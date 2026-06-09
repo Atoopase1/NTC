@@ -42,11 +42,35 @@
     width: 100%;
   }
 
-  .features-grid,
   .subjects-grid,
   .testimonials-grid,
   .pricing-grid {
     grid-template-columns: 1fr;
+  }
+
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm);
+  }
+  
+  .features-grid .feature-card {
+    padding: var(--space-md);
+  }
+  
+  .features-grid .feature-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    margin-bottom: var(--space-sm);
+  }
+  
+  .features-grid h3 {
+    font-size: var(--text-sm);
+    margin-bottom: var(--space-xs);
+  }
+  
+  .features-grid p {
+    font-size: 11px;
   }
 
   .footer-grid {
