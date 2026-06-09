@@ -1,0 +1,422 @@
+[
+  {
+    "id": 1,
+    "subject": "Pedagogy",
+    "question": "Which teaching method promotes active learning among students?",
+    "options": ["Lecture method", "Discussion method", "Dictation method", "Memorization method"],
+    "answer": 1
+  },
+  {
+    "id": 2,
+    "subject": "Pedagogy",
+    "question": "What is the primary purpose of formative assessment?",
+    "options": ["To assign final grades", "To monitor student learning and provide feedback", "To rank students", "To satisfy administrative requirements"],
+    "answer": 1
+  },
+  {
+    "id": 3,
+    "subject": "Pedagogy",
+    "question": "Bloom's Taxonomy classifies educational objectives into how many levels?",
+    "options": ["4", "5", "6", "7"],
+    "answer": 2
+  },
+  {
+    "id": 4,
+    "subject": "Pedagogy",
+    "question": "Which of the following is NOT a principle of child-centered education?",
+    "options": ["Learning by doing", "Freedom of expression", "Teacher-dominated instruction", "Individual attention"],
+    "answer": 2
+  },
+  {
+    "id": 5,
+    "subject": "Pedagogy",
+    "question": "The Zone of Proximal Development (ZPD) was proposed by:",
+    "options": ["Jean Piaget", "Lev Vygotsky", "B.F. Skinner", "John Dewey"],
+    "answer": 1
+  },
+  {
+    "id": 6,
+    "subject": "Pedagogy",
+    "question": "Scaffolding in education refers to:",
+    "options": ["Building physical structures", "Temporary support given to students", "Grading system", "Classroom arrangement"],
+    "answer": 1
+  },
+  {
+    "id": 7,
+    "subject": "Pedagogy",
+    "question": "Which of these is an example of cooperative learning?",
+    "options": ["Individual assignments", "Jigsaw method", "Lecturing", "Rote memorization"],
+    "answer": 1
+  },
+  {
+    "id": 8,
+    "subject": "Pedagogy",
+    "question": "Differentiated instruction means:",
+    "options": ["Teaching the same content to all students", "Adapting teaching to meet individual needs", "Separating students by ability", "Using only one teaching method"],
+    "answer": 1
+  },
+  {
+    "id": 9,
+    "subject": "Pedagogy",
+    "question": "The term 'pedagogy' literally means:",
+    "options": ["The art of teaching children", "The science of learning", "Educational psychology", "Curriculum development"],
+    "answer": 0
+  },
+  {
+    "id": 10,
+    "subject": "Pedagogy",
+    "question": "Which learning theory emphasizes observable behaviors?",
+    "options": ["Constructivism", "Behaviorism", "Cognitivism", "Humanism"],
+    "answer": 1
+  },
+  {
+    "id": 11,
+    "subject": "General Knowledge",
+    "question": "The National Teaching Council (NTC) of Ghana was established in which year?",
+    "options": ["2006", "2008", "2010", "2012"],
+    "answer": 1
+  },
+  {
+    "id": 12,
+    "subject": "General Knowledge",
+    "question": "Which body is responsible for teacher licensing in Ghana?",
+    "options": ["Ministry of Education", "Ghana Education Service", "National Teaching Council", "UNESCO"],
+    "answer": 2
+  },
+  {
+    "id": 13,
+    "subject": "General Knowledge",
+    "question": "The current basic education system in Ghana spans how many years?",
+    "options": ["9 years", "11 years", "12 years", "15 years"],
+    "answer": 1
+  },
+  {
+    "id": 14,
+    "subject": "General Knowledge",
+    "question": "Which of the following is a goal of the Ghana Education Strategic Plan?",
+    "options": ["Reducing teacher numbers", "Improving quality education", "Eliminating examinations", "Closing rural schools"],
+    "answer": 1
+  },
+  {
+    "id": 15,
+    "subject": "General Knowledge",
+    "question": "The Free Senior High School (SHS) policy in Ghana was introduced in:",
+    "options": ["2015", "2016", "2017", "2018"],
+    "answer": 2
+  },
+  {
+    "id": 16,
+    "subject": "General Knowledge",
+    "question": "Which international organization promotes 'Education for All'?",
+    "options": ["WHO", "UNESCO", "UNICEF", "WTO"],
+    "answer": 1
+  },
+  {
+    "id": 17,
+    "subject": "General Knowledge",
+    "question": "The Sustainable Development Goal (SDG) for education is:",
+    "options": ["SDG 2", "SDG 3", "SDG 4", "SDG 5"],
+    "answer": 2
+  },
+  {
+    "id": 18,
+    "subject": "General Knowledge",
+    "question": "Which act established the Ghana Education Service?",
+    "options": ["Education Act of 1961", "Education Reform of 1987", "PNDC Law 247", "Education Act 2008"],
+    "answer": 2
+  },
+  {
+    "id": 19,
+    "subject": "General Knowledge",
+    "question": "The concept of inclusive education primarily advocates for:",
+    "options": ["Separating students with disabilities", "Educating all children together", "Online learning only", "Private schooling"],
+    "answer": 1
+  },
+  {
+    "id": 20,
+    "subject": "General Knowledge",
+    "question": "Which philosopher is known as the father of modern education?",
+    "options": ["Aristotle", "John Amos Comenius", "Plato", "Socrates"],
+    "answer": 1
+  },
+  {
+    "id": 21,
+    "subject": "Curriculum Studies",
+    "question": "A curriculum is best defined as:",
+    "options": ["A list of textbooks", "Planned learning experiences", "Examination syllabus", "Teacher's lesson notes"],
+    "answer": 1
+  },
+  {
+    "id": 22,
+    "subject": "Curriculum Studies",
+    "question": "The hidden curriculum refers to:",
+    "options": ["Secret teaching methods", "Unintended lessons learned in school", "Curriculum not yet approved", "Extra-curricular activities only"],
+    "answer": 1
+  },
+  {
+    "id": 23,
+    "subject": "Curriculum Studies",
+    "question": "Which curriculum model follows objectives-based design?",
+    "options": ["Tyler's Model", "Stenhouse Model", "Freire's Model", "Montessori Model"],
+    "answer": 0
+  },
+  {
+    "id": 24,
+    "subject": "Curriculum Studies",
+    "question": "The spiral curriculum was proposed by:",
+    "options": ["John Dewey", "Jerome Bruner", "Ralph Tyler", "Paulo Freire"],
+    "answer": 1
+  },
+  {
+    "id": 25,
+    "subject": "Curriculum Studies",
+    "question": "Curriculum evaluation primarily aims to:",
+    "options": ["Punish poor teachers", "Determine effectiveness of the program", "Reduce content", "Increase school fees"],
+    "answer": 1
+  },
+  {
+    "id": 26,
+    "subject": "Curriculum Studies",
+    "question": "Which of these is NOT a component of curriculum design?",
+    "options": ["Objectives", "Content", "Student punishment", "Evaluation"],
+    "answer": 2
+  },
+  {
+    "id": 27,
+    "subject": "Curriculum Studies",
+    "question": "The Standards-Based Curriculum (SBC) in Ghana emphasizes:",
+    "options": ["Rote learning", "Core competencies and values", "Teacher-centered approach", "Examination preparation only"],
+    "answer": 1
+  },
+  {
+    "id": 28,
+    "subject": "Curriculum Studies",
+    "question": "Subject-centered curriculum focuses primarily on:",
+    "options": ["Student interests", "Organized body of knowledge", "Community needs", "Teacher preferences"],
+    "answer": 1
+  },
+  {
+    "id": 29,
+    "subject": "Curriculum Studies",
+    "question": "Which approach integrates multiple subjects around a theme?",
+    "options": ["Subject-centered", "Interdisciplinary approach", "Core curriculum", "Elective system"],
+    "answer": 1
+  },
+  {
+    "id": 30,
+    "subject": "Curriculum Studies",
+    "question": "Curriculum implementation is the responsibility of:",
+    "options": ["Only the headteacher", "Only the government", "Teachers primarily", "Parents only"],
+    "answer": 2
+  },
+  {
+    "id": 31,
+    "subject": "Assessment",
+    "question": "Summative assessment is conducted:",
+    "options": ["During instruction", "At the end of a learning period", "Before instruction begins", "Only in primary school"],
+    "answer": 1
+  },
+  {
+    "id": 32,
+    "subject": "Assessment",
+    "question": "Validity in testing refers to:",
+    "options": ["Consistency of scores", "Whether the test measures what it intends to", "Test length", "Number of questions"],
+    "answer": 1
+  },
+  {
+    "id": 33,
+    "subject": "Assessment",
+    "question": "Reliability in assessment means:",
+    "options": ["The test is valid", "Scores are consistent over time", "The test is easy", "All students pass"],
+    "answer": 1
+  },
+  {
+    "id": 34,
+    "subject": "Assessment",
+    "question": "A rubric is used for:",
+    "options": ["Erasing mistakes", "Scoring student work against criteria", "Measuring height", "Cleaning whiteboards"],
+    "answer": 1
+  },
+  {
+    "id": 35,
+    "subject": "Assessment",
+    "question": "Norm-referenced assessment compares students to:",
+    "options": ["A fixed standard", "Other students", "Their own past performance", "Teacher expectations"],
+    "answer": 1
+  },
+  {
+    "id": 36,
+    "subject": "Assessment",
+    "question": "Criterion-referenced assessment measures students against:",
+    "options": ["Other students", "A predetermined standard", "National averages", "Teacher opinions"],
+    "answer": 1
+  },
+  {
+    "id": 37,
+    "subject": "Assessment",
+    "question": "Portfolio assessment involves:",
+    "options": ["A single test", "Collection of student work over time", "Oral examination only", "Multiple choice only"],
+    "answer": 1
+  },
+  {
+    "id": 38,
+    "subject": "Assessment",
+    "question": "Diagnostic assessment is used to:",
+    "options": ["Assign final grades", "Identify learning difficulties", "Rank students", "Determine promotion"],
+    "answer": 1
+  },
+  {
+    "id": 39,
+    "subject": "Assessment",
+    "question": "Which type of test item requires students to construct a response?",
+    "options": ["Multiple choice", "True/False", "Essay question", "Matching"],
+    "answer": 2
+  },
+  {
+    "id": 40,
+    "subject": "Assessment",
+    "question": "Item analysis helps teachers to:",
+    "options": ["Write longer tests", "Evaluate the quality of test items", "Increase class size", "Reduce teaching hours"],
+    "answer": 1
+  },
+  {
+    "id": 41,
+    "subject": "ICT",
+    "question": "ICT in education stands for:",
+    "options": ["International Computer Technology", "Information and Communication Technology", "Integrated Curriculum Teaching", "Internet Connection Tool"],
+    "answer": 1
+  },
+  {
+    "id": 42,
+    "subject": "ICT",
+    "question": "Which of these is an example of educational technology?",
+    "options": ["Chalkboard only", "Learning Management System", "Textbook only", "Exercise book"],
+    "answer": 1
+  },
+  {
+    "id": 43,
+    "subject": "ICT",
+    "question": "Blended learning combines:",
+    "options": ["Two subjects", "Online and face-to-face instruction", "Two teachers", "Two textbooks"],
+    "answer": 1
+  },
+  {
+    "id": 44,
+    "subject": "ICT",
+    "question": "Which software is commonly used for creating presentations?",
+    "options": ["Microsoft Word", "Microsoft Excel", "Microsoft PowerPoint", "Microsoft Access"],
+    "answer": 2
+  },
+  {
+    "id": 45,
+    "subject": "ICT",
+    "question": "E-learning refers to:",
+    "options": ["Evening learning", "Electronic learning", "Extended learning", "Experimental learning"],
+    "answer": 1
+  },
+  {
+    "id": 46,
+    "subject": "ICT",
+    "question": "Digital literacy includes the ability to:",
+    "options": ["Only type fast", "Use technology effectively and critically", "Build computers", "Only browse the internet"],
+    "answer": 1
+  },
+  {
+    "id": 47,
+    "subject": "ICT",
+    "question": "A Learning Management System (LMS) is used to:",
+    "options": ["Manage school finances", "Deliver and track educational content", "Repair computers", "Print certificates only"],
+    "answer": 1
+  },
+  {
+    "id": 48,
+    "subject": "ICT",
+    "question": "Which of these is a benefit of ICT in education?",
+    "options": ["Reduces teacher importance", "Enhances interactive learning", "Replaces all textbooks", "Eliminates examinations"],
+    "answer": 1
+  },
+  {
+    "id": 49,
+    "subject": "ICT",
+    "question": "TPACK stands for:",
+    "options": ["Teaching Practice and Content Knowledge", "Technological Pedagogical and Content Knowledge", "Technical Professional Academic Knowledge", "Teacher Preparation and Certification Kit"],
+    "answer": 1
+  },
+  {
+    "id": 50,
+    "subject": "ICT",
+    "question": "Which is a challenge of using ICT in Ghanaian schools?",
+    "options": ["Too many computers", "Limited infrastructure and internet access", "Too many trained teachers", "Excess funding"],
+    "answer": 1
+  },
+  {
+    "id": 51,
+    "subject": "Educational Psychology",
+    "question": "Jean Piaget's theory of cognitive development has how many stages?",
+    "options": ["2", "3", "4", "5"],
+    "answer": 2
+  },
+  {
+    "id": 52,
+    "subject": "Educational Psychology",
+    "question": "Classical conditioning was developed by:",
+    "options": ["B.F. Skinner", "Ivan Pavlov", "Albert Bandura", "Carl Rogers"],
+    "answer": 1
+  },
+  {
+    "id": 53,
+    "subject": "Educational Psychology",
+    "question": "Maslow's hierarchy of needs places which need at the top?",
+    "options": ["Safety", "Physiological", "Self-actualization", "Belonging"],
+    "answer": 2
+  },
+  {
+    "id": 54,
+    "subject": "Educational Psychology",
+    "question": "Operant conditioning was proposed by:",
+    "options": ["Pavlov", "Bandura", "B.F. Skinner", "Piaget"],
+    "answer": 2
+  },
+  {
+    "id": 55,
+    "subject": "Educational Psychology",
+    "question": "Howard Gardner proposed the theory of:",
+    "options": ["Classical conditioning", "Multiple intelligences", "Moral development", "Psychosocial development"],
+    "answer": 1
+  },
+  {
+    "id": 56,
+    "subject": "Educational Psychology",
+    "question": "Erik Erikson's theory focuses on:",
+    "options": ["Cognitive development", "Psychosocial development", "Moral development", "Language development"],
+    "answer": 1
+  },
+  {
+    "id": 57,
+    "subject": "Educational Psychology",
+    "question": "Intrinsic motivation comes from:",
+    "options": ["External rewards", "Within the individual", "Teacher pressure", "Parental demands"],
+    "answer": 1
+  },
+  {
+    "id": 58,
+    "subject": "Educational Psychology",
+    "question": "Social learning theory was developed by:",
+    "options": ["Piaget", "Vygotsky", "Bandura", "Skinner"],
+    "answer": 2
+  },
+  {
+    "id": 59,
+    "subject": "Educational Psychology",
+    "question": "The concrete operational stage occurs at ages:",
+    "options": ["0-2 years", "2-7 years", "7-11 years", "12+ years"],
+    "answer": 2
+  },
+  {
+    "id": 60,
+    "subject": "Educational Psychology",
+    "question": "Which psychologist is associated with moral development theory?",
+    "options": ["Piaget", "Kohlberg", "Freud", "Erikson"],
+    "answer": 1
+  }
+]

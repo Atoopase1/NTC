@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signing in... | NTC Exam Prep</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0a0f1e;
+      color: white;
+    }
+    .callback-container {
+      text-align: center;
+      padding: 48px;
+    }
+    .spinner {
+      width: 52px;
+      height: 52px;
+      border: 3px solid rgba(17, 150, 232, 0.2);
+      border-top-color: #1196e8;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 24px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    p { color: rgba(255,255,255,0.55); font-size: 14px; }
+    .error-msg {
+      color: #f43f5e;
+      background: rgba(244,63,94,0.1);
+      padding: 12px 20px;
+      border-radius: 10px;
+      margin-top: 20px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="callback-container">
+    <div class="spinner"></div>
+    <h2>Signing you in...</h2>
+    <p>Please wait while we verify your account.</p>
+    <div class="error-msg" id="errorMsg">Sign-in failed. <a href="login.html" style="color:#1196e8;">Try again</a></div>
+  </div>
+
+  <script src="../js/supabase.js"></script>
+  <script>
+    (async () => {
+      try {
+        // Wait a moment for Supabase to process the OAuth tokens from the URL hash
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        if (!supabaseClient) {
+          document.getElementById('errorMsg').style.display = 'block';
+          return;
+        }
+
+        // Supabase automatically reads the tokens from the URL hash
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
+
+        if (error || !session) {
+          document.getElementById('errorMsg').style.display = 'block';
+          return;
+        }
+
+        const userEmail = session.user.email;
+
+        // Use the shared admin redirect logic
+        if (window.supaAuth && window.supaAuth.checkAdminAndRedirect) {
+          await window.supaAuth.checkAdminAndRedirect(userEmail);
+        } else {
+          // Fallback: just go to dashboard
+          window.location.href = 'dashboard.html';
+        }
+
+      } catch (err) {
+        console.error('Auth callback error:', err);
+        document.getElementById('errorMsg').style.display = 'block';
+      }
+    })();
+  </script>
+</body>
+</html>

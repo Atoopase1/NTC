@@ -1,0 +1,14 @@
+# Python scripts (temporary)
+replace_emojis.py
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor folders
+.vscode/
+.idea/
+
+# Node (just in case)
+node_modules/

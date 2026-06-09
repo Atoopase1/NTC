@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | NTC Exam Prep</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/auth.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .google-only-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--background);
+      padding: var(--space-xl);
+    }
+
+    .google-only-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 56px 48px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.25);
+      text-align: center;
+      animation: slideUp 0.4s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .google-only-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 40px;
+      text-decoration: none;
+    }
+
+    .google-only-brand .brand-icon {
+      width: 40px;
+      height: 40px;
+      font-size: 18px;
+    }
+
+    .google-only-brand span {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .google-only-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: var(--gradient-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 28px;
+      box-shadow: 0 12px 32px rgba(17, 150, 232, 0.3);
+    }
+
+    .google-only-icon svg {
+      color: white;
+    }
+
+    .google-only-card h1 {
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+
+    .google-only-card p {
+      color: var(--text-light);
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 36px;
+    }
+
+    .btn-google-large {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      width: 100%;
+      padding: 16px 24px;
+      background: white;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #1a1a2e;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .btn-google-large:hover {
+      border-color: #4285f4;
+      box-shadow: 0 4px 20px rgba(66, 133, 244, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .btn-google-large svg {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .google-only-divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 28px 0;
+      color: var(--text-light);
+      font-size: 13px;
+    }
+
+    .google-only-divider::before,
+    .google-only-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .google-only-features {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 32px;
+      text-align: left;
+    }
+
+    .google-only-feature {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-light);
+      font-size: 13px;
+    }
+
+    .google-only-feature-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: rgba(17, 150, 232, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      flex-shrink: 0;
+    }
+
+    .google-only-footer {
+      margin-top: 32px;
+      font-size: 13px;
+      color: var(--text-light);
+    }
+
+    .google-only-footer a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .status-msg {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .status-msg.loading {
+      display: block;
+      background: rgba(17, 150, 232, 0.1);
+      color: var(--primary);
+    }
+
+    .status-msg.error {
+      display: block;
+      background: rgba(244, 63, 94, 0.1);
+      color: #f43f5e;
+    }
+  </style>
+</head>
+<body>
+  <div class="google-only-page">
+    <div class="google-only-card">
+      <a href="../index.html" class="google-only-brand">
+        <div class="brand-icon">N</div>
+        <span>NTC Prep</span>
+      </a>
+
+      <div class="google-only-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+          <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+        </svg>
+      </div>
+
+      <h1>Welcome Back</h1>
+      <p>Sign in to access your NTC exam preparation dashboard.</p>
+
+      <button class="btn-google-large" id="googleLoginBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+          <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+          <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+          <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+          <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <div id="statusMsg" class="status-msg"></div>
+
+      <div class="google-only-divider">Secure & Fast</div>
+
+      <div class="google-only-features">
+        <div class="google-only-feature">
+          <div class="google-only-feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <span>No password to remember — sign in with your Google account</span>
+        </div>
+        <div class="google-only-feature">
+          <div class="google-only-feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <span>Your progress is saved automatically across all devices</span>
+        </div>
+        <div class="google-only-feature">
+          <div class="google-only-feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          </div>
+          <span>Quick one-tap access — log in in seconds</span>
+        </div>
+      </div>
+
+      <div class="google-only-footer">
+        New here? Clicking the button above automatically creates your account.
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/supabase.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    document.getElementById('googleLoginBtn').addEventListener('click', async () => {
+      const msg = document.getElementById('statusMsg');
+      msg.className = 'status-msg loading';
+      msg.textContent = 'Redirecting to Google...';
+      document.getElementById('googleLoginBtn').disabled = true;
+      
+      if (window.supaAuth) {
+        await window.supaAuth.signInWithGoogle();
+      } else {
+        msg.className = 'status-msg error';
+        msg.textContent = 'Authentication service not available. Please check your connection.';
+        document.getElementById('googleLoginBtn').disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

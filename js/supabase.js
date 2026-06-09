@@ -1,0 +1,269 @@
+// ============================================
+// NTC Exam Prep - Supabase Integration
+// Connects to Supabase backend for Auth & DB
+// ============================================
+
+// Configuration provided in prompt
+const SUPABASE_URL = 'https://wyaadzxbuvaehxvxikgw.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_5GFXJxaQvl6O2FBIZczQJQ_9lYvRMdj';
+
+// Initialize Supabase Client
+// Note: Requires supabase-js library to be loaded in HTML via CDN:
+// <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+let supabaseClient = null;
+
+function initSupabase() {
+  if (typeof supabase !== 'undefined') {
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log('Supabase client initialized');
+  } else {
+    console.error('Supabase library not loaded. Please include the CDN script in HTML.');
+  }
+}
+
+// Initialize on load
+initSupabase();
+
+// --- Auth Functions --- //
+
+/**
+ * Register a new user
+ */
+async function signUp(email, password, fullName, phone) {
+  if (!supabaseClient) return { error: { message: 'Supabase not initialized' } };
+  
+  try {
+    const { data, error } = await supabaseClient.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+          phone: phone
+        }
+      }
+    });
+    
+    if (error) throw error;
+    
+    // Create profile record if signup was successful
+    if (data.user) {
+      await createProfile(data.user.id, fullName, phone, email);
+    }
+    
+    return { data, error: null };
+  } catch (error) {
+    console.error('Signup error:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Login existing user
+ */
+async function signIn(email, password) {
+  if (!supabaseClient) return { error: { message: 'Supabase not initialized' } };
+  
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email,
+      password
+    });
+    
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Signin error:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Logout user
+ */
+async function signOut() {
+  if (!supabaseClient) return;
+  await supabaseClient.auth.signOut();
+  window.location.href = '../pages/login.html';
+}
+
+/**
+ * Get current session/user
+ */
+async function getCurrentUser() {
+  if (!supabaseClient) return null;
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  return session ? session.user : null;
+}
+
+/**
+ * Google OAuth Login
+ */
+async function signInWithGoogle() {
+  if (!supabaseClient) return;
+  
+  // Redirect to the auth callback page so we can check admin role after login
+  const redirectTo = window.location.origin.includes('localhost') || window.location.protocol === 'file:'
+    ? window.location.href.replace(/pages\/.*$/, 'pages/auth-callback.html')  // local file
+    : window.location.origin + '/pages/auth-callback.html';
+
+  const { error } = await supabaseClient.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo }
+  });
+  if (error) console.error('Google login error:', error);
+}
+
+/**
+ * Check user role and redirect to the correct page.
+ * Called after any login method (email+password or Google OAuth).
+ */
+async function checkAdminAndRedirect(userEmail) {
+  const ADMIN_EMAIL = 'atoopase@gmail.com';
+  try {
+    if (userEmail === ADMIN_EMAIL) {
+      window.location.href = 'admin-lessons.html';
+      return;
+    }
+    if (supabaseClient) {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabaseClient
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        if (profile && profile.role === 'admin') {
+          window.location.href = 'admin-lessons.html';
+          return;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Role check failed, defaulting to dashboard', err);
+  }
+  window.location.href = 'dashboard.html';
+}
+
+// --- Database Functions --- //
+
+/**
+ * Create user profile after signup
+ */
+async function createProfile(userId, fullName, phone, email) {
+  try {
+    // Check if profiles table exists by doing a silent select
+    const { error: checkError } = await supabaseClient
+      .from('profiles')
+      .select('id')
+      .eq('id', userId)
+      .single();
+      
+    // We ignore errors here as table might not exist yet, 
+    // but we'll try to insert anyway
+    const { error } = await supabaseClient
+      .from('profiles')
+      .upsert({
+        id: userId,
+        full_name: fullName,
+        phone: phone,
+        email: email,
+        updated_at: new Date().toISOString(),
+      });
+      
+    if (error) {
+      console.warn('Could not save profile to DB (table might not exist yet). Will save locally.', error);
+      // Fallback for demo purposes if DB not setup
+      localStorage.setItem(`user_${userId}_profile`, JSON.stringify({ fullName, phone, email }));
+    }
+  } catch (err) {
+    console.warn('Profile creation failed', err);
+  }
+}
+
+/**
+ * Get user profile data
+ */
+async function getProfile(userId) {
+  try {
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+      
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.log('Using local profile data fallback');
+    // Fallback if DB not setup
+    const localData = localStorage.getItem(`user_${userId}_profile`);
+    if (localData) return JSON.parse(localData);
+    return null;
+  }
+}
+
+/**
+ * Save exam result
+ */
+async function saveExamResult(userId, examData) {
+  try {
+    const { error } = await supabaseClient
+      .from('exam_results')
+      .insert({
+        user_id: userId,
+        subject: examData.subject,
+        score: examData.score,
+        total: examData.total,
+        percentage: examData.percentage,
+        time_used: examData.timeUsed,
+        created_at: new Date().toISOString()
+      });
+      
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.warn('Could not save exam to DB. Saving locally.', error);
+    // Fallback local storage
+    const results = JSON.parse(localStorage.getItem('ntc_exam_results') || '[]');
+    results.push({ ...examData, userId, date: new Date().toISOString() });
+    localStorage.setItem('ntc_exam_results', JSON.stringify(results));
+    return true;
+  }
+}
+
+/**
+ * Get user's exam history
+ */
+async function getExamHistory(userId) {
+  try {
+    const { data, error } = await supabaseClient
+      .from('exam_results')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+      
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    // Fallback local storage
+    const results = JSON.parse(localStorage.getItem('ntc_exam_results') || '[]');
+    return results.filter(r => r.userId === userId).sort((a, b) => new Date(b.date) - new Date(a.date));
+  }
+}
+
+// Export functions for global use
+window.supaAuth = {
+  signUp,
+  signIn,
+  signOut,
+  getCurrentUser,
+  signInWithGoogle,
+  checkAdminAndRedirect
+};
+
+window.supaDB = {
+  getProfile,
+  saveExamResult,
+  getExamHistory
+};

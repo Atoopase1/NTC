@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson Management | Admin | NTC Exam Prep</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container" style="max-width: 100%;">
+      <div style="display: flex; align-items: center; gap: var(--space-md);">
+        <button class="sidebar-toggle-btn" id="sidebarToggle" aria-label="Toggle Sidebar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+        
+        <a href="../index.html" class="navbar-brand">
+          <div class="brand-icon" style="background: linear-gradient(135deg, #f43f5e, #e11d48);">N</div>
+          <span>Admin Portal</span>
+        </a>
+      </div>
+      
+      <div class="navbar-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle Dark Mode"></button>
+        
+        <div class="user-dropdown">
+          <div class="user-dropdown-toggle">
+            <div class="avatar avatar-sm user-avatar-initials" style="background: #f43f5e;">A</div>
+            <span class="user-name">Administrator</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          
+          <div class="user-dropdown-menu">
+            <a href="#" class="dropdown-item danger" id="logoutBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              Log Out
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="dashboard-layout">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
+    <!-- Admin Sidebar -->
+    <aside class="sidebar admin-sidebar" id="sidebar">
+      <div class="sidebar-nav">
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Admin Controls</div>
+          <a href="#" class="sidebar-link">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg></span>
+            Overview
+          </a>
+          <a href="#" class="sidebar-link">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+            Manage Users
+          </a>
+          <a href="admin-lessons.html" class="sidebar-link active">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span>
+            Lesson Materials
+          </a>
+          <a href="#" class="sidebar-link">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span>
+            Question Bank
+          </a>
+        </div>
+      </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="dashboard-main">
+      <div class="admin-header reveal">
+        <div class="admin-header-title">
+          <h1>Lesson Materials</h1>
+          <p>Post and manage study videos, PDFs, and text lessons for students.</p>
+        </div>
+      </div>
+      
+      <!-- Tabs -->
+      <div class="admin-tabs reveal delay-1">
+        <button class="admin-tab active" data-tab="manage-lessons">Manage Existing</button>
+        <button class="admin-tab" data-tab="add-lesson">Add New Lesson</button>
+      </div>
+
+      <!-- Tab Content: Manage Lessons -->
+      <div id="manage-lessons" class="tab-content active reveal delay-2">
+        <div class="admin-card">
+          <div class="admin-table-container">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Topic</th>
+                  <th>Sub-Topic</th>
+                  <th>Format</th>
+                  <th>Date Added</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Pedagogy</strong></td>
+                  <td>Classroom Management Strategies</td>
+                  <td><span class="badge-type badge-video"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Video</span></td>
+                  <td>June 08, 2026</td>
+                  <td>
+                    <div class="table-actions">
+                      <button class="btn-icon" aria-label="Edit"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                      <button class="btn-icon delete" aria-label="Delete"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Curriculum Studies</strong></td>
+                  <td>National Curriculum Framework</td>
+                  <td><span class="badge-type badge-pdf"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> PDF</span></td>
+                  <td>June 07, 2026</td>
+                  <td>
+                    <div class="table-actions">
+                      <button class="btn-icon" aria-label="Edit"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                      <button class="btn-icon delete" aria-label="Delete"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Educational Psychology</strong></td>
+                  <td>Theories of Child Development</td>
+                  <td><span class="badge-type badge-text"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> Text Notes</span></td>
+                  <td>June 05, 2026</td>
+                  <td>
+                    <div class="table-actions">
+                      <button class="btn-icon" aria-label="Edit"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                      <button class="btn-icon delete" aria-label="Delete"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content: Add New Lesson -->
+      <div id="add-lesson" class="tab-content">
+        <div class="admin-card">
+          <form id="addLessonForm">
+            
+            <div class="admin-form-row">
+              <div>
+                <label class="admin-label" for="lessonTopic">Core Module / Topic</label>
+                <select id="lessonTopic" class="admin-input" required>
+                  <option value="" disabled selected>Select a subject area...</option>
+                  <option value="Pedagogy">Pedagogy</option>
+                  <option value="General Knowledge">General Knowledge</option>
+                  <option value="Curriculum Studies">Curriculum Studies</option>
+                  <option value="Assessment">Assessment</option>
+                  <option value="ICT in Education">ICT in Education</option>
+                  <option value="Educational Psychology">Educational Psychology</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="admin-label" for="lessonSubtopic">Sub-Topic / Lesson Title</label>
+                <input type="text" id="lessonSubtopic" class="admin-input" placeholder="e.g. Assessment Techniques" required>
+              </div>
+            </div>
+
+            <div class="admin-form-row">
+              <div>
+                <label class="admin-label" for="lessonMediaType">Lesson Material Format</label>
+                <select id="lessonMediaType" class="admin-input" required>
+                  <option value="video">Video Lecture (YouTube/Vimeo)</option>
+                  <option value="pdf">Document (PDF Link)</option>
+                  <option value="text">Text Notes Only</option>
+                </select>
+              </div>
+              
+              <div id="mediaLinkGroup">
+                <label class="admin-label" for="lessonMediaLink">Media URL Link</label>
+                <input type="url" id="lessonMediaLink" class="admin-input" placeholder="e.g. https://youtube.com/watch?v=..." required>
+              </div>
+            </div>
+
+            <div style="margin-bottom: var(--space-xl);">
+              <label class="admin-label" for="lessonContent">Lesson Content & Notes (Optional if Video/PDF provided)</label>
+              <textarea id="lessonContent" class="admin-input admin-textarea" placeholder="Write comprehensive study notes, key takeaways, or a summary for this lesson here..."></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+              <button type="button" class="btn btn-outline" onclick="document.getElementById('addLessonForm').reset()">Clear Form</button>
+              <button type="submit" class="btn btn-primary">Publish Lesson</button>
+            </div>
+            
+          </form>
+        </div>
+      </div>
+      
+    </main>
+  </div>
+
+  <script src="../js/supabase.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script src="../js/admin.js"></script>
+</body>
+</html>

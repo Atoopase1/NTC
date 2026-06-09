@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exam Results | NTC Exam Prep</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/exam.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="results-page">
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container">
+      <a href="dashboard.html" class="navbar-brand">
+        <div class="brand-icon">N</div>
+        <span>NTC Prep</span>
+      </a>
+      
+      <div class="navbar-actions">
+        <a href="dashboard.html" class="btn btn-outline">Back to Dashboard</a>
+        <a href="exam.html?setup=1" class="btn btn-primary">Take Another Exam</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-header" style="border-radius: var(--radius-xl); padding: var(--space-2xl); margin-bottom: var(--space-xl); background: var(--surface); border: 1px solid var(--border);">
+      <h1 style="color: var(--text); font-size: var(--text-3xl);">Examination Results</h1>
+      <p style="color: var(--text-light); font-size: var(--text-base);">Your performance analysis for the recent mock exam.</p>
+    </div>
+
+    <!-- Main Score Card -->
+    <div id="mainScoreCard" class="score-card reveal">
+      <div id="resultStatus" class="score-status">Calculating...</div>
+      
+      <div class="score-ring">
+        <svg>
+          <circle class="track" cx="90" cy="90" r="80"></circle>
+          <circle class="fill-pass" id="scoreRingFill" cx="90" cy="90" r="80" style="stroke-dasharray: 502.65; stroke-dashoffset: 502.65;"></circle>
+        </svg>
+        <div class="score-ring-text">
+          <div class="score-percentage" id="resultPercentage">0%</div>
+          <div class="score-label">Score</div>
+        </div>
+      </div>
+      
+      <div class="score-details">
+        <div class="score-detail">
+          <div class="score-detail-value" id="statScore">0/0</div>
+          <div class="score-detail-label">Total Correct</div>
+        </div>
+        <div class="score-detail">
+          <div class="score-detail-value" id="statGrade">-</div>
+          <div class="score-detail-label">Grade</div>
+        </div>
+        <div class="score-detail">
+          <div class="score-detail-value" id="statTime">0m 0s</div>
+          <div class="score-detail-label">Time Used</div>
+        </div>
+        <div class="score-detail">
+          <div class="score-detail-value" id="statSubject" style="font-size: var(--text-base); display: flex; align-items: center; justify-content: center; height: 100%;">-</div>
+          <div class="score-detail-label">Subject</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="results-grid">
+      <!-- Left Col: Breakdown -->
+      <div class="results-col">
+        <div class="results-widget reveal delay-1">
+          <div class="widget-header">
+            <h3 class="widget-title">Performance Breakdown</h3>
+          </div>
+          <div class="widget-body" id="subjectBreakdown">
+            <!-- Injected by JS -->
+            <div class="skeleton skeleton-text" style="height: 30px; margin-bottom: 10px;"></div>
+            <div class="skeleton skeleton-text" style="height: 30px;"></div>
+          </div>
+        </div>
+        
+        <div class="results-actions reveal delay-2">
+          <button class="btn btn-outline btn-lg btn-block" id="printResultBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            Print Result Report
+          </button>
+        </div>
+      </div>
+      
+      <!-- Right Col: Review -->
+      <div class="results-col">
+        <div class="results-widget reveal delay-3">
+          <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 class="widget-title">Answer Review</h3>
+            <span style="font-size: var(--text-xs); color: var(--text-light);">Scroll to see all</span>
+          </div>
+          <div class="widget-body" style="max-height: 600px; overflow-y: auto;">
+            <div id="answerReview">
+              <!-- Injected by JS -->
+              <div class="skeleton skeleton-card" style="margin-bottom: 15px;"></div>
+              <div class="skeleton skeleton-card"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/supabase.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/results.js"></script>
+</body>
+</html>

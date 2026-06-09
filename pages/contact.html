@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Us | NTC Exam Prep</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+  
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container">
+      <a href="../index.html" class="navbar-brand">
+        <div class="brand-icon">N</div>
+        <span>NTC Prep</span>
+      </a>
+      
+      <div class="navbar-toggle" id="navbarToggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      
+      <div class="navbar-nav" id="navbarNav">
+        <a href="../index.html#features" class="nav-link">Features</a>
+        <a href="../index.html#subjects" class="nav-link">Subjects</a>
+        <a href="contact.html" class="nav-link active">Contact</a>
+      </div>
+      
+      <div class="navbar-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle Dark Mode"></button>
+        <a href="login.html" class="btn btn-ghost">Log In</a>
+        <a href="register.html" class="btn btn-primary">Sign Up Free</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container" style="padding-top: var(--space-3xl); padding-bottom: var(--space-3xl);">
+    <div class="section-header text-center reveal">
+      <h1 class="section-title">Get in Touch</h1>
+      <p class="section-subtitle">Have questions about our NTC Exam Prep platform? We're here to help.</p>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-2xl); max-width: 1000px; margin: 0 auto;">
+      
+      <!-- Contact Info -->
+      <div class="reveal-left">
+        <div style="background: var(--surface); padding: var(--space-xl); border-radius: var(--radius-xl); height: 100%; border: 1px solid var(--border);">
+          <h3 style="margin-bottom: var(--space-lg);">Contact Information</h3>
+          
+          <div style="display: flex; gap: var(--space-md); margin-bottom: var(--space-lg);">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--primary-ghost); display: flex; align-items: center; justify-content: center; color: var(--primary); flex-shrink: 0;">
+              📧
+            </div>
+            <div>
+              <h4 style="font-size: var(--text-base); margin-bottom: 4px;">Email Us</h4>
+              <p style="color: var(--text-light);">support@ntcprep.com.gh</p>
+            </div>
+          </div>
+          
+          <div style="display: flex; gap: var(--space-md); margin-bottom: var(--space-lg);">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--primary-ghost); display: flex; align-items: center; justify-content: center; color: var(--primary); flex-shrink: 0;">
+              📞
+            </div>
+            <div>
+              <h4 style="font-size: var(--text-base); margin-bottom: 4px;">Call Us</h4>
+              <p style="color: var(--text-light);">+233 (0) 54 123 4567</p>
+            </div>
+          </div>
+          
+          <div style="display: flex; gap: var(--space-md);">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--primary-ghost); display: flex; align-items: center; justify-content: center; color: var(--primary); flex-shrink: 0;">
+              📍
+            </div>
+            <div>
+              <h4 style="font-size: var(--text-base); margin-bottom: 4px;">Office Address</h4>
+              <p style="color: var(--text-light);">East Legon, Accra<br>Ghana</p>
+            </div>
+          </div>
+          
+          <div style="margin-top: var(--space-2xl);">
+            <h4 style="font-size: var(--text-base); margin-bottom: var(--space-md);">Follow Us</h4>
+            <div style="display: flex; gap: var(--space-sm);">
+              <a href="#" style="width: 40px; height: 40px; border-radius: 50%; background: var(--surface-hover); display: flex; align-items: center; justify-content: center; color: var(--text);">f</a>
+              <a href="#" style="width: 40px; height: 40px; border-radius: 50%; background: var(--surface-hover); display: flex; align-items: center; justify-content: center; color: var(--text);">t</a>
+              <a href="#" style="width: 40px; height: 40px; border-radius: 50%; background: var(--surface-hover); display: flex; align-items: center; justify-content: center; color: var(--text);">in</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Contact Form -->
+      <div class="reveal-right">
+        <form style="background: var(--surface); padding: var(--space-xl); border-radius: var(--radius-xl); border: 1px solid var(--border);" onsubmit="event.preventDefault(); window.showToast('Message sent successfully! We will get back to you soon.', 'success'); this.reset();">
+          <div style="margin-bottom: var(--space-md);">
+            <label class="form-label">Full Name</label>
+            <input type="text" class="form-input" placeholder="Your name" required>
+          </div>
+          
+          <div style="margin-bottom: var(--space-md);">
+            <label class="form-label">Email Address</label>
+            <input type="email" class="form-input" placeholder="Your email" required>
+          </div>
+          
+          <div style="margin-bottom: var(--space-md);">
+            <label class="form-label">Subject</label>
+            <select class="form-input form-select" required>
+              <option value="" disabled selected>Select a subject</option>
+              <option value="support">Technical Support</option>
+              <option value="billing">Billing Inquiry</option>
+              <option value="partnership">Partnership</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          
+          <div style="margin-bottom: var(--space-lg);">
+            <label class="form-label">Message</label>
+            <textarea class="form-input" rows="5" placeholder="How can we help you?" required></textarea>
+          </div>
+          
+          <button type="submit" class="btn btn-primary btn-block btn-lg">Send Message</button>
+        </form>
+      </div>
+      
+    </div>
+  </div>
+
+  <script src="../js/app.js"></script>
+</body>
+</html>

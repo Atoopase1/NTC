@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaderboard | NTC Exam Prep</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container" style="max-width: 100%;">
+      <div style="display: flex; align-items: center; gap: var(--space-md);">
+        <button class="sidebar-toggle-btn" id="sidebarToggle" aria-label="Toggle Sidebar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+        
+        <a href="dashboard.html" class="navbar-brand">
+          <div class="brand-icon">N</div>
+          <span>NTC Prep</span>
+        </a>
+      </div>
+      
+      <div class="navbar-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle Dark Mode"></button>
+        
+        <div class="user-dropdown">
+          <div class="user-dropdown-toggle">
+            <div class="avatar avatar-sm user-avatar-initials">U</div>
+            <span class="user-name">User Name</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="dashboard-layout">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-nav">
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Menu</div>
+          <a href="dashboard.html" class="sidebar-link">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg></span>
+            Dashboard
+          </a>
+          <a href="exam.html" class="sidebar-link">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span>
+            Mock Exams
+          </a>
+          <a href="resources.html" class="sidebar-link">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span>
+            Study Resources
+          </a>
+          <a href="leaderboard.html" class="sidebar-link active">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></span>
+            Leaderboard
+          </a>
+        </div>
+      </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="dashboard-main">
+      <div class="page-header" style="border-radius: var(--radius-xl); padding: var(--space-2xl); margin-bottom: var(--space-xl);">
+        <h1>National Leaderboard</h1>
+        <p>Compete with teaching candidates across Ghana. Top performers receive special recognition.</p>
+      </div>
+
+      <!-- Top 3 Podium -->
+      <div class="podium" id="podiumContainer">
+        <!-- Injected by JS -->
+      </div>
+
+      <!-- Leaderboard Table -->
+      <div class="widget reveal delay-2">
+        <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 class="widget-title">Top Candidates</h3>
+          <div class="tabs" style="border-bottom: none; margin-bottom: 0;">
+            <button class="tab-btn active">This Month</button>
+            <button class="tab-btn">All Time</button>
+          </div>
+        </div>
+        <div class="widget-body no-padding">
+          <div class="leaderboard-table-wrapper">
+            <table class="leaderboard-table">
+              <thead>
+                <tr>
+                  <th style="width: 60px;">Rank</th>
+                  <th>Candidate</th>
+                  <th>Average Score</th>
+                  <th>Exams Taken</th>
+                  <th>Badges</th>
+                </tr>
+              </thead>
+              <tbody id="leaderboardTableBody">
+                <!-- Injected by JS -->
+                <tr>
+                  <td colspan="5" style="text-align: center; padding: 20px;">
+                    <div class="spinner spinner-sm" style="margin: 0 auto;"></div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/supabase.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/leaderboard.js"></script>
+</body>
+</html>
