@@ -212,3 +212,64 @@
 .tab-content.active {
   display: block;
 }
+
+/* ── Drop Zone ───────────────────────────────── */
+.drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-2xl) var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--bg);
+  text-align: center;
+  min-height: 160px;
+}
+
+.drop-zone:hover,
+.drop-zone.drag-over {
+  border-color: var(--primary);
+  background: var(--primary-ghost);
+}
+
+.drop-zone.drag-over {
+  transform: scale(1.01);
+}
+
+/* ── Type Pills ──────────────────────────────── */
+.type-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 99px;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  color: var(--text-light);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.type-pill:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.type-pill.active {
+  border-color: var(--primary);
+  background: var(--primary-ghost);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* ── File type badges ────────────────────────── */
+.badge-image  { background: rgba(34,197,94,0.1);   color: #16a34a; }
+.badge-audio  { background: rgba(168,85,247,0.1);  color: #9333ea; }
+.badge-doc    { background: rgba(59,130,246,0.1);  color: #2563eb; }

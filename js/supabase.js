@@ -484,6 +484,87 @@ window.supaAuth = {
   checkAdminAndRedirect
 };
 
+// --- Lesson CRUD & File Upload --- //
+
+/**
+ * Upload a lesson file to Supabase Storage
+ */
+async function uploadLessonFile(file, subject) {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const ext = file.name.split('.').pop();
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const filePath = `${subject.replace(/\s+/g, '_')}/${Date.now()}_${safeName}`;
+
+    const { data, error } = await supabaseClient.storage
+      .from('lesson-materials')
+      .upload(filePath, file, { contentType: file.type, upsert: false });
+
+    if (error) throw error;
+
+    const { data: { publicUrl } } = supabaseClient.storage
+      .from('lesson-materials')
+      .getPublicUrl(filePath);
+
+    return { url: publicUrl, error: null };
+  } catch (error) {
+    console.error('Upload failed:', error);
+    return { url: null, error };
+  }
+}
+
+/**
+ * Create a lesson record in the database
+ */
+async function createLesson({ subject, title, description, media_url, media_type, content }) {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const { data, error } = await supabaseClient
+      .from('lessons')
+      .insert([{ subject, title, description, media_url, media_type, content }])
+      .select()
+      .single();
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Failed to create lesson:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Fetch all lessons
+ */
+async function getLessons() {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const { data, error } = await supabaseClient
+      .from('lessons')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Failed to fetch lessons:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Delete a lesson by ID
+ */
+async function deleteLesson(id) {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const { error } = await supabaseClient.from('lessons').delete().eq('id', id);
+    if (error) throw error;
+    return { error: null };
+  } catch (error) {
+    console.error('Failed to delete lesson:', error);
+    return { error };
+  }
+}
+
 window.supaDB = {
   createProfile,
   getProfile,
@@ -498,5 +579,9 @@ window.supaDB = {
   getScheduledExams,
   createScheduledExam,
   deleteScheduledExam,
-  getExamRankings
+  getExamRankings,
+  uploadLessonFile,
+  createLesson,
+  getLessons,
+  deleteLesson
 };

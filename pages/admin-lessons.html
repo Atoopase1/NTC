@@ -118,14 +118,18 @@
             <table class="admin-table">
               <thead>
                 <tr>
-                  <th>Topic</th>
-                  <th>Sub-Topic</th>
-                  <th>Format</th>
+                  <th>Subject</th>
+                  <th>Lesson Title</th>
+                  <th>Type</th>
                   <th>Date Added</th>
                   <th>Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="lessonsTableBody">
+                <tr><td colspan="5" style="text-align:center;color:var(--text-light);">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
                 <tr>
                   <td><strong>Pedagogy</strong></td>
                   <td>Classroom Management Strategies</td>
@@ -172,47 +176,112 @@
       <div id="add-lesson" class="tab-content">
         <div class="admin-card">
           <form id="addLessonForm">
-            
+
+            <!-- Row 1: Subject + Title -->
             <div class="admin-form-row">
               <div>
-                <label class="admin-label" for="lessonTopic">Core Module / Topic</label>
+                <label class="admin-label" for="lessonTopic">Subject / Module</label>
                 <select id="lessonTopic" class="admin-input" required>
                   <option value="" disabled selected>Loading subjects...</option>
                 </select>
               </div>
-              
               <div>
-                <label class="admin-label" for="lessonSubtopic">Sub-Topic / Lesson Title</label>
+                <label class="admin-label" for="lessonSubtopic">Lesson Title</label>
                 <input type="text" id="lessonSubtopic" class="admin-input" placeholder="e.g. Assessment Techniques" required>
               </div>
             </div>
 
-            <div class="admin-form-row">
-              <div>
-                <label class="admin-label" for="lessonMediaType">Lesson Material Format</label>
-                <select id="lessonMediaType" class="admin-input" required>
-                  <option value="video">Video Lecture (YouTube/Vimeo)</option>
-                  <option value="pdf">Document (PDF Link)</option>
-                  <option value="text">Text Notes Only</option>
-                </select>
-              </div>
-              
-              <div id="mediaLinkGroup">
-                <label class="admin-label" for="lessonMediaLink">Media URL Link</label>
-                <input type="url" id="lessonMediaLink" class="admin-input" placeholder="e.g. https://youtube.com/watch?v=..." required>
+            <!-- Material Type Pills -->
+            <div style="margin-bottom: var(--space-md);">
+              <label class="admin-label">Material Type</label>
+              <div style="display:flex;gap:var(--space-sm);flex-wrap:wrap;">
+                <label class="type-pill active" data-type="file">
+                  <input type="radio" name="lessonType" value="file" checked style="display:none;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                  Upload File
+                </label>
+                <label class="type-pill" data-type="link">
+                  <input type="radio" name="lessonType" value="link" style="display:none;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                  External Link
+                </label>
+                <label class="type-pill" data-type="text">
+                  <input type="radio" name="lessonType" value="text" style="display:none;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                  Text Notes
+                </label>
               </div>
             </div>
 
+            <!-- File Upload Area -->
+            <div id="fileUploadSection" style="margin-bottom:var(--space-md);">
+              <label class="admin-label">File (Image, Video, PDF, Document &mdash; max 50MB)</label>
+              <div id="dropZone" class="drop-zone">
+                <input type="file" id="lessonFile" style="display:none;"
+                  accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:var(--space-sm);">
+                  <div style="color:var(--text-light);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  </div>
+                  <div style="text-align:center;">
+                    <strong>Drag &amp; drop your file here</strong><br>
+                    <span style="color:var(--text-light);font-size:var(--text-sm);">or <a href="#" id="browseBtn" style="color:var(--primary);text-decoration:underline;">browse to upload</a></span>
+                  </div>
+                  <div style="font-size:var(--text-xs);color:var(--text-light);">
+                    Images &bull; Videos &bull; PDFs &bull; Word &bull; PowerPoint &bull; Excel &bull; Audio
+                  </div>
+                </div>
+              </div>
+              <!-- File Preview -->
+              <div id="filePreview" style="display:none; margin-top:var(--space-sm); padding:var(--space-md); background:var(--bg); border-radius:var(--radius-md); border:1px solid var(--border); align-items:center; gap:var(--space-md);">
+                <div id="filePreviewIcon" style="width:48px;height:48px;border-radius:var(--radius-md);background:var(--primary-ghost);display:flex;align-items:center;justify-content:center;color:var(--primary);flex-shrink:0;"></div>
+                <div style="flex:1;min-width:0;">
+                  <div id="filePreviewName" style="font-weight:600;font-size:var(--text-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+                  <div id="filePreviewSize" style="font-size:var(--text-xs);color:var(--text-light);margin-top:2px;"></div>
+                </div>
+                <button type="button" id="removeFileBtn" style="background:none;border:none;cursor:pointer;color:var(--danger);padding:4px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+              <!-- Upload Progress -->
+              <div id="uploadProgress" style="display:none; margin-top:var(--space-sm);">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                  <span style="font-size:var(--text-xs);color:var(--text-light);">Uploading to storage...</span>
+                  <span id="uploadPercent" style="font-size:var(--text-xs);color:var(--primary);font-weight:600;">0%</span>
+                </div>
+                <div style="height:6px;background:var(--border);border-radius:99px;overflow:hidden;">
+                  <div id="uploadBar" style="height:100%;background:var(--primary);border-radius:99px;width:0%;transition:width 0.3s;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- External Link -->
+            <div id="linkSection" style="display:none;margin-bottom:var(--space-md);">
+              <label class="admin-label" for="lessonLink">External URL</label>
+              <input type="url" id="lessonLink" class="admin-input" placeholder="https://youtube.com/watch?v=... or https://drive.google.com/...">
+              <p style="font-size:var(--text-xs);color:var(--text-light);margin-top:var(--space-xs);">Paste a YouTube, Google Drive, or any public URL.</p>
+            </div>
+
+            <!-- Text Notes -->
+            <div id="textSection" style="display:none;margin-bottom:var(--space-md);">
+              <label class="admin-label" for="lessonContent">Lesson Notes</label>
+              <textarea id="lessonContent" class="admin-input admin-textarea" rows="12" placeholder="Write your comprehensive study notes here..."></textarea>
+            </div>
+
+            <!-- Description -->
             <div style="margin-bottom: var(--space-xl);">
-              <label class="admin-label" for="lessonContent">Lesson Content & Notes (Optional if Video/PDF provided)</label>
-              <textarea id="lessonContent" class="admin-input admin-textarea" placeholder="Write comprehensive study notes, key takeaways, or a summary for this lesson here..."></textarea>
+              <label class="admin-label" for="lessonDescription">Description / Summary (optional)</label>
+              <textarea id="lessonDescription" class="admin-input" rows="3" placeholder="Brief description of what this lesson covers..."></textarea>
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 12px;">
-              <button type="button" class="btn btn-outline" onclick="document.getElementById('addLessonForm').reset()">Clear Form</button>
-              <button type="submit" class="btn btn-primary">Publish Lesson</button>
+              <button type="button" class="btn btn-outline" onclick="window.resetLessonForm()">Clear Form</button>
+              <button type="submit" class="btn btn-primary" id="publishBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Publish Lesson
+              </button>
             </div>
-            
+
           </form>
         </div>
       </div>
