@@ -1,23 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NTC Exam Prep | Pass Your Teacher Licensure Exam</title>
-  <meta name="description" content="Premium online preparation platform for the Ghana National Teaching Council (NTC) Licensure Examination. Access mock exams, study materials, and track your progress.">
-  
+  <meta name="description"
+    content="Premium online preparation platform for the Ghana National Teaching Council (NTC) Licensure Examination. Access mock exams, study materials, and track your progress.">
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
+
   <!-- CSS -->
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/responsive.css">
-  
+
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+
 <body>
   <!-- Navigation -->
   <nav class="navbar">
@@ -26,13 +29,13 @@
         <div class="brand-icon">N</div>
         <span>NTC Prep</span>
       </a>
-      
+
       <div class="navbar-toggle" id="navbarToggle">
         <span></span>
         <span></span>
         <span></span>
       </div>
-      
+
       <div class="navbar-nav" id="navbarNav">
         <a href="#features" class="nav-link">Features</a>
         <a href="#subjects" class="nav-link">Subjects</a>
@@ -40,7 +43,7 @@
         <a href="#pricing" class="nav-link">Pricing</a>
         <a href="pages/contact.html" class="nav-link">Contact</a>
       </div>
-      
+
       <div class="navbar-actions">
         <button class="theme-toggle" id="themeToggle" aria-label="Toggle Dark Mode">
           <!-- Icon injected by JS -->
@@ -57,17 +60,23 @@
     <div class="container">
       <div class="hero-content reveal-left">
         <div class="hero-badge">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
           Updated for 2026 NTC Syllabus
         </div>
         <h1 class="hero-title">Ace Your <span class="highlight">NTC Licensure</span> Exam First Time</h1>
-        <p class="hero-description">The most comprehensive Computer-Based Testing (CBT) platform for Ghanaian teachers. Practice with authentic past questions, track your progress, and join thousands of successful candidates.</p>
-        
+        <p class="hero-description">The most comprehensive Computer-Based Testing (CBT) platform for Ghanaian teachers.
+          Practice with authentic past questions, track your progress, and join thousands of successful candidates.</p>
+
         <div class="hero-actions">
           <a href="pages/register.html" class="btn btn-primary btn-lg">Start Practicing Now</a>
-          <a href="#features" class="btn btn-outline btn-lg" style="color: var(--text); border-color: var(--border);">Explore Features</a>
+          <a href="#features" class="btn btn-outline btn-lg"
+            style="color: var(--text); border-color: var(--border);">Explore Features</a>
         </div>
-        
+
         <div class="hero-stats">
           <div class="hero-stat">
             <div class="hero-stat-value">5,000+</div>
@@ -83,23 +92,28 @@
           </div>
         </div>
       </div>
-      
+
       <div class="hero-visual reveal-right delay-2">
         <div class="hero-illustration">
           <div class="hero-card">
             <div class="hero-card-header">
-              <div class="hero-card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></div>
+              <div class="hero-card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+                </svg></div>
               <div>
                 <div class="hero-card-title">Mock Examination</div>
                 <div class="hero-card-subtitle">Pedagogy • Question 14 of 60</div>
               </div>
-              <div style="margin-left: auto; color: var(--warning); font-weight: 700; font-family: monospace;">28:45</div>
+              <div style="margin-left: auto; color: var(--warning); font-weight: 700; font-family: monospace;">28:45
+              </div>
             </div>
-            
+
             <div class="hero-question">
               <p>Which teaching method promotes active learning among students?</p>
             </div>
-            
+
             <div class="hero-option">
               <div class="hero-option-radio"></div>
               A. Lecture method
@@ -112,18 +126,26 @@
               <div class="hero-option-radio"></div>
               C. Dictation method
             </div>
-            
+
             <div style="display: flex; justify-content: space-between; margin-top: 20px;">
               <div style="width: 80px; height: 30px; background: rgba(255,255,255,0.1); border-radius: 4px;"></div>
               <div style="width: 80px; height: 30px; background: var(--primary); border-radius: 4px;"></div>
             </div>
           </div>
-          
+
           <div class="hero-float hero-float-1">
             <span style="color: var(--accent);">+1</span> Score Updated
           </div>
           <div class="hero-float hero-float-2" style="display: flex; align-items: center; gap: 8px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> New Badge Earned!
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+              <path d="M4 22h16" />
+              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+            </svg> New Badge Earned!
           </div>
         </div>
       </div>
@@ -135,14 +157,11 @@
   <section class="section">
     <div class="container">
       <div class="ntc-split-layout">
-        
+
         <!-- Left: The Banner Image wrapped in a card -->
         <div class="ntc-banner-wrapper">
-          <img
-            src="assets/images/ntc-banner-latest.jpg"
-            alt="NTC National Teaching Council Banner"
-            class="ntc-banner-img"
-          />
+          <img src="assets/images/ntc-banner-latest.jpg" alt="NTC National Teaching Council Banner"
+            class="ntc-banner-img" />
 
           <!-- Glassmorphism panel -->
           <div class="ntc-glass-panel reveal">
@@ -170,7 +189,7 @@
             <h3>How It Works</h3>
             <p>Your path to passing the NTC exams</p>
           </div>
-          
+
           <div class="flow-steps">
             <div class="flow-step">
               <div class="step-icon">1</div>
@@ -179,7 +198,7 @@
                 <p>Create your free account to track your progress.</p>
               </div>
             </div>
-            
+
             <div class="flow-step">
               <div class="step-icon">2</div>
               <div class="step-content">
@@ -187,7 +206,7 @@
                 <p>Practice with timed, realistic exam questions.</p>
               </div>
             </div>
-            
+
             <div class="flow-step">
               <div class="step-icon">3</div>
               <div class="step-content">
@@ -195,7 +214,7 @@
                 <p>Identify your weak areas and get instant feedback.</p>
               </div>
             </div>
-            
+
             <div class="flow-step">
               <div class="step-icon">4</div>
               <div class="step-content">
@@ -216,56 +235,97 @@
       <div class="section-header reveal">
         <div class="section-badge">Why Choose Us</div>
         <h2 class="section-title">Everything you need to pass</h2>
-        <p class="section-subtitle">Our platform is designed to mirror the exact NTC examination environment, giving you the confidence you need on exam day.</p>
+        <p class="section-subtitle">Our platform is designed to mirror the exact NTC examination environment, giving you
+          the confidence you need on exam day.</p>
       </div>
-      
+
       <div class="features-grid">
         <div class="feature-card reveal delay-1">
           <div class="feature-icon">
-            <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="12" x="3" y="4" rx="2" ry="2"/><line x1="2" x2="22" y1="20" y2="20"/></svg></span>
+            <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="12" x="3" y="4" rx="2" ry="2" />
+                <line x1="2" x2="22" y1="20" y2="20" />
+              </svg></span>
           </div>
           <h3 class="feature-title">Authentic CBT Experience</h3>
-          <p class="feature-desc">Familiarize yourself with the computer-based testing interface used by NTC. No surprises on exam day.</p>
+          <p class="feature-desc">Familiarize yourself with the computer-based testing interface used by NTC. No
+            surprises on exam day.</p>
         </div>
-        
+
         <div class="feature-card reveal delay-2">
           <div class="feature-icon">
-            <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg></span>
+            <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" x2="18" y1="20" y2="10" />
+                <line x1="12" x2="12" y1="20" y2="4" />
+                <line x1="6" x2="6" y1="20" y2="14" />
+              </svg></span>
           </div>
           <h3 class="feature-title">Performance Analytics</h3>
-          <p class="feature-desc">Track your progress over time with detailed charts. Identify your weak areas and focus your studies effectively.</p>
+          <p class="feature-desc">Track your progress over time with detailed charts. Identify your weak areas and focus
+            your studies effectively.</p>
         </div>
-        
+
         <div class="feature-card reveal delay-3">
           <div class="feature-icon">
-            <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span>
+            <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" x2="8" y1="13" y2="13" />
+                <line x1="16" x2="8" y1="17" y2="17" />
+                <line x1="10" x2="8" y1="9" y2="9" />
+              </svg></span>
           </div>
           <h3 class="feature-title">Thousands of Questions</h3>
-          <p class="feature-desc">Access a massive question bank of past questions and expertly crafted likely questions across all subjects.</p>
+          <p class="feature-desc">Access a massive question bank of past questions and expertly crafted likely questions
+            across all subjects.</p>
         </div>
-        
+
         <div class="feature-card reveal delay-4">
           <div class="feature-icon">
-            <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="12" y1="2" y2="5"/></svg></span>
+            <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="13" r="8" />
+                <path d="M12 9v4l2 2" />
+                <line x1="10" x2="14" y1="2" y2="2" />
+                <line x1="12" x2="12" y1="2" y2="5" />
+              </svg></span>
           </div>
           <h3 class="feature-title">Timed Mock Exams</h3>
-          <p class="feature-desc">Practice under real exam pressure with our strict timer system. Improve your speed and accuracy.</p>
+          <p class="feature-desc">Practice under real exam pressure with our strict timer system. Improve your speed and
+            accuracy.</p>
         </div>
-        
+
         <div class="feature-card reveal delay-5">
           <div class="feature-icon">
-            <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></span>
+            <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                <path d="M4 22h16" />
+                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+              </svg></span>
           </div>
           <h3 class="feature-title">Gamified Learning</h3>
-          <p class="feature-desc">Stay motivated by earning badges, maintaining study streaks, and competing on our national leaderboard.</p>
+          <p class="feature-desc">Stay motivated by earning badges, maintaining study streaks, and competing on our
+            national leaderboard.</p>
         </div>
-        
+
         <div class="feature-card reveal delay-6">
           <div class="feature-icon">
-            <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg></span>
+            <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
+                <path d="M12 18h.01" />
+              </svg></span>
           </div>
           <h3 class="feature-title">Study Anywhere</h3>
-          <p class="feature-desc">Fully responsive design means you can practice on your phone, tablet, or laptop whenever you have free time.</p>
+          <p class="feature-desc">Fully responsive design means you can practice on your phone, tablet, or laptop
+            whenever you have free time.</p>
         </div>
       </div>
     </div>
@@ -277,83 +337,138 @@
       <div class="section-header reveal">
         <div class="section-badge">Comprehensive Coverage</div>
         <h2 class="section-title">Master Every Subject Area</h2>
-        <p class="section-subtitle">Our question bank covers all the core modules required for the Ghana NTC Licensure Examination.</p>
+        <p class="section-subtitle">Our question bank covers all the core modules required for the Ghana NTC Licensure
+          Examination.</p>
       </div>
-      
+
       <div class="subjects-grid">
         <div class="subject-card reveal delay-1">
-          <div class="subject-icon pedagogy"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
+          <div class="subject-icon pedagogy"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+              <path d="M6 12v5c3 3 9 3 12 0v-5" />
+            </svg></div>
           <div class="subject-info">
             <h4>Pedagogy</h4>
             <p>Teaching methodologies, lesson planning, and classroom management.</p>
             <div class="subject-meta" style="display: flex; align-items: center; gap: 6px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+              </svg>
               <span>1,200+ Questions</span>
             </div>
           </div>
         </div>
-        
+
         <div class="subject-card reveal delay-2">
-          <div class="subject-icon general"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+          <div class="subject-icon general"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="2" x2="22" y1="12" y2="12" />
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+            </svg></div>
           <div class="subject-info">
             <h4>General Knowledge</h4>
             <p>Educational policies in Ghana, history, and current affairs.</p>
             <div class="subject-meta" style="display: flex; align-items: center; gap: 6px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+              </svg>
               <span>850+ Questions</span>
             </div>
           </div>
         </div>
-        
+
         <div class="subject-card reveal delay-3">
-          <div class="subject-icon curriculum"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></div>
+          <div class="subject-icon curriculum"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+            </svg></div>
           <div class="subject-info">
             <h4>Curriculum Studies</h4>
             <p>Curriculum design, implementation, and evaluation in Ghanaian schools.</p>
             <div class="subject-meta" style="display: flex; align-items: center; gap: 6px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+              </svg>
               <span>900+ Questions</span>
             </div>
           </div>
         </div>
-        
+
         <div class="subject-card reveal delay-4">
-          <div class="subject-icon assessment"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></div>
+          <div class="subject-icon assessment"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" x2="8" y1="13" y2="13" />
+              <line x1="16" x2="8" y1="17" y2="17" />
+              <line x1="10" x2="8" y1="9" y2="9" />
+            </svg></div>
           <div class="subject-info">
             <h4>Assessment</h4>
             <p>Principles of educational measurement, testing, and evaluation.</p>
             <div class="subject-meta" style="display: flex; align-items: center; gap: 6px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+              </svg>
               <span>750+ Questions</span>
             </div>
           </div>
         </div>
-        
+
         <div class="subject-card reveal delay-5">
-          <div class="subject-icon ict"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="12" x="3" y="4" rx="2" ry="2"/><line x1="2" x2="22" y1="20" y2="20"/></svg></div>
+          <div class="subject-icon ict"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <rect width="18" height="12" x="3" y="4" rx="2" ry="2" />
+              <line x1="2" x2="22" y1="20" y2="20" />
+            </svg></div>
           <div class="subject-info">
             <h4>ICT in Education</h4>
             <p>Integrating technology into teaching and learning processes.</p>
             <div class="subject-meta" style="display: flex; align-items: center; gap: 6px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+              </svg>
               <span>600+ Questions</span>
             </div>
           </div>
         </div>
-        
+
         <div class="subject-card reveal delay-6">
-          <div class="subject-icon psychology"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.9 1.2 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></div>
+          <div class="subject-icon psychology"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path
+                d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.9 1.2 1.5 1.5 2.5" />
+              <path d="M9 18h6" />
+              <path d="M10 22h4" />
+            </svg></div>
           <div class="subject-info">
             <h4>Educational Psychology</h4>
             <p>Child development theories, learning processes, and motivation.</p>
             <div class="subject-meta" style="display: flex; align-items: center; gap: 6px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+              </svg>
               <span>1,100+ Questions</span>
             </div>
           </div>
         </div>
       </div>
-      
+
       <div class="text-center" style="margin-top: var(--space-2xl);">
         <a href="pages/register.html" class="btn btn-primary btn-lg reveal">Start Your Free Trial</a>
       </div>
@@ -364,8 +479,10 @@
   <section class="section" style="background: var(--gradient-primary); color: white;">
     <div class="container text-center reveal">
       <h2 class="section-title" style="color: white;">Ready to become a licensed teacher?</h2>
-      <p class="section-subtitle" style="color: rgba(255,255,255,0.8); margin-bottom: var(--space-xl);">Join the fastest growing NTC prep community in Ghana.</p>
-      <a href="pages/register.html" class="btn btn-secondary btn-lg" style="background: white; color: var(--primary);">Create Free Account</a>
+      <p class="section-subtitle" style="color: rgba(255,255,255,0.8); margin-bottom: var(--space-xl);">Join the fastest
+        growing NTC prep community in Ghana.</p>
+      <a href="pages/register.html" class="btn btn-secondary btn-lg"
+        style="background: white; color: var(--primary);">Create Free Account</a>
     </div>
   </section>
 
@@ -378,7 +495,8 @@
             <div class="brand-icon">N</div>
             <span>NTC Prep</span>
           </a>
-          <p>The premium online preparation platform for the Ghana National Teaching Council (NTC) Licensure Examination. We help teachers pass with confidence.</p>
+          <p>The premium online preparation platform for the Ghana National Teaching Council (NTC) Licensure
+            Examination. We help teachers pass with confidence.</p>
           <div class="footer-socials">
             <a href="#" class="footer-social-link">f</a>
             <a href="#" class="footer-social-link">t</a>
@@ -386,7 +504,7 @@
             <a href="#" class="footer-social-link">ig</a>
           </div>
         </div>
-        
+
         <div>
           <h4 class="footer-heading">Quick Links</h4>
           <div class="footer-links">
@@ -396,7 +514,7 @@
             <a href="pages/contact.html" class="footer-link">Contact Us</a>
           </div>
         </div>
-        
+
         <div>
           <h4 class="footer-heading">Platform</h4>
           <div class="footer-links">
@@ -406,7 +524,7 @@
             <a href="pages/leaderboard.html" class="footer-link">Leaderboard</a>
           </div>
         </div>
-        
+
         <div>
           <h4 class="footer-heading">Legal</h4>
           <div class="footer-links">
@@ -417,7 +535,7 @@
           </div>
         </div>
       </div>
-      
+
       <div class="footer-bottom">
         <p>&copy; 2026 NTC Exam Prep. All rights reserved.</p>
         <div class="footer-bottom-links">
@@ -429,9 +547,13 @@
 
   <!-- Scroll to top button -->
   <button class="scroll-top" id="scrollTop" aria-label="Scroll to top">
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="18 15 12 9 6 15"></polyline>
+    </svg>
   </button>
 
   <script src="js/app.js"></script>
 </body>
+
 </html>

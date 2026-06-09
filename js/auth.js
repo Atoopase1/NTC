@@ -241,18 +241,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function updateUserInfo() {
     const userNames = document.querySelectorAll('.user-name');
-    if (userNames.length === 0) return;
+    const userAvatars = document.querySelectorAll('.user-avatar-initials, .user-avatar');
+    
+    if (userNames.length === 0 && userAvatars.length === 0) return;
     
     let displayName = 'Student User';
+    let avatarUrl = null;
     
     if (window.supaAuth && window.supaDB) {
       const user = await window.supaAuth.getCurrentUser();
       if (user) {
-        const profile = await window.supaDB.getProfile(user.id);
-        if (profile && profile.full_name) {
-          displayName = profile.full_name;
-        } else {
-          displayName = user.email.split('@')[0];
+        // Fallback to Google metadata if profile is slow
+        if (user.user_metadata && user.user_metadata.avatar_url) {
+          avatarUrl = user.user_metadata.avatar_url;
+        }
+        if (user.user_metadata && user.user_metadata.full_name) {
+          displayName = user.user_metadata.full_name;
+        }
+
+        try {
+          const profile = await window.supaDB.getProfile(user.id);
+          if (profile) {
+            if (profile.full_name) displayName = profile.full_name;
+            if (profile.avatar_url) avatarUrl = profile.avatar_url;
+          } else if (!displayName || displayName === 'Student User') {
+            displayName = user.email.split('@')[0];
+          }
+        } catch (e) {
+           // profile fetch failed
+           if (displayName === 'Student User') displayName = user.email.split('@')[0];
         }
       }
     } else {
@@ -264,6 +281,21 @@ document.addEventListener('DOMContentLoaded', () => {
     
     userNames.forEach(el => {
       el.textContent = displayName;
+    });
+
+    userAvatars.forEach(el => {
+      if (avatarUrl) {
+        // Change from initials to actual image
+        el.textContent = '';
+        el.style.backgroundImage = `url(${avatarUrl})`;
+        el.style.backgroundSize = 'cover';
+        el.style.backgroundPosition = 'center';
+        // Remove initials classes if any, add general avatar class
+        el.classList.remove('user-avatar-initials');
+        if (!el.classList.contains('user-avatar')) el.classList.add('user-avatar');
+      } else {
+        el.textContent = displayName.charAt(0).toUpperCase();
+      }
     });
   }
 

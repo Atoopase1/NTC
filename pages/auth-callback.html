@@ -76,6 +76,12 @@
 
         const userEmail = session.user.email;
 
+        // Ensure profile exists (in case db trigger is disabled/fails)
+        if (window.supaDB && window.supaDB.createProfile) {
+          const fullName = session.user.user_metadata?.full_name || userEmail.split('@')[0];
+          await window.supaDB.createProfile(session.user.id, fullName, null, userEmail);
+        }
+
         // Use the shared admin redirect logic
         if (window.supaAuth && window.supaAuth.checkAdminAndRedirect) {
           await window.supaAuth.checkAdminAndRedirect(userEmail);

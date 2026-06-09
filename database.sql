@@ -7,7 +7,12 @@
 CREATE TABLE IF NOT EXISTS public.profiles (
   id uuid references auth.users on delete cascade not null primary key,
   full_name text,
+  email text,
   phone text,
+  avatar_url text,
+  dob text,
+  school text,
+  bio text,
   role text default 'student',
   updated_at timestamp with time zone default timezone('utc'::text, now())
 );
@@ -57,12 +62,15 @@ CREATE POLICY "Users can insert their own exam results."
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.profiles (id, full_name, phone)
+  INSERT INTO public.profiles (id, full_name, email, phone, avatar_url)
   VALUES (
     new.id, 
     new.raw_user_meta_data->>'full_name',
-    new.raw_user_meta_data->>'phone'
-  );
+    new.email,
+    new.raw_user_meta_data->>'phone',
+    new.raw_user_meta_data->>'avatar_url'
+  )
+  ON CONFLICT (id) DO NOTHING;
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

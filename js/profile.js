@@ -27,23 +27,34 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('profileAvgScore').textContent = `${avgScore}%`;
     }
     
-    // Load User Data
     let userData = {
       fullName: '',
       email: '',
       phone: '',
+      dob: '',
       school: '',
-      bio: ''
+      bio: '',
+      avatar_url: null
     };
     
     if (window.supaAuth && window.supaDB) {
       const user = await window.supaAuth.getCurrentUser();
       if (user) {
+        if (user.user_metadata && user.user_metadata.avatar_url) {
+          userData.avatar_url = user.user_metadata.avatar_url;
+        }
+        if (user.user_metadata && user.user_metadata.full_name) {
+          userData.fullName = user.user_metadata.full_name;
+        }
         const profile = await window.supaDB.getProfile(user.id);
         if (profile) {
-          userData.fullName = profile.full_name || '';
+          userData.fullName = profile.full_name || userData.fullName;
           userData.email = profile.email || user.email;
           userData.phone = profile.phone || '';
+          userData.dob = profile.dob || '';
+          userData.school = profile.school || '';
+          userData.bio = profile.bio || '';
+          userData.avatar_url = profile.avatar_url || userData.avatar_url;
         } else {
           userData.email = user.email;
         }
@@ -59,12 +70,27 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('profileName')) document.getElementById('profileName').value = userData.fullName;
     if (document.getElementById('profileEmail')) document.getElementById('profileEmail').value = userData.email;
     if (document.getElementById('profilePhone')) document.getElementById('profilePhone').value = userData.phone;
+    if (document.getElementById('profileDob')) document.getElementById('profileDob').value = userData.dob;
+    if (document.getElementById('profileSchool')) document.getElementById('profileSchool').value = userData.school;
+    if (document.getElementById('profileBio')) document.getElementById('profileBio').value = userData.bio;
     
     // Display names
     const displayName = userData.fullName || userData.email.split('@')[0];
     document.getElementById('profileDisplayName').textContent = displayName;
     document.getElementById('profileDisplayEmail').textContent = userData.email;
-    document.getElementById('profileAvatarInitials').textContent = displayName.substring(0, 2).toUpperCase();
+    
+    // Display avatar
+    const avatarInitials = document.getElementById('profileAvatarInitials');
+    if (userData.avatar_url) {
+      avatarInitials.style.display = 'none';
+      const container = avatarInitials.parentElement;
+      container.style.backgroundImage = `url(${userData.avatar_url})`;
+      container.style.backgroundSize = 'cover';
+      container.style.backgroundPosition = 'center';
+      container.style.border = '2px solid var(--primary)';
+    } else {
+      avatarInitials.textContent = displayName.substring(0, 2).toUpperCase();
+    }
   }
 
   // Handle Profile Update
@@ -79,8 +105,9 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const fullName = document.getElementById('profileName').value;
       const phone = document.getElementById('profilePhone').value;
-      const school = document.getElementById('profileSchool').value;
-      const bio = document.getElementById('profileBio').value;
+      const dob = document.getElementById('profileDob') ? document.getElementById('profileDob').value : '';
+      const school = document.getElementById('profileSchool') ? document.getElementById('profileSchool').value : '';
+      const bio = document.getElementById('profileBio') ? document.getElementById('profileBio').value : '';
       
       try {
         if (window.supaAuth && window.supaDB) {
@@ -91,6 +118,9 @@ document.addEventListener('DOMContentLoaded', () => {
               id: user.id,
               full_name: fullName,
               phone: phone,
+              dob: dob,
+              school: school,
+              bio: bio,
               updated_at: new Date().toISOString()
             });
             window.showToast('Profile updated successfully', 'success');
@@ -106,7 +136,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Update display
         document.getElementById('profileDisplayName').textContent = fullName || storedUser.email.split('@')[0];
-        document.getElementById('profileAvatarInitials').textContent = (fullName || 'U').substring(0, 2).toUpperCase();
+        const initialsEl = document.getElementById('profileAvatarInitials');
+        if (initialsEl.style.display !== 'none') {
+           initialsEl.textContent = (fullName || 'U').substring(0, 2).toUpperCase();
+        }
         
         // Update name in navbar if it exists
         const userNames = document.querySelectorAll('.user-name');

@@ -5,7 +5,7 @@
 
 // Configuration provided in prompt
 const SUPABASE_URL = 'https://wyaadzxbuvaehxvxikgw.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_5GFXJxaQvl6O2FBIZczQJQ_9lYvRMdj';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5YWFkenhidXZhZWh4dnhpa2d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5NjYxMDUsImV4cCI6MjA5NjU0MjEwNX0.fktLQXecCzaFxp9Dco0XppEoMjpPdTlypYzVA1RGlQI';
 
 // Initialize Supabase Client
 // Note: Requires supabase-js library to be loaded in HTML via CDN:
@@ -263,6 +263,7 @@ window.supaAuth = {
 };
 
 window.supaDB = {
+  createProfile,
   getProfile,
   saveExamResult,
   getExamHistory
