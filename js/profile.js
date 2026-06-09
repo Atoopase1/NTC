@@ -147,16 +147,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.supaAuth && window.supaDB) {
           const user = await window.supaAuth.getCurrentUser();
           if (user) {
-            // Check if profile exists, if not create, if yes update
-            await window.supabaseClient.from('profiles').upsert({
-              id: user.id,
+            const { error } = await window.supaDB.updateProfile(user.id, {
               full_name: fullName,
-              phone: phone,
-              dob: dob,
-              school: school,
-              bio: bio,
+              phone,
+              dob,
+              school,
+              bio,
               updated_at: new Date().toISOString()
             });
+            if (error) throw error;
             window.showToast('Profile updated successfully', 'success');
           }
         } else {
@@ -168,10 +167,11 @@ document.addEventListener('DOMContentLoaded', () => {
           window.showToast('Profile updated successfully (Demo)', 'success');
         }
         
-        // Update display
-        document.getElementById('profileDisplayName').textContent = fullName || storedUser.email.split('@')[0];
+        // Update display (safe — fullName is always defined here)
+        const displayName = fullName || document.getElementById('profileDisplayEmail').textContent.split('@')[0];
+        document.getElementById('profileDisplayName').textContent = displayName;
         const initialsEl = document.getElementById('profileAvatarInitials');
-        if (initialsEl.style.display !== 'none') {
+        if (initialsEl && initialsEl.style.display !== 'none') {
            initialsEl.textContent = (fullName || 'U').substring(0, 2).toUpperCase();
         }
         
@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
       } catch (err) {
         console.error(err);
-        window.showToast('Failed to update profile', 'error');
+        window.showToast('Failed to update profile: ' + (err.message || 'Unknown error'), 'error');
       } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;

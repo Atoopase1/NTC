@@ -215,6 +215,22 @@ async function getProfile(userId) {
 }
 
 /**
+ * Update an existing user profile
+ */
+async function updateProfile(userId, fields) {
+  try {
+    const { error } = await supabaseClient
+      .from('profiles')
+      .upsert({ id: userId, ...fields });
+    if (error) throw error;
+    return { error: null };
+  } catch (error) {
+    console.error('Profile update failed:', error);
+    return { error };
+  }
+}
+
+/**
  * Save exam result
  */
 async function saveExamResult(userId, examData) {
@@ -580,6 +596,7 @@ async function deleteLesson(id) {
 window.supaDB = {
   createProfile,
   getProfile,
+  updateProfile,
   saveExamResult,
   getExamHistory,
   getSubjects,
