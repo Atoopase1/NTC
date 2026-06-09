@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -18,6 +18,7 @@
 
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <!-- PWA -->
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#4f46e5">
@@ -25,7 +26,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="NTC Prep">
-  <link rel="apple-touch-icon" href="/icons/icon-192.png"></head>
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
 
 <body>
 
@@ -175,15 +177,19 @@
               <h4 style="font-size: var(--text-sm); margin-bottom: var(--space-sm);">Achievements</h4>
               <div class="achievements-grid" style="grid-template-columns: 1fr 1fr;">
                 <div class="achievement-card">
-                  <div class="achievement-icon">ðŸŒŸ</div>
+                  <div class="achievement-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  </div>
                   <div class="achievement-name">First Login</div>
                 </div>
                 <div class="achievement-card locked">
-                  <div class="achievement-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"
+                  <div class="achievement-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"
                       viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                       stroke-linejoin="round">
                       <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
-                    </svg></div>
+                    </svg>
+                  </div>
                   <div class="achievement-name">10 Exams</div>
                 </div>
               </div>
@@ -230,8 +236,6 @@
                   <span class="form-helper">Email cannot be changed. Contact support if needed.</span>
                 </div>
 
-
-
                 <div class="form-group">
                   <label class="form-label" for="profileBio">Bio (Optional)</label>
                   <textarea id="profileBio" class="form-input" rows="3"
@@ -252,7 +256,9 @@
                 <div class="form-group">
                   <label class="form-label" for="currentPassword">Current Password</label>
                   <div class="input-group">
-                    <span class="input-icon">ðŸ”’</span>
+                    <span class="input-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </span>
                     <input type="password" id="currentPassword" class="form-input" required>
                   </div>
                 </div>
@@ -262,14 +268,18 @@
                   <div class="form-group">
                     <label class="form-label" for="newPassword">New Password</label>
                     <div class="input-group">
-                      <span class="input-icon">ðŸ”‘</span>
+                      <span class="input-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                      </span>
                       <input type="password" id="newPassword" class="form-input" required minlength="6">
                     </div>
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="confirmNewPassword">Confirm New Password</label>
                     <div class="input-group">
-                      <span class="input-icon">ðŸ”‘</span>
+                      <span class="input-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                      </span>
                       <input type="password" id="confirmNewPassword" class="form-input" required minlength="6">
                     </div>
                   </div>
@@ -282,7 +292,7 @@
 
           <div class="widget" style="margin-top: var(--space-xl);">
             <div class="widget-header">
-              <h3 class="widget-title">Exam History & Reviews</h3>
+              <h3 class="widget-title">Exam History &amp; Reviews</h3>
             </div>
             <div class="widget-body">
               <div id="profileExamHistory">
@@ -301,7 +311,9 @@
     <div class="modal" style="max-width: 800px; width: 90%;">
       <div class="modal-header">
         <h3 class="modal-title">Exam Review</h3>
-        <button class="modal-close" onclick="window.closeModal('reviewModal')">Ã—</button>
+        <button class="modal-close" onclick="window.closeModal('reviewModal')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
       <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
         <div id="reviewModalContent">
@@ -326,6 +338,7 @@
           .catch(err => console.warn('[NTC] SW registration failed:', err));
       });
     }
-  </script></body>
+  </script>
+</body>
 
 </html>

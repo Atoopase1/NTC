@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       try {
         questionsData = parsePlainTextExam(questionsText, answerKeyText);
       } catch (err) {
-        window.showToast('⚠️ ' + err.message, 'error');
+        window.showToast('Error: ' + err.message, 'error');
         return;
       }
 
@@ -218,7 +218,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error(error);
         window.showToast('Failed to schedule exam. See console for details.', 'error');
       } else {
-        window.showToast(`✅ Exam scheduled! (${questionsData.length} questions parsed)`, 'success');
+        window.showToast(`Exam scheduled! (${questionsData.length} questions parsed)`, 'success');
         scheduleExamForm.reset();
         document.querySelector('[data-tab="manage-exams"]').click();
         loadScheduledExams();
