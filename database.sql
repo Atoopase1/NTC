@@ -105,21 +105,19 @@ CREATE POLICY "Anyone can view lessons"
 DROP POLICY IF EXISTS "Admin can insert lessons" ON public.lessons;
 CREATE POLICY "Admin can insert lessons"
   ON public.lessons FOR INSERT
-  WITH CHECK ( 
-    (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
-    OR
-    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
-  );
+  WITH CHECK ( (auth.jwt() ->> 'email') = 'atoopase@gmail.com' );
 
 -- Security: Only allow the specific admin email to update lessons
 DROP POLICY IF EXISTS "Admin can update lessons" ON public.lessons;
 CREATE POLICY "Admin can update lessons"
   ON public.lessons FOR UPDATE
-  USING ( 
-    (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
-    OR
-    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
-  );
+  USING ( (auth.jwt() ->> 'email') = 'atoopase@gmail.com' );
+
+-- Security: Only allow admin to delete lessons
+DROP POLICY IF EXISTS "Admin can delete lessons" ON public.lessons;
+CREATE POLICY "Admin can delete lessons"
+  ON public.lessons FOR DELETE
+  USING ( (auth.jwt() ->> 'email') = 'atoopase@gmail.com' );
 
 -- ============================================
 -- 5. Subjects Table
@@ -138,15 +136,26 @@ CREATE POLICY "Anyone can view subjects"
   ON public.subjects FOR SELECT
   USING ( true );
 
--- Security: Only allow the specific admin email to insert/update/delete subjects
+-- Admin-only: insert subjects
+DROP POLICY IF EXISTS "Admin can insert subjects" ON public.subjects;
+CREATE POLICY "Admin can insert subjects"
+  ON public.subjects FOR INSERT
+  WITH CHECK ( (auth.jwt() ->> 'email') = 'atoopase@gmail.com' );
+
+-- Admin-only: update subjects
+DROP POLICY IF EXISTS "Admin can update subjects" ON public.subjects;
+CREATE POLICY "Admin can update subjects"
+  ON public.subjects FOR UPDATE
+  USING ( (auth.jwt() ->> 'email') = 'atoopase@gmail.com' );
+
+-- Admin-only: delete subjects
+DROP POLICY IF EXISTS "Admin can delete subjects" ON public.subjects;
+CREATE POLICY "Admin can delete subjects"
+  ON public.subjects FOR DELETE
+  USING ( (auth.jwt() ->> 'email') = 'atoopase@gmail.com' );
+
+-- Drop the old catch-all policy if it exists
 DROP POLICY IF EXISTS "Admin can manage subjects" ON public.subjects;
-CREATE POLICY "Admin can manage subjects"
-  ON public.subjects FOR ALL
-  USING ( 
-    (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
-    OR
-    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
-  );
 
 -- Insert default subjects if they don't exist
 INSERT INTO public.subjects (name)
@@ -180,15 +189,18 @@ CREATE POLICY "Anyone can view scheduled exams"
   ON public.scheduled_exams FOR SELECT
   USING ( true );
 
--- Security: Only allow admin to manage scheduled exams
+-- Admin-only: manage scheduled exams
 DROP POLICY IF EXISTS "Admin can manage scheduled exams" ON public.scheduled_exams;
-CREATE POLICY "Admin can manage scheduled exams"
-  ON public.scheduled_exams FOR ALL
-  USING ( 
-    (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
-    OR
-    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
-  );
+DROP POLICY IF EXISTS "Admin can insert scheduled exams" ON public.scheduled_exams;
+DROP POLICY IF EXISTS "Admin can delete scheduled exams" ON public.scheduled_exams;
+
+CREATE POLICY "Admin can insert scheduled exams"
+  ON public.scheduled_exams FOR INSERT
+  WITH CHECK ( (auth.jwt() ->> 'email') = 'atoopase@gmail.com' );
+
+CREATE POLICY "Admin can delete scheduled exams"
+  ON public.scheduled_exams FOR DELETE
+  USING ( (auth.jwt() ->> 'email') = 'atoopase@gmail.com' );
 
 -- Modify exam_results to add scheduled_exam_id
 ALTER TABLE public.exam_results 
@@ -196,50 +208,39 @@ ADD COLUMN IF NOT EXISTS scheduled_exam_id uuid references public.scheduled_exam
 
 -- ============================================
 -- 7. Admin Student Management Policies
+-- (No recursive profile lookups — uses jwt email only)
 -- ============================================
 
--- Allow admin to read ALL profiles (students)
+-- Drop old conflicting policies on profiles
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone." ON public.profiles;
 DROP POLICY IF EXISTS "Admin can view all profiles" ON public.profiles;
-CREATE POLICY "Admin can view all profiles"
-  ON public.profiles FOR SELECT
-  USING (
-    (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
-    OR
-    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
-    OR
-    auth.uid() = id
-  );
-
--- Allow admin to delete any profile
 DROP POLICY IF EXISTS "Admin can delete profiles" ON public.profiles;
+
+-- Allow everyone to read all profiles (leaderboard, rankings need this)
+CREATE POLICY "Public profiles are viewable by everyone."
+  ON public.profiles FOR SELECT
+  USING ( true );
+
+-- Admin can delete any profile
 CREATE POLICY "Admin can delete profiles"
   ON public.profiles FOR DELETE
-  USING (
-    (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
-    OR
-    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
-  );
+  USING ( (auth.jwt() ->> 'email') = 'atoopase@gmail.com' );
 
--- Allow admin to read ALL exam results
+-- Drop old exam_results SELECT policy and replace with unified one
+DROP POLICY IF EXISTS "Users can view their own exam results." ON public.exam_results;
 DROP POLICY IF EXISTS "Admin can view all exam results" ON public.exam_results;
-CREATE POLICY "Admin can view all exam results"
+DROP POLICY IF EXISTS "Admin can delete exam results" ON public.exam_results;
+
+CREATE POLICY "Users can view their own exam results."
   ON public.exam_results FOR SELECT
   USING (
-    (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
-    OR
-    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
-    OR
     auth.uid() = user_id
+    OR (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
   );
 
--- Allow admin to delete any exam results
-DROP POLICY IF EXISTS "Admin can delete exam results" ON public.exam_results;
 CREATE POLICY "Admin can delete exam results"
   ON public.exam_results FOR DELETE
   USING (
-    (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
-    OR
-    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
-    OR
     auth.uid() = user_id
+    OR (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
   );
