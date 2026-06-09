@@ -183,25 +183,47 @@
             const dateStr = new Date(lesson.created_at).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
             
             let actionBtn = '';
+            let mediaEmbed = '';
+            
             if (lesson.media_url) {
-              actionBtn = `<a href="${lesson.media_url}" target="_blank" class="btn btn-primary btn-block">Watch / Open Full View</a>`;
+              const url = lesson.media_url;
+              const type = lesson.media_type;
+              
+              if (type === 'video') {
+                mediaEmbed = `<video controls style="max-width:100%; border-radius:8px; margin-top:var(--space-md);"><source src="${url}">Your browser does not support video.</video>`;
+              } else if (type === 'image') {
+                mediaEmbed = `<img src="${url}" style="max-width:100%; border-radius:8px; margin-top:var(--space-md);" alt="Study Resource" loading="lazy">`;
+              } else if (type === 'audio') {
+                mediaEmbed = `<audio controls style="width:100%; margin-top:var(--space-md);"><source src="${url}">Your browser does not support audio.</audio>`;
+              } else if (type === 'pdf') {
+                mediaEmbed = `<iframe src="${url}" style="width:100%; height:300px; border:none; border-radius:8px; margin-top:var(--space-md);" title="PDF Document"></iframe>`;
+                actionBtn = `<a href="${url}" target="_blank" class="btn btn-primary btn-block" style="margin-top:var(--space-md);">Open PDF in New Tab</a>`;
+              } else {
+                actionBtn = `<a href="${url}" target="_blank" class="btn btn-primary btn-block" style="margin-top:var(--space-md);">Download / View File</a>`;
+              }
             } else if (lesson.content) {
-              // If it's just text, clicking opens an alert for now, or just let them read the description
-              actionBtn = `<button class="btn btn-outline btn-block" onclick="alert('Text notes\\n\\n' + \`${lesson.content.replace(/`/g, "'")}\`)">Read Full Notes</button>`;
+              // If it's just text, we can show it fully or let them read the description
+              actionBtn = `<button class="btn btn-outline btn-block" style="margin-top:var(--space-md);" onclick="alert('Text notes\\n\\n' + \`${lesson.content.replace(/`/g, "'")}\`)">Read Full Notes</button>`;
             }
 
             return `
-              <div class="resource-card">
-                <div class="resource-icon">${getIcon(lesson.media_type)}</div>
-                <h3 class="resource-title" style="margin-bottom:4px;">${lesson.title || lesson.subtopic || 'Lesson'}</h3>
-                <div style="font-size:var(--text-xs); color:var(--primary); font-weight:600; margin-bottom:var(--space-sm);">${lesson.subject || ''}</div>
+              <div class="resource-card" style="display:flex; flex-direction:column; overflow:hidden;">
+                <div style="display:flex; align-items:center; gap:var(--space-sm); margin-bottom:var(--space-md);">
+                  <div class="resource-icon" style="margin-bottom:0;">${getIcon(lesson.media_type)}</div>
+                  <div>
+                    <h3 class="resource-title" style="margin-bottom:4px; word-wrap:break-word;">${lesson.title || lesson.subtopic || 'Lesson'}</h3>
+                    <div style="font-size:var(--text-xs); color:var(--primary); font-weight:600;">${lesson.subject || ''}</div>
+                  </div>
+                </div>
                 
-                <div>
-                  <p class="desc-text">${desc}</p>
+                <div style="flex:1;">
+                  <p class="desc-text" style="word-wrap:break-word; white-space:pre-wrap;">${desc}</p>
                   ${isLong ? `<button class="read-more-btn" onclick="toggleDescription(this)">Read more</button>` : ''}
                 </div>
 
-                <div class="resource-meta" style="margin-bottom: var(--space-md); margin-top: auto;">
+                ${mediaEmbed}
+
+                <div class="resource-meta" style="margin-top: var(--space-md);">
                   <span style="text-transform: capitalize;">${lesson.media_type || 'Document'}</span>
                   <span>Added: ${dateStr}</span>
                 </div>
