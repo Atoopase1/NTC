@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Students | Admin | NTC Exam Prep</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="NTC Prep">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <style>
+    .student-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--primary-ghost); color: var(--primary);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: var(--text-sm); flex-shrink: 0;
+    }
+    .student-info { display: flex; align-items: center; gap: var(--space-sm); }
+    .student-name { font-weight: 600; font-size: var(--text-sm); }
+    .student-email { font-size: var(--text-xs); color: var(--text-light); }
+    .results-modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center;
+    }
+    .results-modal-overlay.active { display: flex; }
+    .results-modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-xl); padding: var(--space-xl);
+      width: 90%; max-width: 680px; max-height: 80vh; overflow-y: auto;
+    }
+    .results-modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: var(--space-lg);
+    }
+    .results-modal-title { font-size: var(--text-xl); font-weight: 700; }
+    .modal-close-btn {
+      background: none; border: none; cursor: pointer; color: var(--text-light);
+      padding: 4px; display: flex; border-radius: var(--radius-sm);
+    }
+    .modal-close-btn:hover { background: var(--surface-hover); color: var(--text); }
+    .result-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--radius-md); margin-bottom: var(--space-xs);
+      background: var(--bg);
+    }
+    .result-row:hover { background: var(--surface-hover); }
+    .grade-badge {
+      font-size: var(--text-xs); font-weight: 700; padding: 3px 10px;
+      border-radius: 99px;
+    }
+    .grade-a { background: #dcfce7; color: #15803d; }
+    .grade-b { background: #dbeafe; color: #1d4ed8; }
+    .grade-c { background: #fef9c3; color: #a16207; }
+    .grade-d { background: #fee2e2; color: #dc2626; }
+    .stat-pills { display: flex; gap: var(--space-sm); flex-wrap: wrap; margin-bottom: var(--space-lg); }
+    .stat-pill {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 99px; padding: 6px 16px;
+      font-size: var(--text-sm); display: flex; align-items: center; gap: 6px;
+    }
+    .stat-pill strong { color: var(--primary); }
+    .empty-state {
+      text-align: center; padding: var(--space-2xl);
+      color: var(--text-light); font-size: var(--text-sm);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container" style="max-width: 100%;">
+      <div style="display: flex; align-items: center; gap: var(--space-md);">
+        <button class="sidebar-toggle-btn" id="sidebarToggle" aria-label="Toggle Sidebar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+        <a href="../index.html" class="navbar-brand">
+          <div class="brand-icon" style="background: linear-gradient(135deg, #f43f5e, #e11d48);">N</div>
+          <span>Admin Portal</span>
+        </a>
+      </div>
+      <div class="navbar-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle Dark Mode"></button>
+        <div class="user-dropdown">
+          <div class="user-dropdown-toggle">
+            <div class="avatar avatar-sm user-avatar-initials" style="background: #f43f5e;">A</div>
+            <span class="user-name">Administrator</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="user-dropdown-menu" id="userDropdownMenu">
+            <a href="#" class="dropdown-item danger" id="logoutBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              Log Out
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="dashboard-layout">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Admin Sidebar -->
+    <aside class="sidebar admin-sidebar" id="sidebar">
+      <div class="sidebar-nav">
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Admin Controls</div>
+          <a href="admin-users.html" class="sidebar-link active">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+            Manage Students
+          </a>
+          <a href="admin-lessons.html" class="sidebar-link">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span>
+            Lesson Materials
+          </a>
+          <a href="admin-exams.html" class="sidebar-link">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span>
+            Scheduled Exams
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+      <div class="admin-header reveal">
+        <div class="admin-header-title">
+          <h1>Manage Students</h1>
+          <p>View all registered students, their exam results, and manage accounts.</p>
+        </div>
+        <div style="display:flex;gap:var(--space-sm);align-items:center;">
+          <div style="position:relative;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-light);pointer-events:none;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="studentSearch" class="admin-input" placeholder="Search by name or email..." style="padding-left:38px;height:40px;min-width:260px;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Row -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:var(--space-md);margin-bottom:var(--space-xl);" class="reveal delay-1">
+        <div class="admin-card" style="padding:var(--space-lg);text-align:center;">
+          <div style="font-size:2rem;font-weight:800;color:var(--primary);" id="statTotal">—</div>
+          <div style="font-size:var(--text-sm);color:var(--text-light);margin-top:4px;">Total Students</div>
+        </div>
+        <div class="admin-card" style="padding:var(--space-lg);text-align:center;">
+          <div style="font-size:2rem;font-weight:800;color:var(--accent);" id="statExams">—</div>
+          <div style="font-size:var(--text-sm);color:var(--text-light);margin-top:4px;">Exams Taken</div>
+        </div>
+        <div class="admin-card" style="padding:var(--space-lg);text-align:center;">
+          <div style="font-size:2rem;font-weight:800;color:var(--success);" id="statAvg">—</div>
+          <div style="font-size:var(--text-sm);color:var(--text-light);margin-top:4px;">Avg Score</div>
+        </div>
+      </div>
+
+      <!-- Students Table -->
+      <div class="admin-card reveal delay-2">
+        <div class="admin-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Phone</th>
+                <th>School</th>
+                <th>Joined</th>
+                <th>Exams</th>
+                <th>Avg Score</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="studentsTableBody">
+              <tr><td colspan="7" style="text-align:center;color:var(--text-light);">Loading students...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Results Modal -->
+  <div class="results-modal-overlay" id="resultsModal">
+    <div class="results-modal">
+      <div class="results-modal-header">
+        <div>
+          <div class="results-modal-title" id="modalStudentName">Student Results</div>
+          <div style="font-size:var(--text-sm);color:var(--text-light);" id="modalStudentEmail"></div>
+        </div>
+        <button class="modal-close-btn" id="closeResultsModal" aria-label="Close">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="stat-pills" id="modalStatPills"></div>
+      <div id="modalResultsList"></div>
+    </div>
+  </div>
+
+  <script src="../js/supabase.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script src="../js/admin-users.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('[NTC] SW registered:', reg.scope))
+          .catch(err => console.warn('[NTC] SW registration failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>

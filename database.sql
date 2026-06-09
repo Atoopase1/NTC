@@ -193,3 +193,53 @@ CREATE POLICY "Admin can manage scheduled exams"
 -- Modify exam_results to add scheduled_exam_id
 ALTER TABLE public.exam_results 
 ADD COLUMN IF NOT EXISTS scheduled_exam_id uuid references public.scheduled_exams on delete cascade;
+
+-- ============================================
+-- 7. Admin Student Management Policies
+-- ============================================
+
+-- Allow admin to read ALL profiles (students)
+DROP POLICY IF EXISTS "Admin can view all profiles" ON public.profiles;
+CREATE POLICY "Admin can view all profiles"
+  ON public.profiles FOR SELECT
+  USING (
+    (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
+    OR
+    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+    OR
+    auth.uid() = id
+  );
+
+-- Allow admin to delete any profile
+DROP POLICY IF EXISTS "Admin can delete profiles" ON public.profiles;
+CREATE POLICY "Admin can delete profiles"
+  ON public.profiles FOR DELETE
+  USING (
+    (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
+    OR
+    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+  );
+
+-- Allow admin to read ALL exam results
+DROP POLICY IF EXISTS "Admin can view all exam results" ON public.exam_results;
+CREATE POLICY "Admin can view all exam results"
+  ON public.exam_results FOR SELECT
+  USING (
+    (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
+    OR
+    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+    OR
+    auth.uid() = user_id
+  );
+
+-- Allow admin to delete any exam results
+DROP POLICY IF EXISTS "Admin can delete exam results" ON public.exam_results;
+CREATE POLICY "Admin can delete exam results"
+  ON public.exam_results FOR DELETE
+  USING (
+    (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
+    OR
+    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+    OR
+    auth.uid() = user_id
+  );

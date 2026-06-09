@@ -337,6 +337,65 @@ async function deleteSubject(id) {
 
 // --- Scheduled Exams Functions --- //
 
+// --- Admin Functions --- //
+
+/**
+ * Get all student profiles (admin only)
+ */
+async function getAllStudents() {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('*')
+      .neq('role', 'admin')
+      .order('updated_at', { ascending: false });
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Failed to fetch students:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Get all exam results (admin only)
+ */
+async function getAllExamResults() {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const { data, error } = await supabaseClient
+      .from('exam_results')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Failed to fetch all exam results:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Delete a student's profile (removes all their app data)
+ */
+async function deleteStudentProfile(userId) {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    // Delete exam results first (FK may not cascade)
+    await supabaseClient.from('exam_results').delete().eq('user_id', userId);
+    // Delete profile
+    const { error } = await supabaseClient.from('profiles').delete().eq('id', userId);
+    if (error) throw error;
+    return { error: null };
+  } catch (error) {
+    console.error('Failed to delete student:', error);
+    return { error };
+  }
+}
+
+// --- Scheduled Exams Functions --- //
+
 /**
  * Fetch all scheduled exams
  */
@@ -433,6 +492,9 @@ window.supaDB = {
   getSubjects,
   addSubject,
   deleteSubject,
+  getAllStudents,
+  getAllExamResults,
+  deleteStudentProfile,
   getScheduledExams,
   createScheduledExam,
   deleteScheduledExam,
