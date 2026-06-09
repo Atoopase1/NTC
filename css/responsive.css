@@ -868,27 +868,45 @@
   display: inline-block;
 }
 
-.profile-photo-upload .upload-overlay {
+.profile-photo-upload .avatar {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-photo-upload:hover .avatar {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+.profile-photo-upload .upload-badge {
   position: absolute;
-  inset: 0;
+  bottom: 24px;
+  right: 0;
+  background: var(--primary);
+  color: white;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-full);
-  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
+  border: 3px solid var(--surface);
+  transition: transform 0.2s ease, background 0.2s ease;
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
-  color: white;
-  font-size: var(--text-xl);
 }
 
-.profile-photo-upload:hover .upload-overlay {
-  opacity: 1;
+.profile-photo-upload:hover .upload-badge {
+  transform: scale(1.1);
+  background: var(--primary-dark);
 }
 
 .profile-photo-upload input[type="file"] {
-  display: none;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  z-index: -1;
 }
 
 /* === Resources Page === */
