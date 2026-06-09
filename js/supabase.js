@@ -301,12 +301,7 @@ async function addSubject(name) {
     return { data, error: null };
   } catch (error) {
     console.error('Failed to add subject:', error);
-    // Fallback local storage
-    const subjects = await getSubjects();
-    const newSubject = { id: Date.now().toString(), name };
-    subjects.push(newSubject);
-    localStorage.setItem('ntc_subjects', JSON.stringify(subjects));
-    return { data: newSubject, error: null };
+    return { data: null, error };
   }
 }
 
@@ -325,11 +320,7 @@ async function deleteSubject(id) {
     return { error: null };
   } catch (error) {
     console.error('Failed to delete subject:', error);
-    // Fallback local storage
-    let subjects = await getSubjects();
-    subjects = subjects.filter(s => s.id !== id);
-    localStorage.setItem('ntc_subjects', JSON.stringify(subjects));
-    return { error: null };
+    return { error };
   }
 }
 

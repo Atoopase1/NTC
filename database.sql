@@ -106,7 +106,7 @@ DROP POLICY IF EXISTS "Admin can insert lessons" ON public.lessons;
 CREATE POLICY "Admin can insert lessons"
   ON public.lessons FOR INSERT
   WITH CHECK ( 
-    auth.uid() IN (SELECT id FROM auth.users WHERE email = 'atoopase@gmail.com')
+    (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
     OR
     (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
   );
@@ -116,7 +116,7 @@ DROP POLICY IF EXISTS "Admin can update lessons" ON public.lessons;
 CREATE POLICY "Admin can update lessons"
   ON public.lessons FOR UPDATE
   USING ( 
-    auth.uid() IN (SELECT id FROM auth.users WHERE email = 'atoopase@gmail.com')
+    (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
     OR
     (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
   );
@@ -143,7 +143,7 @@ DROP POLICY IF EXISTS "Admin can manage subjects" ON public.subjects;
 CREATE POLICY "Admin can manage subjects"
   ON public.subjects FOR ALL
   USING ( 
-    auth.uid() IN (SELECT id FROM auth.users WHERE email = 'atoopase@gmail.com')
+    (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
     OR
     (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
   );
@@ -185,7 +185,7 @@ DROP POLICY IF EXISTS "Admin can manage scheduled exams" ON public.scheduled_exa
 CREATE POLICY "Admin can manage scheduled exams"
   ON public.scheduled_exams FOR ALL
   USING ( 
-    auth.uid() IN (SELECT id FROM auth.users WHERE email = 'atoopase@gmail.com')
+    (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
     OR
     (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
   );

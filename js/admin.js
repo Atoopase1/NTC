@@ -130,8 +130,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!confirm('Are you sure you want to delete this subject?')) return;
             const id = e.currentTarget.getAttribute('data-id');
             e.currentTarget.disabled = true;
-            await window.supaDB.deleteSubject(id);
-            loadSubjects();
+            const { error } = await window.supaDB.deleteSubject(id);
+            if (error) {
+              alert('Failed to delete subject: ' + error.message);
+              e.currentTarget.disabled = false;
+            } else {
+              loadSubjects();
+            }
           });
         });
       }
@@ -156,12 +161,13 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.disabled = true;
 
       try {
-        await window.supaDB.addSubject(name);
+        const { error } = await window.supaDB.addSubject(name);
+        if (error) throw error;
         input.value = '';
         await loadSubjects();
       } catch (err) {
         console.error(err);
-        alert('Failed to add subject');
+        alert('Failed to add subject: ' + (err.message || 'Unknown error'));
       } finally {
         btn.textContent = originalText;
         btn.disabled = false;
