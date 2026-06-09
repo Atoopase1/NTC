@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -13,7 +13,14 @@
   <!-- CSS -->
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/responsive.css">
-</head>
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="NTC Prep">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png"></head>
 <body>
   
   <!-- Navigation -->
@@ -59,7 +66,7 @@
           
           <div style="display: flex; gap: var(--space-md); margin-bottom: var(--space-lg);">
             <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--primary-ghost); display: flex; align-items: center; justify-content: center; color: var(--primary); flex-shrink: 0;">
-              📧
+              ðŸ“§
             </div>
             <div>
               <h4 style="font-size: var(--text-base); margin-bottom: 4px;">Email Us</h4>
@@ -69,7 +76,7 @@
           
           <div style="display: flex; gap: var(--space-md); margin-bottom: var(--space-lg);">
             <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--primary-ghost); display: flex; align-items: center; justify-content: center; color: var(--primary); flex-shrink: 0;">
-              📞
+              ðŸ“ž
             </div>
             <div>
               <h4 style="font-size: var(--text-base); margin-bottom: 4px;">Call Us</h4>
@@ -79,7 +86,7 @@
           
           <div style="display: flex; gap: var(--space-md);">
             <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--primary-ghost); display: flex; align-items: center; justify-content: center; color: var(--primary); flex-shrink: 0;">
-              📍
+              ðŸ“
             </div>
             <div>
               <h4 style="font-size: var(--text-base); margin-bottom: 4px;">Office Address</h4>
@@ -135,5 +142,14 @@
   </div>
 
   <script src="../js/app.js"></script>
-</body>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('[NTC] SW registered:', reg.scope))
+          .catch(err => console.warn('[NTC] SW registration failed:', err));
+      });
+    }
+  </script></body>
 </html>
+

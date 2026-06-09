@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -17,7 +17,14 @@
   
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="NTC Prep">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png"></head>
 <body>
   
   <!-- Navigation -->
@@ -154,7 +161,7 @@
           <div>
             <div class="stat-label">Average Score</div>
             <div class="stat-value" id="statAvgScore"><div class="skeleton skeleton-text" style="width: 40px;"></div></div>
-            <div class="stat-change positive">↑ 4% this week</div>
+            <div class="stat-change positive">â†‘ 4% this week</div>
           </div>
         </div>
         
@@ -265,5 +272,14 @@
   <script src="../js/app.js"></script>
   <script src="../js/auth.js"></script>
   <script src="../js/dashboard.js"></script>
-</body>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('[NTC] SW registered:', reg.scope))
+          .catch(err => console.warn('[NTC] SW registration failed:', err));
+      });
+    }
+  </script></body>
 </html>
+

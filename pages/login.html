@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -196,7 +196,14 @@
       color: #f43f5e;
     }
   </style>
-</head>
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="NTC Prep">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png"></head>
 <body>
   <div class="google-only-page">
     <div class="google-only-card">
@@ -234,7 +241,7 @@
           <div class="google-only-feature-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           </div>
-          <span>No password to remember — sign in with your Google account</span>
+          <span>No password to remember â€” sign in with your Google account</span>
         </div>
         <div class="google-only-feature">
           <div class="google-only-feature-icon">
@@ -246,7 +253,7 @@
           <div class="google-only-feature-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
           </div>
-          <span>Quick one-tap access — log in in seconds</span>
+          <span>Quick one-tap access â€” log in in seconds</span>
         </div>
       </div>
 
@@ -274,5 +281,14 @@
       }
     });
   </script>
-</body>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('[NTC] SW registered:', reg.scope))
+          .catch(err => console.warn('[NTC] SW registration failed:', err));
+      });
+    }
+  </script></body>
 </html>
+

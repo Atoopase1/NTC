@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -116,7 +116,14 @@
     .status-msg.loading { display: block; background: rgba(17, 150, 232, 0.1); color: var(--primary); }
     .status-msg.error { display: block; background: rgba(244, 63, 94, 0.1); color: #f43f5e; }
   </style>
-</head>
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="NTC Prep">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png"></head>
 <body>
   <div class="google-only-page">
     <div class="google-only-card">
@@ -196,5 +203,14 @@
       }
     });
   </script>
-</body>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('[NTC] SW registered:', reg.scope))
+          .catch(err => console.warn('[NTC] SW registration failed:', err));
+      });
+    }
+  </script></body>
 </html>
+
