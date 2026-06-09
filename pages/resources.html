@@ -86,6 +86,68 @@
       <div class="page-header" style="border-radius: var(--radius-xl); padding: var(--space-2xl); margin-bottom: var(--space-xl);">
         <h1>Study Resources & Notes</h1>
         <p>Download comprehensive PDF guides, past question analyses, and subject summaries.</p>
+  <link rel="apple-touch-icon" href="/icons/icon-192.png"></head>
+<body>
+  
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container" style="max-width: 100%;">
+      <div style="display: flex; align-items: center; gap: var(--space-md);">
+        <button class="sidebar-toggle-btn" id="sidebarToggle" aria-label="Toggle Sidebar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+        
+        <a href="dashboard.html" class="navbar-brand">
+          <div class="brand-icon">N</div>
+          <span>NTC Prep</span>
+        </a>
+      </div>
+      
+      <div class="navbar-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle Dark Mode"></button>
+        <div class="user-dropdown">
+          <div class="user-dropdown-toggle">
+            <div class="avatar avatar-sm user-avatar-initials">U</div>
+            <span class="user-name">User Name</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="dashboard-layout">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-nav">
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Menu</div>
+          <a href="dashboard.html" class="sidebar-link">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg></span>
+            Dashboard
+          </a>
+          <a href="exam.html" class="sidebar-link">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span>
+            Mock Exams
+          </a>
+          <a href="resources.html" class="sidebar-link active">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span>
+            Study Resources
+          </a>
+          <a href="leaderboard.html" class="sidebar-link">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></span>
+            Leaderboard
+          </a>
+        </div>
+      </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="dashboard-main">
+      <div class="page-header" style="border-radius: var(--radius-xl); padding: var(--space-2xl); margin-bottom: var(--space-xl);">
+        <h1>Study Resources & Notes</h1>
+        <p>Download comprehensive PDF guides, past question analyses, and subject summaries.</p>
       </div>
 
       <div class="tabs" style="margin-bottom: var(--space-xl);" id="resourceTabs">
@@ -93,53 +155,9 @@
       </div>
 
       <div class="tab-content active" id="tab-all">
-        <div class="resources-grid">
-          <!-- Resource 1 -->
-          <div class="resource-card reveal delay-1">
-            <div class="resource-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
-            <h3 class="resource-title">NTC Syllabus 2026 Guide</h3>
-            <p class="resource-desc">Complete breakdown of all topics covered in the new syllabus with weighting.</p>
-            <div class="resource-meta" style="margin-bottom: var(--space-md);">
-              <span>PDF &bull; 2.4 MB</span>
-              <span>Updated: May 2026</span>
-            </div>
-            <button class="btn btn-outline btn-block">Download</button>
-          </div>
-          
-          <!-- Resource 2 -->
-          <div class="resource-card reveal delay-2">
-            <div class="resource-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.9 1.2 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></div>
-            <h3 class="resource-title">Educational Psych Summary</h3>
-            <p class="resource-desc">Key theories from Piaget, Vygotsky, Skinner, and Bandura simplified.</p>
-            <div class="resource-meta" style="margin-bottom: var(--space-md);">
-              <span>PDF &bull; 1.8 MB</span>
-              <span>Updated: Apr 2026</span>
-            </div>
-            <button class="btn btn-outline btn-block">Download</button>
-          </div>
-          
-          <!-- Resource 3 -->
-          <div class="resource-card reveal delay-3">
-            <div class="resource-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></div>
-            <h3 class="resource-title">Assessment & Evaluation Notes</h3>
-            <p class="resource-desc">Formative vs Summative, Reliability, Validity and test construction.</p>
-            <div class="resource-meta" style="margin-bottom: var(--space-md);">
-              <span>PDF &bull; 3.1 MB</span>
-              <span>Updated: Jun 2026</span>
-            </div>
-            <button class="btn btn-outline btn-block">Download</button>
-          </div>
-          
-          <!-- Resource 4 -->
-          <div class="resource-card reveal delay-4">
-            <div class="resource-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
-            <h3 class="resource-title">Classroom Management Guide</h3>
-            <p class="resource-desc">Effective strategies for handling student behavior and maintaining discipline.</p>
-            <div class="resource-meta" style="margin-bottom: var(--space-md);">
-              <span>PDF &bull; 1.5 MB</span>
-              <span>Updated: Mar 2026</span>
-            </div>
-            <button class="btn btn-outline btn-block">Download</button>
+        <div class="resources-grid" id="allResourcesGrid">
+          <div class="empty-state">
+            <p>Loading study materials...</p>
           </div>
         </div>
       </div>
@@ -155,31 +173,136 @@
   <script src="../js/app.js"></script>
   <script src="../js/auth.js"></script>
   
+  <style>
+    .desc-text {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 4px;
+      font-size: var(--text-sm);
+      color: var(--text-light);
+      line-height: 1.5;
+    }
+    .desc-text.expanded {
+      -webkit-line-clamp: unset;
+    }
+    .read-more-btn {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-weight: 600;
+      font-size: var(--text-sm);
+      cursor: pointer;
+      padding: 0;
+      margin-bottom: var(--space-sm);
+    }
+    .read-more-btn:hover {
+      text-decoration: underline;
+    }
+  </style>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const resourceTabs = document.getElementById('resourceTabs');
       const dynamicTabContents = document.getElementById('dynamicTabContents');
+      const allResourcesGrid = document.getElementById('allResourcesGrid');
       
+      // Expand/Collapse description
+      window.toggleDescription = (btn) => {
+        const p = btn.previousElementSibling;
+        p.classList.toggle('expanded');
+        if (p.classList.contains('expanded')) {
+          btn.textContent = 'Show less';
+        } else {
+          btn.textContent = 'Read more';
+        }
+      };
+
       if (resourceTabs && dynamicTabContents && window.supaDB && window.supaDB.getSubjects) {
         try {
-          const subjects = await window.supaDB.getSubjects();
+          // Fetch Subjects and Lessons in parallel
+          const [subRes, lesRes] = await Promise.all([
+            window.supaDB.getSubjects(),
+            window.supaDB.getLessons ? window.supaDB.getLessons() : {data:[]}
+          ]);
+          
+          const subjects = subRes.data || subRes || [];
+          const lessons = lesRes.data || [];
+
+          // Helper to get SVG icon based on media_type
+          const getIcon = (type) => {
+            if (type === 'video') return `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+            if (type === 'pdf') return `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+            if (type === 'image') return `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
+            if (type === 'audio') return `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`;
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>`;
+          };
+
+          // Helper to generate a resource card HTML
+          const createCardHtml = (lesson) => {
+            const desc = lesson.description || lesson.content || '';
+            const isLong = desc.length > 120;
+            const dateStr = new Date(lesson.created_at).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+            
+            let actionBtn = '';
+            if (lesson.media_url) {
+              actionBtn = `<a href="${lesson.media_url}" target="_blank" class="btn btn-primary btn-block">Watch / Open Full View</a>`;
+            } else if (lesson.content) {
+              // If it's just text, clicking opens an alert for now, or just let them read the description
+              actionBtn = `<button class="btn btn-outline btn-block" onclick="alert('Text notes\\n\\n' + \`${lesson.content.replace(/`/g, "'")}\`)">Read Full Notes</button>`;
+            }
+
+            return `
+              <div class="resource-card">
+                <div class="resource-icon">${getIcon(lesson.media_type)}</div>
+                <h3 class="resource-title" style="margin-bottom:4px;">${lesson.title || lesson.subtopic || 'Lesson'}</h3>
+                <div style="font-size:var(--text-xs); color:var(--primary); font-weight:600; margin-bottom:var(--space-sm);">${lesson.subject || ''}</div>
+                
+                <div>
+                  <p class="desc-text">${desc}</p>
+                  ${isLong ? `<button class="read-more-btn" onclick="toggleDescription(this)">Read more</button>` : ''}
+                </div>
+
+                <div class="resource-meta" style="margin-bottom: var(--space-md); margin-top: auto;">
+                  <span style="text-transform: capitalize;">${lesson.media_type || 'Document'}</span>
+                  <span>Added: ${dateStr}</span>
+                </div>
+                ${actionBtn}
+              </div>
+            `;
+          };
+
+          // Render "All Materials"
+          if (lessons.length === 0) {
+            allResourcesGrid.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;"><p>No study materials have been published yet.</p></div>`;
+          } else {
+            allResourcesGrid.innerHTML = lessons.map(createCardHtml).join('');
+          }
+
           if (subjects && subjects.length > 0) {
             let tabsHtml = '';
             let contentsHtml = '';
             
             subjects.forEach((sub, idx) => {
               const tabId = `tab-sub-${sub.id}`;
-              const iconClasses = ['pedagogy', 'general', 'curriculum', 'assessment', 'psychology'];
-              const iconClass = iconClasses[idx % iconClasses.length];
-              
+              const subLessons = lessons.filter(l => l.subject === sub.name);
+
               tabsHtml += `<button class="tab-btn" data-tab="${tabId}">${sub.name}</button>`;
               
+              let subContentHtml = `<div class="empty-state" style="grid-column: 1/-1;">
+                <div class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+                <h3>${sub.name} Resources</h3>
+                <p>No materials published for this subject yet.</p>
+              </div>`;
+
+              if (subLessons.length > 0) {
+                subContentHtml = subLessons.map(createCardHtml).join('');
+              }
+
               contentsHtml += `
                 <div class="tab-content" id="${tabId}">
-                  <div class="empty-state">
-                    <div class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
-                    <h3>${sub.name} Resources</h3>
-                    <p>Filtered materials for ${sub.name} will appear here.</p>
+                  <div class="resources-grid">
+                    ${subContentHtml}
                   </div>
                 </div>
               `;
@@ -188,7 +311,7 @@
             resourceTabs.innerHTML += tabsHtml;
             dynamicTabContents.innerHTML = contentsHtml;
             
-            // Re-attach tab listeners to include new dynamic tabs
+            // Re-attach tab listeners
             const tabBtns = document.querySelectorAll('.tab-btn');
             tabBtns.forEach(btn => {
               btn.addEventListener('click', () => {
@@ -206,7 +329,8 @@
             });
           }
         } catch (e) {
-          console.error("Error loading subjects for resources:", e);
+          console.error("Error loading resources:", e);
+          allResourcesGrid.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;color:var(--danger);"><p>Failed to load study materials.</p></div>`;
         }
       }
     });
