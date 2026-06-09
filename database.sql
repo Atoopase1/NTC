@@ -178,6 +178,7 @@ CREATE TABLE IF NOT EXISTS public.scheduled_exams (
   subject text not null,
   start_time timestamp with time zone not null,
   end_time timestamp with time zone not null,
+  duration_minutes integer not null default 60,
   questions_data jsonb not null,
   created_at timestamp with time zone default timezone('utc'::text, now())
 );

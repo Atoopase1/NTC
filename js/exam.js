@@ -114,6 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   <p style="font-size: var(--text-xs); margin-top: 8px; color: ${isActive ? 'var(--success)' : 'var(--warning)'}; font-weight: 500;">
                     ${isActive ? 'Active Now. Ends ' + endTime.toLocaleTimeString() : 'Starts ' + startTime.toLocaleString()}
                   </p>
+                  <p style="font-size: var(--text-xs); color: var(--text-light); margin-top: 4px;">Duration: ${exam.duration_minutes || 60} mins</p>
                 </div>
               `;
             });
@@ -149,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
             subject: selectedScheduledExam.subject,
             startTime: selectedScheduledExam.start_time,
             endTime: selectedScheduledExam.end_time,
+            durationMins: selectedScheduledExam.duration_minutes || 60,
             questions: selectedScheduledExam.questions_data
           };
         } else {
@@ -201,15 +203,26 @@ document.addEventListener('DOMContentLoaded', () => {
       // Update UI with config
       if (examConfig.isScheduled) {
         document.getElementById('examSubjectTitle').textContent = examConfig.title;
-        // Calculate remaining seconds
-        const endTime = new Date(examConfig.endTime);
+        
         const now = new Date();
-        const secondsRemaining = Math.max(0, Math.floor((endTime - now) / 1000));
+        const startTime = new Date(examConfig.startTime);
+        const endTime = new Date(examConfig.endTime);
+        const durationSecs = (examConfig.durationMins || 60) * 60;
+        
+        if (now < startTime) {
+          alert('This exam has not started yet.');
+          window.location.href = 'exam.html';
+          return;
+        }
+        
+        // Timer is the minimum between explicit duration and remaining window time
+        const maxSecsRemaining = Math.max(0, Math.floor((endTime - now) / 1000));
+        const activeTimer = Math.min(durationSecs, maxSecsRemaining);
         
         await loadQuestions();
         buildNavigator();
         showQuestion(0);
-        startTimer(secondsRemaining);
+        startTimer(activeTimer);
       } else {
         document.getElementById('examSubjectTitle').textContent = examConfig.subject;
         await loadQuestions();

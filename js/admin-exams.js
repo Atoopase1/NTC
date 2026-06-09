@@ -73,6 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               <td>${qCount} Qs</td>
               <td>${startTime.toLocaleString()}</td>
               <td>${endTime.toLocaleString()}</td>
+              <td>${exam.duration_minutes || 60} mins</td>
               <td>${statusHtml}</td>
               <td>
                 <div class="table-actions">
@@ -176,21 +177,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const title         = document.getElementById('examTitle').value.trim();
       const subject       = examSubjectSelect.value;
-      const startTime     = document.getElementById('examStartTime').value;
-      const endTime       = document.getElementById('examEndTime').value;
+      const startTimeStr  = document.getElementById('examStartTime').value;
+      const endTimeStr    = document.getElementById('examEndTime').value;
+      const durationMins  = parseInt(document.getElementById('examDuration').value) || 60;
       const questionsText = document.getElementById('examQuestionsText').value.trim();
       const answerKeyText = document.getElementById('examAnswerKey').value.trim();
 
+      const startIso = new Date(startTimeStr).toISOString();
+      const endIso   = new Date(endTimeStr).toISOString();
+
       // Validate dates
-      if (new Date(startTime) >= new Date(endTime)) {
+      if (new Date(startTimeStr) >= new Date(endTimeStr)) {
         window.showToast('End time must be after start time.', 'error');
         return;
       }
 
       // Parse plain text into structured questions
-      let questionsData;
+      let parsedQuestions;
       try {
-        questionsData = parsePlainTextExam(questionsText, answerKeyText);
+        parsedQuestions = parsePlainTextExam(questionsText, answerKeyText);
       } catch (err) {
         window.showToast('Error: ' + err.message, 'error');
         return;
@@ -201,15 +206,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<span class="spinner spinner-sm"></span> Scheduling...';
 
-      const examData = {
+      const { error } = await window.supaDB.createScheduledExam({
         title,
         subject,
-        start_time:     new Date(startTime).toISOString(),
-        end_time:       new Date(endTime).toISOString(),
-        questions_data: questionsData
-      };
-
-      const { error } = await window.supaDB.createScheduledExam(examData);
+        start_time: startIso,
+        end_time: endIso,
+        duration_minutes: durationMins,
+        questions_data: parsedQuestions
+      });
 
       submitBtn.disabled = false;
       submitBtn.textContent = originalText;
@@ -218,7 +222,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error(error);
         window.showToast('Failed to schedule exam. See console for details.', 'error');
       } else {
-        window.showToast(`Exam scheduled! (${questionsData.length} questions parsed)`, 'success');
+        window.showToast(`Exam scheduled! (${parsedQuestions.length} questions parsed)`, 'success');
         scheduleExamForm.reset();
         document.querySelector('[data-tab="manage-exams"]').click();
         loadScheduledExams();

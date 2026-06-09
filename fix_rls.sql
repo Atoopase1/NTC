@@ -155,6 +155,14 @@ UPDATE public.lessons SET title = subtopic WHERE title IS NULL AND subtopic IS N
 
 
 -- ================================================================
+-- 7. Update scheduled_exams table to support duration
+-- ================================================================
+
+ALTER TABLE public.scheduled_exams
+  ADD COLUMN IF NOT EXISTS duration_minutes integer not null default 60;
+
+
+-- ================================================================
 -- 7. Supabase Storage Bucket for lesson materials
 -- ================================================================
 

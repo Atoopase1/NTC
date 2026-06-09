@@ -24,19 +24,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 800);
   }
 
-  function loadDashboardData(subjects) {
+  async function loadDashboardData(subjects) {
     // Get exam history to populate stats
     let history = [];
-    if (localStorage.getItem('ntc_exam_results')) {
-      history = JSON.parse(localStorage.getItem('ntc_exam_results'));
-    } else {
-      // Mock data for fresh users
-      history = [
-        { subject: 'Pedagogy', score: 45, total: 60, percentage: 75, date: new Date(Date.now() - 86400000 * 2).toISOString() },
-        { subject: 'General Knowledge', score: 50, total: 60, percentage: 83, date: new Date(Date.now() - 86400000 * 5).toISOString() },
-        { subject: 'Curriculum Studies', score: 38, total: 60, percentage: 63, date: new Date(Date.now() - 86400000 * 10).toISOString() }
-      ];
-      localStorage.setItem('ntc_exam_results', JSON.stringify(history));
+    if (window.supaDB && window.supaDB.getExamHistory && window.supaAuth && window.supaAuth.getCurrentUser) {
+      const user = await window.supaAuth.getCurrentUser();
+      if (user) {
+        history = await window.supaDB.getExamHistory(user.id);
+      }
+    }
+    
+    // Fallback to local storage if empty (for guests/offline)
+    if (!history || history.length === 0) {
+      if (localStorage.getItem('ntc_exam_results')) {
+        history = JSON.parse(localStorage.getItem('ntc_exam_results'));
+      } else {
+        // Mock data for fresh users
+        history = [
+          { subject: 'Pedagogy', score: 45, total: 60, percentage: 75, date: new Date(Date.now() - 86400000 * 2).toISOString() },
+          { subject: 'General Knowledge', score: 50, total: 60, percentage: 83, date: new Date(Date.now() - 86400000 * 5).toISOString() },
+          { subject: 'Curriculum Studies', score: 38, total: 60, percentage: 63, date: new Date(Date.now() - 86400000 * 10).toISOString() }
+        ];
+        localStorage.setItem('ntc_exam_results', JSON.stringify(history));
+      }
     }
 
     updateStats(history);
