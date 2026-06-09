@@ -5,10 +5,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
   if (!window.supaDB) return;
 
-  // Protect route
-  if (window.supaAuth && window.supaAuth.checkAdminAndRedirect) {
-    window.supaAuth.checkAdminAndRedirect();
-  }
+  // Admin page — auth guard is handled by auth.js
 
   const scheduleExamForm = document.getElementById('scheduleExamForm');
   const examSubjectSelect = document.getElementById('examSubject');

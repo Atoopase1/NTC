@@ -55,11 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const ringFill = document.getElementById('scoreRingFill');
       const circumference = 339.29; // 2 * pi * 54
       const offset = circumference - (result.percentage / 100) * circumference;
-      
       ringFill.style.strokeDashoffset = offset;
       ringFill.className = isPass ? 'fill-pass' : 'fill-fail';
-    }, 100);
-    
     }, 100);
     
     // Render Subject Breakdown
@@ -82,10 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const rankings = await window.supaDB.getExamRankings(examId);
       if (rankings && rankings.length > 0) {
-        // Sort just in case, though the backend already did
         rankings.sort((a, b) => b.percentage - a.percentage);
         
-        // Find user rank (using their percentage. In a real app we'd match user_id)
         let rankIndex = rankings.findIndex(r => r.percentage <= userPercentage);
         if (rankIndex === -1) rankIndex = rankings.length - 1;
         
@@ -122,8 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('subjectBreakdown');
     if (!container) return;
     
-    // For a single subject exam, we just show that one subject. 
-    // In a real app with mixed subjects, we'd calculate per subject.
     let html = `
       <div class="subject-breakdown-item">
         <div class="subject-breakdown-name">${result.subject}</div>

@@ -592,12 +592,13 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.setItem('ntc_exam_results', JSON.stringify(history));
       
       // Try to save to Supabase if configured
-      if (window.supaDB) {
-        const userStr = localStorage.getItem('ntc_user');
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          // Pass full result data. In supaDB we will pick what to save to DB.
-          window.supaDB.saveExamResult(user.id || 'demo_user', resultData);
+      if (window.supaDB && window.supaAuth) {
+        try {
+          const user = await window.supaAuth.getCurrentUser();
+          const userId = user ? user.id : (JSON.parse(localStorage.getItem('ntc_user') || '{}').id || 'demo_user');
+          window.supaDB.saveExamResult(userId, resultData);
+        } catch(e) {
+          console.warn('Could not save result to Supabase:', e);
         }
       }
       
