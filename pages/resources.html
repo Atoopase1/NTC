@@ -81,10 +81,8 @@
         <p>Download comprehensive PDF guides, past question analyses, and subject summaries.</p>
       </div>
 
-      <div class="tabs" style="margin-bottom: var(--space-xl);">
+      <div class="tabs" style="margin-bottom: var(--space-xl);" id="resourceTabs">
         <button class="tab-btn active" data-tab="tab-all">All Materials</button>
-        <button class="tab-btn" data-tab="tab-pedagogy">Pedagogy</button>
-        <button class="tab-btn" data-tab="tab-general">General Knowledge</button>
       </div>
 
       <div class="tab-content active" id="tab-all">
@@ -139,21 +137,8 @@
         </div>
       </div>
       
-      <!-- Other tabs are placeholders for the UI demonstration -->
-      <div class="tab-content" id="tab-pedagogy">
-        <div class="empty-state">
-          <div class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
-          <h3>Pedagogy Resources</h3>
-          <p>Filtered pedagogy materials will appear here.</p>
-        </div>
-      </div>
-      
-      <div class="tab-content" id="tab-general">
-        <div class="empty-state">
-          <div class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
-          <h3>General Knowledge</h3>
-          <p>Filtered general knowledge materials will appear here.</p>
-        </div>
+      <div id="dynamicTabContents">
+        <!-- Dynamic tab contents will be injected here -->
       </div>
 
     </main>
@@ -162,5 +147,62 @@
   <script src="../js/supabase.js"></script>
   <script src="../js/app.js"></script>
   <script src="../js/auth.js"></script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const resourceTabs = document.getElementById('resourceTabs');
+      const dynamicTabContents = document.getElementById('dynamicTabContents');
+      
+      if (resourceTabs && dynamicTabContents && window.supaDB && window.supaDB.getSubjects) {
+        try {
+          const subjects = await window.supaDB.getSubjects();
+          if (subjects && subjects.length > 0) {
+            let tabsHtml = '';
+            let contentsHtml = '';
+            
+            subjects.forEach((sub, idx) => {
+              const tabId = `tab-sub-${sub.id}`;
+              const iconClasses = ['pedagogy', 'general', 'curriculum', 'assessment', 'psychology'];
+              const iconClass = iconClasses[idx % iconClasses.length];
+              
+              tabsHtml += `<button class="tab-btn" data-tab="${tabId}">${sub.name}</button>`;
+              
+              contentsHtml += `
+                <div class="tab-content" id="${tabId}">
+                  <div class="empty-state">
+                    <div class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+                    <h3>${sub.name} Resources</h3>
+                    <p>Filtered materials for ${sub.name} will appear here.</p>
+                  </div>
+                </div>
+              `;
+            });
+            
+            resourceTabs.innerHTML += tabsHtml;
+            dynamicTabContents.innerHTML = contentsHtml;
+            
+            // Re-attach tab listeners to include new dynamic tabs
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            tabBtns.forEach(btn => {
+              btn.addEventListener('click', () => {
+                const tabId = btn.getAttribute('data-tab');
+                
+                // Remove active class from all buttons and content
+                btn.parentElement.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to current button and target content
+                btn.classList.add('active');
+                const target = document.getElementById(tabId);
+                if (target) target.classList.add('active');
+              });
+            });
+          }
+        } catch (e) {
+          console.error("Error loading subjects for resources:", e);
+        }
+      }
+    });
+  </script>
 </body>
 </html>

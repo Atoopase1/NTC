@@ -120,3 +120,76 @@ CREATE POLICY "Admin can update lessons"
     OR
     (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
   );
+
+-- ============================================
+-- 5. Subjects Table
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.subjects (
+  id uuid default gen_random_uuid() primary key,
+  name text not null unique,
+  created_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+ALTER TABLE public.subjects ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can view subjects" ON public.subjects;
+CREATE POLICY "Anyone can view subjects"
+  ON public.subjects FOR SELECT
+  USING ( true );
+
+-- Security: Only allow the specific admin email to insert/update/delete subjects
+DROP POLICY IF EXISTS "Admin can manage subjects" ON public.subjects;
+CREATE POLICY "Admin can manage subjects"
+  ON public.subjects FOR ALL
+  USING ( 
+    auth.uid() IN (SELECT id FROM auth.users WHERE email = 'atoopase@gmail.com')
+    OR
+    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+  );
+
+-- Insert default subjects if they don't exist
+INSERT INTO public.subjects (name)
+VALUES 
+  ('Pedagogy'), 
+  ('General Knowledge'), 
+  ('Curriculum Studies'), 
+  ('Assessment'), 
+  ('ICT in Education'), 
+  ('Educational Psychology')
+ON CONFLICT (name) DO NOTHING;
+
+-- ============================================
+-- 6. Scheduled Exams Table
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.scheduled_exams (
+  id uuid default gen_random_uuid() primary key,
+  title text not null,
+  subject text not null,
+  start_time timestamp with time zone not null,
+  end_time timestamp with time zone not null,
+  questions_data jsonb not null,
+  created_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+ALTER TABLE public.scheduled_exams ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can view scheduled exams" ON public.scheduled_exams;
+CREATE POLICY "Anyone can view scheduled exams"
+  ON public.scheduled_exams FOR SELECT
+  USING ( true );
+
+-- Security: Only allow admin to manage scheduled exams
+DROP POLICY IF EXISTS "Admin can manage scheduled exams" ON public.scheduled_exams;
+CREATE POLICY "Admin can manage scheduled exams"
+  ON public.scheduled_exams FOR ALL
+  USING ( 
+    auth.uid() IN (SELECT id FROM auth.users WHERE email = 'atoopase@gmail.com')
+    OR
+    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+  );
+
+-- Modify exam_results to add scheduled_exam_id
+ALTER TABLE public.exam_results 
+ADD COLUMN IF NOT EXISTS scheduled_exam_id uuid references public.scheduled_exams on delete cascade;

@@ -11,16 +11,20 @@ document.addEventListener('DOMContentLoaded', () => {
   initDashboard();
 
   async function initDashboard() {
-    // Show skeleton loaders while fetching data
-    // In a real app, we'd fetch from Supabase here
-    
-    // Simulate API delay for realism
-    setTimeout(() => {
-      loadDashboardData();
+    // Fetch subjects dynamically, then load dashboard data
+    setTimeout(async () => {
+      let subjects = ['Pedagogy', 'General Knowledge', 'Curriculum Studies', 'Assessment', 'ICT in Education', 'Educational Psychology'];
+      if (window.supaDB && window.supaDB.getSubjects) {
+        const fetched = await window.supaDB.getSubjects();
+        if (fetched && fetched.length > 0) {
+          subjects = fetched.map(s => s.name);
+        }
+      }
+      loadDashboardData(subjects);
     }, 800);
   }
 
-  function loadDashboardData() {
+  function loadDashboardData(subjects) {
     // Get exam history to populate stats
     let history = [];
     if (localStorage.getItem('ntc_exam_results')) {
@@ -37,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateStats(history);
     updateRecentScores(history);
-    updateSubjectOverview(history);
+    updateSubjectOverview(history, subjects);
     initCharts(history);
     
     // Remove loading skeletons if any (we'll just animate in the content)
@@ -113,11 +117,13 @@ document.addEventListener('DOMContentLoaded', () => {
     container.innerHTML = html;
   }
 
-  function updateSubjectOverview(history) {
+  function updateSubjectOverview(history, subjects) {
     const container = document.getElementById('subjectOverviewContainer');
     if (!container) return;
 
-    const subjects = ['Pedagogy', 'General Knowledge', 'Curriculum Studies', 'Assessment', 'ICT', 'Educational Psychology'];
+    if (!subjects || subjects.length === 0) {
+      subjects = ['Pedagogy', 'General Knowledge', 'Curriculum Studies', 'Assessment', 'ICT in Education', 'Educational Psychology'];
+    }
     
     // Calculate best score for each subject
     const subjectScores = {};

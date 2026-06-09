@@ -60,19 +60,62 @@ document.addEventListener('DOMContentLoaded', () => {
       ringFill.className = isPass ? 'fill-pass' : 'fill-fail';
     }, 100);
     
-    // Render Subject Breakdown (Simulated based on categories if it's a general exam, or just the subject)
-    renderSubjectBreakdown(result);
+    }, 100);
     
-    // Render Answer Review
-    renderAnswerReview(result);
+    // Render Subject Breakdown
+    renderSubjectBreakdown(result);
+
+    // Fetch and display class rank if scheduled exam
+    if (result.isScheduled && result.scheduledExamId) {
+      fetchClassRank(result.scheduledExamId, result.percentage);
+    }
+  }
+
+  async function fetchClassRank(examId, userPercentage) {
+    const rankContainer = document.getElementById('statRankContainer');
+    const rankEl = document.getElementById('statRank');
+    if (!rankContainer || !window.supaDB) return;
+
+    try {
+      rankContainer.style.display = 'flex';
+      rankEl.innerHTML = '<span class="spinner spinner-sm"></span>';
+      
+      const rankings = await window.supaDB.getExamRankings(examId);
+      if (rankings && rankings.length > 0) {
+        // Sort just in case, though the backend already did
+        rankings.sort((a, b) => b.percentage - a.percentage);
+        
+        // Find user rank (using their percentage. In a real app we'd match user_id)
+        let rankIndex = rankings.findIndex(r => r.percentage <= userPercentage);
+        if (rankIndex === -1) rankIndex = rankings.length - 1;
+        
+        const rank = rankIndex + 1;
+        const total = rankings.length;
+        
+        const suffix = (rank % 10 === 1 && rank !== 11) ? 'st' :
+                       (rank % 10 === 2 && rank !== 12) ? 'nd' :
+                       (rank % 10 === 3 && rank !== 13) ? 'rd' : 'th';
+                       
+        rankEl.textContent = `${rank}${suffix} / ${total}`;
+      } else {
+        rankEl.textContent = 'N/A';
+      }
+    } catch (e) {
+      console.error(e);
+      rankEl.textContent = 'Err';
+    }
   }
   
   function getGrade(percentage) {
-    if (percentage >= 80) return 'A';
-    if (percentage >= 70) return 'B';
-    if (percentage >= 60) return 'C';
-    if (percentage >= 50) return 'D';
-    return 'F';
+    if (percentage >= 80) return 'A1';
+    if (percentage >= 70) return 'B2';
+    if (percentage >= 65) return 'B3';
+    if (percentage >= 60) return 'C4';
+    if (percentage >= 55) return 'C5';
+    if (percentage >= 50) return 'C6';
+    if (percentage >= 45) return 'D7';
+    if (percentage >= 40) return 'E8';
+    return 'F9';
   }
   
   function renderSubjectBreakdown(result) {
@@ -100,59 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
         fill.style.width = fill.getAttribute('data-width');
       });
     }, 300);
-  }
-  
-  function renderAnswerReview(result) {
-    const container = document.getElementById('answerReview');
-    if (!container || !result.reviewData) return;
-    
-    let html = '<div class="review-list">';
-    const letters = ['A', 'B', 'C', 'D'];
-    
-    result.reviewData.forEach((item, index) => {
-      const isCorrect = item.isCorrect;
-      const statusClass = isCorrect ? 'correct-q' : 'wrong-q';
-      
-      let optionsHtml = '';
-      item.options.forEach((opt, optIndex) => {
-        let optClass = 'review-option';
-        let icon = '';
-        
-        if (optIndex === item.correctAnswer) {
-          optClass += ' correct-answer';
-          icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent); margin-left: auto;"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-        } else if (optIndex === item.userAnswer && !isCorrect) {
-          optClass += ' wrong-answer';
-          icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--danger); margin-left: auto;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
-        }
-        
-        optionsHtml += `
-          <div class="${optClass}">
-            <span style="font-weight: 700; width: 24px;">${letters[optIndex]}.</span> 
-            ${opt}
-            ${icon}
-          </div>
-        `;
-      });
-      
-      html += `
-        <div class="review-item">
-          <div class="review-question-header">
-            <div class="review-question-num ${statusClass}">Q${index + 1}</div>
-            <div style="font-size: var(--text-xs); color: var(--text-lighter); margin-left: auto;">
-              ${isCorrect ? 'Correct +1' : 'Incorrect 0'}
-            </div>
-          </div>
-          <div class="review-question-text">${item.question}</div>
-          <div class="review-options">
-            ${optionsHtml}
-          </div>
-        </div>
-      `;
-    });
-    
-    html += '</div>';
-    container.innerHTML = html;
   }
   
   // Print functionality

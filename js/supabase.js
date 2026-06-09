@@ -212,6 +212,7 @@ async function saveExamResult(userId, examData) {
       .from('exam_results')
       .insert({
         user_id: userId,
+        scheduled_exam_id: examData.isScheduled ? examData.scheduledExamId : null,
         subject: examData.subject,
         score: examData.score,
         total: examData.total,
@@ -252,6 +253,166 @@ async function getExamHistory(userId) {
   }
 }
 
+// --- Subject Functions --- //
+
+/**
+ * Fetch all subjects
+ */
+async function getSubjects() {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const { data, error } = await supabaseClient
+      .from('subjects')
+      .select('*')
+      .order('created_at', { ascending: true });
+      
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.warn('Could not fetch subjects from DB. Using local fallback.', error);
+    const localData = localStorage.getItem('ntc_subjects');
+    if (localData) return JSON.parse(localData);
+    
+    // Default fallback
+    return [
+      { id: '1', name: 'Pedagogy' },
+      { id: '2', name: 'General Knowledge' },
+      { id: '3', name: 'Curriculum Studies' },
+      { id: '4', name: 'Assessment' },
+      { id: '5', name: 'ICT in Education' },
+      { id: '6', name: 'Educational Psychology' }
+    ];
+  }
+}
+
+/**
+ * Add a new subject
+ */
+async function addSubject(name) {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const { data, error } = await supabaseClient
+      .from('subjects')
+      .insert([{ name }])
+      .select()
+      .single();
+      
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Failed to add subject:', error);
+    // Fallback local storage
+    const subjects = await getSubjects();
+    const newSubject = { id: Date.now().toString(), name };
+    subjects.push(newSubject);
+    localStorage.setItem('ntc_subjects', JSON.stringify(subjects));
+    return { data: newSubject, error: null };
+  }
+}
+
+/**
+ * Delete a subject
+ */
+async function deleteSubject(id) {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const { error } = await supabaseClient
+      .from('subjects')
+      .delete()
+      .eq('id', id);
+      
+    if (error) throw error;
+    return { error: null };
+  } catch (error) {
+    console.error('Failed to delete subject:', error);
+    // Fallback local storage
+    let subjects = await getSubjects();
+    subjects = subjects.filter(s => s.id !== id);
+    localStorage.setItem('ntc_subjects', JSON.stringify(subjects));
+    return { error: null };
+  }
+}
+
+// --- Scheduled Exams Functions --- //
+
+/**
+ * Fetch all scheduled exams
+ */
+async function getScheduledExams() {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const { data, error } = await supabaseClient
+      .from('scheduled_exams')
+      .select('*')
+      .order('start_time', { ascending: true });
+      
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch scheduled exams:', error);
+    return [];
+  }
+}
+
+/**
+ * Create a scheduled exam
+ */
+async function createScheduledExam(examData) {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const { data, error } = await supabaseClient
+      .from('scheduled_exams')
+      .insert([examData])
+      .select()
+      .single();
+      
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Failed to create scheduled exam:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Delete a scheduled exam
+ */
+async function deleteScheduledExam(id) {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const { error } = await supabaseClient
+      .from('scheduled_exams')
+      .delete()
+      .eq('id', id);
+      
+    if (error) throw error;
+    return { error: null };
+  } catch (error) {
+    console.error('Failed to delete scheduled exam:', error);
+    return { error };
+  }
+}
+
+/**
+ * Get rankings for a specific scheduled exam
+ */
+async function getExamRankings(scheduled_exam_id) {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const { data, error } = await supabaseClient
+      .from('exam_results')
+      .select('id, user_id, percentage, profiles(full_name)')
+      .eq('scheduled_exam_id', scheduled_exam_id)
+      .order('percentage', { ascending: false });
+      
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch exam rankings:', error);
+    return [];
+  }
+}
+
 // Export functions for global use
 window.supaAuth = {
   signUp,
@@ -266,5 +427,12 @@ window.supaDB = {
   createProfile,
   getProfile,
   saveExamResult,
-  getExamHistory
+  getExamHistory,
+  getSubjects,
+  addSubject,
+  deleteSubject,
+  getScheduledExams,
+  createScheduledExam,
+  deleteScheduledExam,
+  getExamRankings
 };

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson Management | Admin | NTC Exam Prep</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container" style="max-width: 100%;">
+      <div style="display: flex; align-items: center; gap: var(--space-md);">
+        <button class="sidebar-toggle-btn" id="sidebarToggle" aria-label="Toggle Sidebar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+        
+        <a href="../index.html" class="navbar-brand">
+          <div class="brand-icon" style="background: linear-gradient(135deg, #f43f5e, #e11d48);">N</div>
+          <span>Admin Portal</span>
+        </a>
+      </div>
+      
+      <div class="navbar-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle Dark Mode"></button>
+        
+        <div class="user-dropdown">
+          <div class="user-dropdown-toggle">
+            <div class="avatar avatar-sm user-avatar-initials" style="background: #f43f5e;">A</div>
+            <span class="user-name">Administrator</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          
+          <div class="user-dropdown-menu">
+            <a href="#" class="dropdown-item danger" id="logoutBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              Log Out
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="dashboard-layout">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
+    <!-- Admin Sidebar -->
+    <aside class="sidebar admin-sidebar" id="sidebar">
+      <div class="sidebar-nav">
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Admin Controls</div>
+          <a href="#" class="sidebar-link">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg></span>
+            Overview
+          </a>
+          <a href="#" class="sidebar-link">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+            Manage Users
+          </a>
+          <a href="admin-lessons.html" class="sidebar-link">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span>
+            Lesson Materials
+          </a>
+          <a href="admin-exams.html" class="sidebar-link active">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span>
+            Scheduled Exams
+          </a>
+          <a href="#" class="sidebar-link">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+            Question Bank
+          </a>
+        </div>
+      </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="dashboard-main">
+      <div class="admin-header reveal">
+        <div class="admin-header-title">
+          <h1>Scheduled Exams</h1>
+          <p>Create and manage live examinations with strict start and end times.</p>
+        </div>
+      </div>
+      
+      <!-- Tabs -->
+      <div class="admin-tabs reveal delay-1">
+        <button class="admin-tab active" data-tab="manage-exams">Manage Exams</button>
+        <button class="admin-tab" data-tab="create-exam">Schedule New Exam</button>
+      </div>
+
+      <!-- Tab Content: Manage Exams -->
+      <div id="manage-exams" class="tab-content active reveal delay-2">
+        <div class="admin-card">
+          <div class="admin-table-container">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Subject</th>
+                  <th>Questions</th>
+                  <th>Start Time</th>
+                  <th>End Time</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="scheduledExamsTableBody">
+                <tr>
+                  <td colspan="6">Loading exams...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content: Schedule New Exam -->
+      <div id="create-exam" class="tab-content">
+        <div class="admin-card">
+          <form id="scheduleExamForm">
+            
+            <div class="admin-form-row">
+              <div>
+                <label class="admin-label" for="examTitle">Exam Title</label>
+                <input type="text" id="examTitle" class="admin-input" placeholder="e.g. Midterm Pedagogy Exam" required>
+              </div>
+              
+              <div>
+                <label class="admin-label" for="examSubject">Subject</label>
+                <select id="examSubject" class="admin-input" required>
+                  <option value="" disabled selected>Loading subjects...</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="admin-form-row">
+              <div>
+                <label class="admin-label" for="examStartTime">Start Time</label>
+                <input type="datetime-local" id="examStartTime" class="admin-input" required>
+              </div>
+              
+              <div>
+                <label class="admin-label" for="examEndTime">End Time</label>
+                <input type="datetime-local" id="examEndTime" class="admin-input" required>
+              </div>
+            </div>
+
+            <div style="margin-bottom: var(--space-md);">
+              <label class="admin-label" for="examQuestionsText">Questions (Plain Text)</label>
+              <textarea id="examQuestionsText" class="admin-input admin-textarea" rows="10" placeholder="1. What is the capital of Ghana?&#10;A. Accra&#10;B. Kumasi&#10;C. Tema&#10;D. Ho&#10;&#10;2. Next question..." required></textarea>
+              <p style="font-size: var(--text-xs); color: var(--text-light); margin-top: var(--space-xs);">Format: Questions must start with a number (1., 2.). Options must start with a letter (A., B., C., D.).</p>
+            </div>
+
+            <div style="margin-bottom: var(--space-xl);">
+              <label class="admin-label" for="examAnswerKey">Answer Key</label>
+              <input type="text" id="examAnswerKey" class="admin-input" placeholder="e.g. A, B, C, D, A" required>
+              <p style="font-size: var(--text-xs); color: var(--text-light); margin-top: var(--space-xs);">Provide a comma-separated list of letters representing the correct answers in order.</p>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+              <button type="button" class="btn btn-outline" onclick="document.getElementById('scheduleExamForm').reset()">Clear Form</button>
+              <button type="submit" class="btn btn-primary">Schedule Exam</button>
+            </div>
+            
+          </form>
+        </div>
+      </div>
+      
+    </main>
+  </div>
+
+  <script src="../js/supabase.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script src="../js/admin-exams.js"></script>
+</body>
+</html>

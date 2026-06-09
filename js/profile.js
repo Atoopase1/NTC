@@ -25,6 +25,40 @@ document.addEventListener('DOMContentLoaded', () => {
       const totalPercentage = history.reduce((acc, curr) => acc + curr.percentage, 0);
       const avgScore = Math.round(totalPercentage / history.length);
       document.getElementById('profileAvgScore').textContent = `${avgScore}%`;
+      
+      // Render Exam History
+      const historyContainer = document.getElementById('profileExamHistory');
+      if (historyContainer) {
+        // Reverse so newest is first
+        const sortedHistory = [...history].reverse();
+        let html = '';
+        
+        sortedHistory.forEach((exam, idx) => {
+          const date = new Date(exam.date).toLocaleDateString();
+          const passClass = exam.percentage >= 50 ? 'success' : 'danger';
+          
+          html += `
+            <div class="admin-card" style="margin-bottom: var(--space-md); padding: var(--space-md); border-left: 4px solid var(--${passClass}); display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h4 style="margin-bottom: 4px;">${exam.title || exam.subject}</h4>
+                <div style="font-size: var(--text-xs); color: var(--text-light); display: flex; gap: 12px;">
+                  <span>📅 ${date}</span>
+                  <span>🏆 Score: ${exam.score}/${exam.total} (${exam.percentage}%)</span>
+                </div>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="window.openReviewModal(${history.length - 1 - idx})">
+                View Review
+              </button>
+            </div>
+          `;
+        });
+        historyContainer.innerHTML = html;
+      }
+    } else {
+      const historyContainer = document.getElementById('profileExamHistory');
+      if (historyContainer) {
+        historyContainer.innerHTML = '<p style="color: var(--text-light);">No exams taken yet. Your history will appear here.</p>';
+      }
     }
     
     let userData = {
@@ -229,4 +263,68 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+  
+  // Global function to open Review Modal
+  window.openReviewModal = (historyIndex) => {
+    const historyStr = localStorage.getItem('ntc_exam_results');
+    if (!historyStr) return;
+    
+    const history = JSON.parse(historyStr);
+    const examResult = history[historyIndex];
+    if (!examResult || !examResult.reviewData) {
+      window.showToast('Detailed review data not available for this exam.', 'error');
+      return;
+    }
+    
+    const container = document.getElementById('reviewModalContent');
+    let html = '<div class="review-list">';
+    const letters = ['A', 'B', 'C', 'D'];
+    
+    examResult.reviewData.forEach((item, index) => {
+      const isCorrect = item.isCorrect;
+      const statusClass = isCorrect ? 'correct-q' : 'wrong-q';
+      
+      let optionsHtml = '';
+      item.options.forEach((opt, optIndex) => {
+        let optClass = 'review-option';
+        let icon = '';
+        
+        if (optIndex === item.correctAnswer) {
+          optClass += ' correct-answer';
+          icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent); margin-left: auto;"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+        } else if (optIndex === item.userAnswer && !isCorrect) {
+          optClass += ' wrong-answer';
+          icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--danger); margin-left: auto;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+        }
+        
+        optionsHtml += `
+          <div class="${optClass}">
+            <span style="font-weight: 700; width: 24px;">${letters[optIndex]}.</span> 
+            ${opt}
+            ${icon}
+          </div>
+        `;
+      });
+      
+      html += `
+        <div class="review-item">
+          <div class="review-question-header">
+            <div class="review-question-num ${statusClass}">Q${index + 1}</div>
+            <div style="font-size: var(--text-xs); color: var(--text-lighter); margin-left: auto;">
+              ${isCorrect ? 'Correct +1' : 'Incorrect 0'}
+            </div>
+          </div>
+          <div class="review-question-text">${item.question}</div>
+          <div class="review-options">
+            ${optionsHtml}
+          </div>
+        </div>
+      `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+    
+    window.openModal('reviewModal');
+  };
 });
