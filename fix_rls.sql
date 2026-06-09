@@ -11,6 +11,10 @@ DROP POLICY IF EXISTS "Users can insert their own profile."       ON public.prof
 DROP POLICY IF EXISTS "Users can update own profile."             ON public.profiles;
 DROP POLICY IF EXISTS "Admin can view all profiles"               ON public.profiles;
 DROP POLICY IF EXISTS "Admin can delete profiles"                 ON public.profiles;
+DROP POLICY IF EXISTS "profiles_select_all"                       ON public.profiles;
+DROP POLICY IF EXISTS "profiles_insert_own"                       ON public.profiles;
+DROP POLICY IF EXISTS "profiles_update_own"                       ON public.profiles;
+DROP POLICY IF EXISTS "profiles_delete_admin"                     ON public.profiles;
 
 -- Recreate cleanly
 CREATE POLICY "profiles_select_all"
@@ -35,6 +39,10 @@ DROP POLICY IF EXISTS "Admin can manage subjects"  ON public.subjects;
 DROP POLICY IF EXISTS "Admin can insert subjects"  ON public.subjects;
 DROP POLICY IF EXISTS "Admin can update subjects"  ON public.subjects;
 DROP POLICY IF EXISTS "Admin can delete subjects"  ON public.subjects;
+DROP POLICY IF EXISTS "subjects_select_all"        ON public.subjects;
+DROP POLICY IF EXISTS "subjects_insert_admin"      ON public.subjects;
+DROP POLICY IF EXISTS "subjects_update_admin"      ON public.subjects;
+DROP POLICY IF EXISTS "subjects_delete_admin"      ON public.subjects;
 
 -- Recreate cleanly
 CREATE POLICY "subjects_select_all"
@@ -54,10 +62,13 @@ CREATE POLICY "subjects_delete_admin"
 
 
 -- ── 3. DROP ALL policies on exam_results ────────────────────────
-DROP POLICY IF EXISTS "Users can view their own exam results."  ON public.exam_results;
+DROP POLICY IF EXISTS "Users can view their own exam results."   ON public.exam_results;
 DROP POLICY IF EXISTS "Users can insert their own exam results." ON public.exam_results;
-DROP POLICY IF EXISTS "Admin can view all exam results"         ON public.exam_results;
-DROP POLICY IF EXISTS "Admin can delete exam results"           ON public.exam_results;
+DROP POLICY IF EXISTS "Admin can view all exam results"          ON public.exam_results;
+DROP POLICY IF EXISTS "Admin can delete exam results"            ON public.exam_results;
+DROP POLICY IF EXISTS "exam_results_select"                      ON public.exam_results;
+DROP POLICY IF EXISTS "exam_results_insert_own"                  ON public.exam_results;
+DROP POLICY IF EXISTS "exam_results_delete"                      ON public.exam_results;
 
 -- Recreate cleanly
 CREATE POLICY "exam_results_select"
@@ -84,6 +95,9 @@ DROP POLICY IF EXISTS "Anyone can view scheduled exams"    ON public.scheduled_e
 DROP POLICY IF EXISTS "Admin can manage scheduled exams"   ON public.scheduled_exams;
 DROP POLICY IF EXISTS "Admin can insert scheduled exams"   ON public.scheduled_exams;
 DROP POLICY IF EXISTS "Admin can delete scheduled exams"   ON public.scheduled_exams;
+DROP POLICY IF EXISTS "scheduled_exams_select_all"         ON public.scheduled_exams;
+DROP POLICY IF EXISTS "scheduled_exams_insert_admin"       ON public.scheduled_exams;
+DROP POLICY IF EXISTS "scheduled_exams_delete_admin"       ON public.scheduled_exams;
 
 -- Recreate cleanly
 CREATE POLICY "scheduled_exams_select_all"
@@ -103,6 +117,10 @@ DROP POLICY IF EXISTS "Anyone can view lessons"   ON public.lessons;
 DROP POLICY IF EXISTS "Admin can insert lessons"  ON public.lessons;
 DROP POLICY IF EXISTS "Admin can update lessons"  ON public.lessons;
 DROP POLICY IF EXISTS "Admin can delete lessons"  ON public.lessons;
+DROP POLICY IF EXISTS "lessons_select_all"        ON public.lessons;
+DROP POLICY IF EXISTS "lessons_insert_admin"      ON public.lessons;
+DROP POLICY IF EXISTS "lessons_update_admin"      ON public.lessons;
+DROP POLICY IF EXISTS "lessons_delete_admin"      ON public.lessons;
 
 -- Recreate cleanly
 CREATE POLICY "lessons_select_all"
@@ -190,4 +208,3 @@ CREATE POLICY "Admin can delete lesson materials"
     bucket_id = 'lesson-materials'
     AND (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
   );
-
