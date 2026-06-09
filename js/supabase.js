@@ -120,12 +120,12 @@ async function signInWithGoogle() {
  */
 async function checkAdminAndRedirect(userEmail) {
   const ADMIN_EMAIL = 'atoopase@gmail.com';
+  let isAdmin = false;
+
   try {
     if (userEmail === ADMIN_EMAIL) {
-      window.location.href = 'admin-lessons.html';
-      return;
-    }
-    if (supabaseClient) {
+      isAdmin = true;
+    } else if (supabaseClient) {
       const { data: { user } } = await supabaseClient.auth.getUser();
       if (user) {
         const { data: profile } = await supabaseClient
@@ -134,14 +134,25 @@ async function checkAdminAndRedirect(userEmail) {
           .eq('id', user.id)
           .single();
         if (profile && profile.role === 'admin') {
-          window.location.href = 'admin-lessons.html';
-          return;
+          isAdmin = true;
         }
       }
     }
   } catch (err) {
     console.warn('Role check failed, defaulting to dashboard', err);
   }
+
+  if (isAdmin) {
+    localStorage.setItem('ntc_is_admin', 'true');
+    const viewMode = localStorage.getItem('ntc_view_mode') || 'admin';
+    if (viewMode === 'admin') {
+      window.location.href = 'admin-lessons.html';
+      return;
+    }
+  } else {
+    localStorage.removeItem('ntc_is_admin');
+  }
+
   window.location.href = 'dashboard.html';
 }
 
