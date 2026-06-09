@@ -517,11 +517,16 @@ async function uploadLessonFile(file, subject) {
  * Create a lesson record in the database
  */
 async function createLesson({ subject, title, description, media_url, media_type, content }) {
+  // Map to actual DB column names: topic, subtopic, type
+  // Coerce media_type to one of the allowed values: 'video', 'pdf', 'text'
+  const dbType = ['video', 'pdf', 'text'].includes(media_type) ? media_type
+    : (media_type === 'link' ? 'text' : 'text');
+
   try {
     if (!supabaseClient) throw new Error('Supabase not initialized');
     const { data, error } = await supabaseClient
       .from('lessons')
-      .insert([{ subject, title, description, media_url, media_type, content }])
+      .insert([{ topic: subject, subtopic: title, type: dbType, media_url, content }])
       .select()
       .single();
     if (error) throw error;
@@ -540,10 +545,17 @@ async function getLessons() {
     if (!supabaseClient) throw new Error('Supabase not initialized');
     const { data, error } = await supabaseClient
       .from('lessons')
-      .select('*')
+      .select('id, topic, subtopic, type, media_url, content, created_at')
       .order('created_at', { ascending: false });
     if (error) throw error;
-    return { data, error: null };
+    // Normalize to expected field names used in the UI
+    const normalized = (data || []).map(l => ({
+      ...l,
+      subject: l.topic,
+      title: l.subtopic,
+      media_type: l.type
+    }));
+    return { data: normalized, error: null };
   } catch (error) {
     console.error('Failed to fetch lessons:', error);
     return { data: null, error };

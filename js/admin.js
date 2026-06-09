@@ -229,14 +229,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     filePreview.style.display = 'flex';
   };
 
-  // ─── Detect media type from file ─────────────────────────────────────────────
+  // ─── Detect media type from file (must match DB CHECK: 'video'|'pdf'|'text') ──
   const getMediaType = (file) => {
     if (!file) return 'text';
-    if (file.type.startsWith('image/')) return 'image';
     if (file.type.startsWith('video/')) return 'video';
-    if (file.type.startsWith('audio/')) return 'audio';
     if (file.type === 'application/pdf') return 'pdf';
-    return 'file';
+    // images, audio, documents all stored as generic 'text' type in DB
+    return 'text';
   };
 
   // ─── Publish Lesson Form ──────────────────────────────────────────────────────
