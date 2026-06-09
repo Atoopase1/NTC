@@ -21,9 +21,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ─── Subjects ────────────────────────────────────────────────────────────────
   const loadSubjects = async () => {
-    const { data: subjects } = await window.supaDB.getSubjects();
-    renderSubjectsTable(subjects || []);
-    populateTopicDropdowns(subjects || []);
+    const subjects = await window.supaDB.getSubjects();
+    renderSubjectsTable(Array.isArray(subjects) ? subjects : []);
+    populateTopicDropdowns(Array.isArray(subjects) ? subjects : []);
   };
 
   const renderSubjectsTable = (subjects) => {
