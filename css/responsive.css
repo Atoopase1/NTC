@@ -240,6 +240,49 @@
   .profile-stats {
     justify-content: center;
   }
+  
+  /* Podium / Leaderboard */
+  .podium {
+    gap: var(--space-xs);
+    padding: var(--space-md) 0;
+  }
+  
+  .podium-item {
+    width: 30%; /* Fit 3 items side-by-side */
+  }
+  
+  .podium-avatar {
+    width: 48px;
+    height: 48px;
+    line-height: 48px;
+    font-size: 20px;
+  }
+  
+  .podium-bar {
+    font-size: var(--text-lg);
+  }
+  
+  /* Admin / Tabs */
+  .admin-tabs, .tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 5px;
+  }
+  
+  .admin-tab, .tab-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  
+  /* Remove useless spacing */
+  .dashboard-main {
+    padding: var(--space-sm);
+  }
+  
+  .admin-card {
+    padding: var(--space-md);
+  }
 }
 
 /* === Small Devices (480px - 767px) === */
