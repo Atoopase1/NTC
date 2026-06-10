@@ -431,6 +431,43 @@ async function deleteStudentProfile(userId) {
   }
 }
 
+/**
+ * Block a student until a given ISO date string.
+ * Sets the blocked_until column on the profiles table.
+ */
+async function blockStudent(userId, blockedUntil) {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const { error } = await supabaseClient
+      .from('profiles')
+      .update({ blocked_until: blockedUntil })
+      .eq('id', userId);
+    if (error) throw error;
+    return { error: null };
+  } catch (error) {
+    console.error('Failed to block student:', error);
+    return { error };
+  }
+}
+
+/**
+ * Unblock a student by clearing the blocked_until column.
+ */
+async function unblockStudent(userId) {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const { error } = await supabaseClient
+      .from('profiles')
+      .update({ blocked_until: null })
+      .eq('id', userId);
+    if (error) throw error;
+    return { error: null };
+  } catch (error) {
+    console.error('Failed to unblock student:', error);
+    return { error };
+  }
+}
+
 // --- Scheduled Exams Functions --- //
 
 /**
@@ -687,6 +724,8 @@ window.supaDB = {
   getAllStudents,
   getAllExamResults,
   deleteStudentProfile,
+  blockStudent,
+  unblockStudent,
   getScheduledExams,
   createScheduledExam,
   deleteScheduledExam,

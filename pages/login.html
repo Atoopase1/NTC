@@ -280,6 +280,16 @@
         document.getElementById('googleLoginBtn').disabled = false;
       }
     });
+
+    // Show blocked message if redirected from dashboard
+    const blockedUntil = localStorage.getItem('ntc_blocked_until');
+    if (blockedUntil) {
+      const msg = document.getElementById('statusMsg');
+      msg.className = 'status-msg error';
+      msg.innerHTML = `🚫 <strong>Your account has been blocked</strong> until ${blockedUntil}. Please contact the administrator.`;
+      localStorage.removeItem('ntc_blocked_until');
+      document.getElementById('googleLoginBtn').disabled = true;
+    }
   </script>
   <script>
     if ('serviceWorker' in navigator) {

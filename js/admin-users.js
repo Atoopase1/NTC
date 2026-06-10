@@ -88,13 +88,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         else scoreColor = 'var(--danger)';
       }
 
+      const isBlocked = student.blocked_until && new Date(student.blocked_until) > new Date();
+      const blockedUntilStr = isBlocked
+        ? new Date(student.blocked_until).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+        : null;
+
       html += `
         <tr data-name="${name.toLowerCase()}" data-email="${email.toLowerCase()}">
           <td>
             <div class="student-info">
-              <div class="student-avatar">${initials}</div>
+              <div class="student-avatar" style="${isBlocked ? 'background:rgba(244,63,94,0.12);color:#f43f5e;' : ''}">${initials}</div>
               <div>
-                <div class="student-name">${name}</div>
+                <div class="student-name">${name} ${isBlocked ? `<span class="badge-blocked"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>Blocked until ${blockedUntilStr}</span>` : ''}</div>
                 <div class="student-email">${email}</div>
               </div>
             </div>
@@ -106,12 +111,14 @@ document.addEventListener('DOMContentLoaded', async () => {
           <td style="color:${scoreColor};font-weight:600;">${avgScore}</td>
           <td>
             <div class="table-actions">
-              <button class="btn-icon" title="View Results" onclick="window.viewStudentResults('${student.id}', '${name.replace(/'/g,"\\'")}', '${email}')">
+              <button class="btn-icon" title="View Results" onclick="window.viewStudentResults('${student.id}', '${name.replace(/'/g, "\\'") }', '${email}')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
-              <button class="btn-icon delete" title="Delete Student" onclick="window.deleteStudent('${student.id}', '${name.replace(/'/g,"\\'")}')">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-              </button>
+              ${isBlocked
+                ? `<button class="btn-icon unblock-btn" title="Unblock Student" onclick="window.unblockStudentAction('${student.id}', '${name.replace(/'/g, "\\'")}')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></button>`
+                : `<button class="btn-icon block-btn" title="Block Student" onclick="window.openBlockModal('${student.id}', '${name.replace(/'/g, "\\'")}')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></button>`
+              }
+              <button class="btn-icon delete" title="Delete Student" onclick="window.deleteStudent('${student.id}', '${name.replace(/'/g, "\\'")}')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
             </div>
           </td>
         </tr>
@@ -185,6 +192,70 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('resultsModal').addEventListener('click', (e) => {
     if (e.target === e.currentTarget) e.currentTarget.classList.remove('active');
   });
+
+  // ─── Block Student ────────────────────────────────────────────────────────────
+  let blockTargetId = null;
+  let selectedDays = null;
+
+  window.openBlockModal = (userId, name) => {
+    blockTargetId = userId;
+    selectedDays = null;
+    document.getElementById('blockModalStudentName').textContent = name;
+    document.getElementById('customDateSection').style.display = 'none';
+    document.getElementById('blockUntilDate').value = '';
+    document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('blockModal').classList.add('active');
+  };
+
+  document.querySelectorAll('.duration-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedDays = parseInt(btn.getAttribute('data-days'));
+      const customSection = document.getElementById('customDateSection');
+      customSection.style.display = selectedDays === 0 ? '' : 'none';
+    });
+  });
+
+  const closeBlockModal = () => {
+    document.getElementById('blockModal').classList.remove('active');
+    blockTargetId = null;
+    selectedDays = null;
+  };
+
+  document.getElementById('closeBlockModal').addEventListener('click', closeBlockModal);
+  document.getElementById('cancelBlockBtn').addEventListener('click', closeBlockModal);
+  document.getElementById('blockModal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeBlockModal();
+  });
+
+  document.getElementById('confirmBlockBtn').addEventListener('click', async () => {
+    if (!blockTargetId) return;
+    let blockedUntil;
+    if (selectedDays === null) { window.showToast('Please select a block duration.', 'error'); return; }
+    if (selectedDays === 0) {
+      const dateVal = document.getElementById('blockUntilDate').value;
+      if (!dateVal) { window.showToast('Please pick a date.', 'error'); return; }
+      blockedUntil = new Date(dateVal + 'T23:59:59').toISOString();
+    } else {
+      const until = new Date();
+      until.setDate(until.getDate() + selectedDays);
+      blockedUntil = until.toISOString();
+    }
+    const { error } = await window.supaDB.blockStudent(blockTargetId, blockedUntil);
+    if (error) { window.showToast('Failed to block student: ' + error.message, 'error'); return; }
+    window.showToast('Student blocked successfully.', 'success');
+    closeBlockModal();
+    loadStudents();
+  });
+
+  window.unblockStudentAction = async (userId, name) => {
+    if (!confirm(`Unblock "${name}" and restore their access?`)) return;
+    const { error } = await window.supaDB.unblockStudent(userId);
+    if (error) { window.showToast('Failed to unblock: ' + error.message, 'error'); return; }
+    window.showToast(`"${name}" has been unblocked.`, 'success');
+    loadStudents();
+  };
 
   // ─── Delete Student ───────────────────────────────────────────────────────────
   window.deleteStudent = async (userId, name) => {

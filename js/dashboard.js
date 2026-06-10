@@ -30,6 +30,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.supaDB && window.supaDB.getExamHistory && window.supaAuth && window.supaAuth.getCurrentUser) {
       const user = await window.supaAuth.getCurrentUser();
       if (user) {
+        // Check if user is blocked
+        const profile = window.supaDB.getProfile ? await window.supaDB.getProfile(user.id) : null;
+        if (profile && profile.blocked_until && new Date(profile.blocked_until) > new Date()) {
+          const until = new Date(profile.blocked_until).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+          if (window.supaAuth.signOut) await window.supaAuth.signOut();
+          localStorage.setItem('ntc_blocked_until', until);
+          window.location.href = 'login.html';
+          return;
+        }
         history = await window.supaDB.getExamHistory(user.id);
       }
     }
