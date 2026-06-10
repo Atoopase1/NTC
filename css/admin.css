@@ -281,17 +281,13 @@
   transform: none !important;
 }
 
-/* Admin tabs: always visible and sticky so they scroll with the page nicely */
+/* Admin tabs: sticky so they stay accessible when scrolling */
 .admin-tabs {
   position: sticky;
   top: var(--navbar-height, 70px);
   z-index: 30;
   background: var(--bg);
   padding-top: var(--space-sm);
-  margin-left: calc(-1 * var(--space-xl));
-  margin-right: calc(-1 * var(--space-xl));
-  padding-left: var(--space-xl);
-  padding-right: var(--space-xl);
 }
 
 /* At tablet/desktop sizes, force admin sidebar to remain visible

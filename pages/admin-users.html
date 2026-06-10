@@ -21,6 +21,10 @@
   <meta name="apple-mobile-web-app-title" content="NTC Prep">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <style>
+    @media (min-width: 768px) {
+      #sidebar.admin-sidebar { transform: translateX(0) !important; z-index: 10 !important; }
+      .dashboard-main { margin-left: 260px !important; }
+    }
     .student-avatar {
       width: 36px; height: 36px; border-radius: 50%;
       background: var(--primary-ghost); color: var(--primary);
