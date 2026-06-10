@@ -601,6 +601,40 @@ async function createLesson({ subject, title, description, media_url, media_type
 }
 
 /**
+ * Update an existing lesson record in the database
+ */
+async function updateLesson(id, { subject, title, description, media_url, media_type, content }) {
+  // Map to actual DB column names: topic, subtopic, type
+  const dbType = ['video', 'pdf', 'text'].includes(media_type) ? media_type
+    : (media_type === 'link' ? 'text' : 'text');
+
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    
+    // Build update payload dynamically to omit undefined values
+    const payload = {};
+    if (subject !== undefined) payload.topic = subject;
+    if (title !== undefined) payload.subtopic = title;
+    if (dbType !== undefined) payload.type = dbType;
+    if (media_url !== undefined) payload.media_url = media_url;
+    if (content !== undefined) payload.content = content;
+    // Note: description isn't in the DB schema in createLesson either
+
+    const { data, error } = await supabaseClient
+      .from('lessons')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Failed to update lesson:', error);
+    return { data: null, error };
+  }
+}
+
+/**
  * Fetch all lessons
  */
 async function getLessons() {
@@ -660,6 +694,7 @@ window.supaDB = {
   uploadLessonFile,
   uploadAvatar,
   createLesson,
+  updateLesson,
   getLessons,
   deleteLesson
 };

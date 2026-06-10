@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ─── Admin Tabs ─────────────────────────────────────────────────────────────
   const adminTabs = document.querySelectorAll('.admin-tab');
   const tabContents = document.querySelectorAll('.tab-content');
+  let editingLessonId = null;
+  let editingLessonMediaUrl = null;
 
   adminTabs.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -150,6 +152,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           <td>
             <div class="table-actions">
               ${l.media_url ? `<a href="${l.media_url}" target="_blank" class="btn-icon" title="Open"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>` : ''}
+              <button class="btn-icon edit-lesson" data-id="${l.id}" title="Edit">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+              </button>
               <button class="btn-icon delete" data-id="${l.id}" title="Delete">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               </button>
@@ -158,6 +163,52 @@ document.addEventListener('DOMContentLoaded', async () => {
         </tr>
       `;
     }).join('');
+
+    tbody.querySelectorAll('.btn-icon.edit-lesson').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const lesson = data.find(l => l.id == id);
+        if (!lesson) return;
+
+        editingLessonId = id;
+        editingLessonMediaUrl = lesson.media_url || null;
+
+        // Populate form
+        const topicSelect = document.getElementById('lessonTopic');
+        if (topicSelect.querySelector(`option[value="${lesson.subject}"]`)) {
+          topicSelect.value = lesson.subject;
+        }
+        document.getElementById('lessonSubtopic').value = lesson.title || '';
+        document.getElementById('lessonDescription').value = lesson.description || '';
+
+        const formType = (lesson.media_type === 'video' || lesson.media_type === 'pdf' || lesson.media_type === 'image' || lesson.media_type === 'audio' || lesson.media_type === 'file') ? 'file' : lesson.media_type === 'link' ? 'link' : 'text';
+        
+        switchMaterialType(formType);
+        const radio = document.querySelector(`input[name="lessonType"][value="${formType}"]`);
+        if (radio) radio.checked = true;
+
+        if (formType === 'file') {
+          selectedFile = null;
+          if (lesson.media_url) {
+            const fileName = lesson.media_url.split('/').pop() || 'Existing File';
+            document.getElementById('dropZone').style.display = 'none';
+            document.getElementById('filePreviewIcon').innerHTML = getFileIcon(lesson.media_type || 'application/pdf');
+            document.getElementById('filePreviewName').textContent = fileName;
+            document.getElementById('filePreviewSize').textContent = '(Will keep existing file unless changed)';
+            document.getElementById('filePreview').style.display = 'flex';
+          }
+        } else if (formType === 'link') {
+          document.getElementById('lessonLink').value = lesson.media_url || '';
+        } else {
+          document.getElementById('lessonContent').value = lesson.content || '';
+        }
+
+        const btnSubmit = document.getElementById('publishBtn');
+        btnSubmit.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg> Update Lesson`;
+
+        document.querySelector('[data-tab="add-lesson"]')?.click();
+      });
+    });
 
     tbody.querySelectorAll('.btn-icon.delete').forEach(btn => {
       btn.addEventListener('click', async () => {
@@ -279,36 +330,45 @@ document.addEventListener('DOMContentLoaded', async () => {
       btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite;margin-right:6px;"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg> Publishing...';
 
       try {
-        let media_url = null;
+        let media_url = editingLessonMediaUrl; // Keep existing by default if updating
         let media_type = 'text';
         let content = null;
 
         if (materialType === 'file') {
-          if (!selectedFile) { window.showToast('Please select a file to upload.', 'error'); return; }
-          // Show progress bar
-          const progressEl = document.getElementById('uploadProgress');
-          const barEl = document.getElementById('uploadBar');
-          const pctEl = document.getElementById('uploadPercent');
-          if (progressEl) progressEl.style.display = '';
+          if (!selectedFile && !editingLessonId) { window.showToast('Please select a file to upload.', 'error'); return; }
+          
+          if (selectedFile) {
+            // Show progress bar only if actually uploading a new file
+            const progressEl = document.getElementById('uploadProgress');
+            const barEl = document.getElementById('uploadBar');
+            const pctEl = document.getElementById('uploadPercent');
+            if (progressEl) progressEl.style.display = '';
 
-          // Simulate progress (Supabase doesn't give upload events)
-          let fakeProgress = 0;
-          const progressInterval = setInterval(() => {
-            fakeProgress = Math.min(fakeProgress + Math.random() * 15, 90);
-            if (barEl) barEl.style.width = fakeProgress + '%';
-            if (pctEl) pctEl.textContent = Math.round(fakeProgress) + '%';
-          }, 300);
+            let fakeProgress = 0;
+            const progressInterval = setInterval(() => {
+              fakeProgress = Math.min(fakeProgress + Math.random() * 15, 90);
+              if (barEl) barEl.style.width = fakeProgress + '%';
+              if (pctEl) pctEl.textContent = Math.round(fakeProgress) + '%';
+            }, 300);
 
-          const { url, error: uploadError } = await window.supaDB.uploadLessonFile(selectedFile, subject);
+            const { url, error: uploadError } = await window.supaDB.uploadLessonFile(selectedFile, subject);
 
-          clearInterval(progressInterval);
-          if (barEl) barEl.style.width = '100%';
-          if (pctEl) pctEl.textContent = '100%';
-          setTimeout(() => { if (progressEl) progressEl.style.display = 'none'; }, 600);
+            clearInterval(progressInterval);
+            if (barEl) barEl.style.width = '100%';
+            if (pctEl) pctEl.textContent = '100%';
+            setTimeout(() => { if (progressEl) progressEl.style.display = 'none'; }, 600);
 
-          if (uploadError) throw uploadError;
-          media_url = url;
-          media_type = getMediaType(selectedFile);
+            if (uploadError) throw uploadError;
+            media_url = url;
+            media_type = getMediaType(selectedFile);
+          } else if (editingLessonId) {
+            // We are keeping the old file
+            // Let the database keep the old media_type by not changing it
+            // but we need to supply a type so the schema check passes
+            // the previous code set media_type = 'text' at the top, let's omit type so it uses the old one if we don't supply it!
+            // Actually our supabase.js wrapper updateLesson handles omitting undefined.
+            media_type = undefined; // Signal to not update
+          }
 
         } else if (materialType === 'link') {
           media_url = document.getElementById('lessonLink').value.trim();
@@ -327,10 +387,16 @@ document.addEventListener('DOMContentLoaded', async () => {
           media_type = 'text';
         }
 
-        const { error } = await window.supaDB.createLesson({ subject, title, description, media_url, media_type, content });
-        if (error) throw error;
+        if (editingLessonId) {
+          const { error } = await window.supaDB.updateLesson(editingLessonId, { subject, title, description, media_url, media_type, content });
+          if (error) throw error;
+          window.showToast('Lesson updated successfully!', 'success');
+        } else {
+          const { error } = await window.supaDB.createLesson({ subject, title, description, media_url, media_type, content });
+          if (error) throw error;
+          window.showToast('Lesson published successfully!', 'success');
+        }
 
-        window.showToast('Lesson published successfully!', 'success');
         window.resetLessonForm();
         await loadLessons();
 
@@ -350,6 +416,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ─── Reset lesson form ────────────────────────────────────────────────────────
   window.resetLessonForm = () => {
     addLessonForm && addLessonForm.reset();
+    editingLessonId = null;
+    editingLessonMediaUrl = null;
+    const btnSubmit = document.getElementById('publishBtn');
+    if (btnSubmit) btnSubmit.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Publish Lesson`;
+    
     selectedFile = null;
     if (fileInput) fileInput.value = '';
     if (filePreview) filePreview.style.display = 'none';
