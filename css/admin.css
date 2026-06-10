@@ -273,3 +273,53 @@
 .badge-image  { background: rgba(34,197,94,0.1);   color: #16a34a; }
 .badge-audio  { background: rgba(168,85,247,0.1);  color: #9333ea; }
 .badge-doc    { background: rgba(59,130,246,0.1);  color: #2563eb; }
+/* ── Admin Layout Fixes ──────────────────────────── */
+
+/*  Admin header should always be visible — never wait for intersection observer */
+.admin-header {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* Admin tabs: always visible and sticky so they scroll with the page nicely */
+.admin-tabs {
+  position: sticky;
+  top: var(--navbar-height, 70px);
+  z-index: 30;
+  background: var(--bg);
+  padding-top: var(--space-sm);
+  margin-left: calc(-1 * var(--space-xl));
+  margin-right: calc(-1 * var(--space-xl));
+  padding-left: var(--space-xl);
+  padding-right: var(--space-xl);
+}
+
+/* At tablet/desktop sizes, force admin sidebar to remain visible
+   and offset the main content correctly regardless of responsive overrides */
+@media (min-width: 768px) {
+  .admin-sidebar {
+    transform: translateX(0) !important;
+    z-index: 10 !important;
+  }
+
+  /* Target main that follows an admin sidebar */
+  .admin-sidebar ~ .dashboard-main {
+    margin-left: 260px !important;
+  }
+}
+
+/* On small mobile (<768px) the sidebar slides in/out via hamburger */
+@media (max-width: 767px) {
+  .admin-sidebar {
+    transform: translateX(-100%);
+    z-index: 1050 !important;
+  }
+
+  .admin-sidebar.open {
+    transform: translateX(0) !important;
+  }
+
+  .admin-sidebar ~ .dashboard-main {
+    margin-left: 0 !important;
+  }
+}
