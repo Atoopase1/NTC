@@ -97,6 +97,7 @@
 /* Main Content */
 .dashboard-main {
   flex: 1;
+  min-width: 0;
   margin-left: 260px;
   padding: var(--space-xl);
   min-height: calc(100vh - var(--navbar-height));
