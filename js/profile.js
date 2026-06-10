@@ -242,24 +242,70 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Avatar Upload (Mock visual effect)
+  // Avatar Upload
   if (avatarUpload) {
-    avatarUpload.addEventListener('change', (e) => {
+    avatarUpload.addEventListener('change', async (e) => {
       if (e.target.files && e.target.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const initials = document.getElementById('profileAvatarInitials');
-          const avatarContainer = initials.parentElement;
+        const file = e.target.files[0];
+        const initials = document.getElementById('profileAvatarInitials');
+        const avatarContainer = initials.parentElement;
+        
+        // Show loading state
+        window.showToast('Uploading profile photo...', 'info');
+        
+        try {
+          let newUrl = null;
           
-          // Remove initials and set background image
-          initials.style.display = 'none';
-          avatarContainer.style.backgroundImage = `url('${e.target.result}')`;
-          avatarContainer.style.backgroundSize = 'cover';
-          avatarContainer.style.backgroundPosition = 'center';
+          if (window.supaAuth && window.supaDB && window.supaDB.uploadAvatar) {
+            const user = await window.supaAuth.getCurrentUser();
+            if (user) {
+              const { url, error } = await window.supaDB.uploadAvatar(user.id, file);
+              if (error) throw error;
+              
+              // Update profile in DB
+              await window.supaDB.updateProfile(user.id, { avatar_url: url });
+              newUrl = url;
+            }
+          } else {
+            // Mock upload
+            const reader = new FileReader();
+            newUrl = await new Promise((resolve) => {
+              reader.onload = (ev) => resolve(ev.target.result);
+              reader.readAsDataURL(file);
+            });
+            const storedUser = JSON.parse(localStorage.getItem('ntc_user') || '{}');
+            storedUser.avatar_url = newUrl;
+            localStorage.setItem('ntc_user', JSON.stringify(storedUser));
+          }
           
-          window.showToast('Profile photo updated', 'success');
+          if (newUrl) {
+            // Update profile page avatar
+            initials.style.display = 'none';
+            avatarContainer.style.backgroundImage = `url('${newUrl}')`;
+            avatarContainer.style.backgroundSize = 'cover';
+            avatarContainer.style.backgroundPosition = 'center';
+            avatarContainer.style.border = '2px solid var(--primary)';
+            
+            // Update all navbar avatars
+            const allAvatars = document.querySelectorAll('.avatar');
+            allAvatars.forEach(av => {
+              if (av !== avatarContainer && !av.closest('.user-dropdown-menu')) {
+                const initSpan = av.querySelector('span') || av;
+                if (initSpan.tagName === 'SPAN' || initSpan.classList.contains('user-avatar-initials')) {
+                  initSpan.textContent = '';
+                }
+                av.style.backgroundImage = `url('${newUrl}')`;
+                av.style.backgroundSize = 'cover';
+                av.style.backgroundPosition = 'center';
+              }
+            });
+            
+            window.showToast('Profile photo updated', 'success');
+          }
+        } catch (err) {
+          console.error(err);
+          window.showToast('Failed to upload photo', 'error');
         }
-        reader.readAsDataURL(e.target.files[0]);
       }
     });
   }

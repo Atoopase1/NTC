@@ -110,11 +110,12 @@
   /* Dashboard */
   .sidebar {
     transform: translateX(-100%);
-    z-index: var(--z-overlay);
+    z-index: 1050 !important;
   }
 
   .sidebar.open {
     transform: translateX(0);
+    z-index: 1050 !important;
   }
 
   .sidebar-overlay.active {
@@ -401,11 +402,12 @@
   /* Dashboard */
   .sidebar {
     transform: translateX(-100%);
-    z-index: var(--z-overlay);
+    z-index: 1050 !important;
   }
 
   .sidebar.open {
     transform: translateX(0);
+    z-index: 1050 !important;
   }
 
   .sidebar-overlay.active {
@@ -558,11 +560,12 @@
   /* Dashboard */
   .sidebar {
     transform: translateX(-100%);
-    z-index: var(--z-overlay);
+    z-index: 1050 !important;
   }
 
   .sidebar.open {
     transform: translateX(0);
+    z-index: 1050 !important;
   }
 
   .sidebar-overlay.active {

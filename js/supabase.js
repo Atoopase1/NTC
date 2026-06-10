@@ -530,6 +530,32 @@ async function uploadLessonFile(file, subject) {
 }
 
 /**
+ * Upload an avatar image to Supabase Storage
+ */
+async function uploadAvatar(userId, file) {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const ext = file.name.split('.').pop();
+    const filePath = `avatars/${userId}_${Date.now()}.${ext}`;
+
+    const { data, error } = await supabaseClient.storage
+      .from('lesson-materials')
+      .upload(filePath, file, { contentType: file.type, upsert: true });
+
+    if (error) throw error;
+
+    const { data: { publicUrl } } = supabaseClient.storage
+      .from('lesson-materials')
+      .getPublicUrl(filePath);
+
+    return { url: publicUrl, error: null };
+  } catch (error) {
+    console.error('Avatar upload failed:', error);
+    return { url: null, error };
+  }
+}
+
+/**
  * Create a lesson record in the database
  */
 async function createLesson({ subject, title, description, media_url, media_type, content }) {
@@ -610,6 +636,7 @@ window.supaDB = {
   deleteScheduledExam,
   getExamRankings,
   uploadLessonFile,
+  uploadAvatar,
   createLesson,
   getLessons,
   deleteLesson
