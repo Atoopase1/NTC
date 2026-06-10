@@ -333,6 +333,27 @@ async function addSubject(name) {
 }
 
 /**
+ * Update an existing subject
+ */
+async function updateSubject(id, name) {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const { data, error } = await supabaseClient
+      .from('subjects')
+      .update({ name })
+      .eq('id', id)
+      .select()
+      .single();
+      
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Failed to update subject:', error);
+    return { data: null, error };
+  }
+}
+
+/**
  * Delete a subject
  */
 async function deleteSubject(id) {
@@ -627,6 +648,7 @@ window.supaDB = {
   getExamHistory,
   getSubjects,
   addSubject,
+  updateSubject,
   deleteSubject,
   getAllStudents,
   getAllExamResults,
