@@ -86,7 +86,7 @@ async function signOut() {
   await supabaseClient.auth.signOut();
   localStorage.removeItem('ntc_is_admin');
   localStorage.removeItem('ntc_view_mode');
-  window.location.href = '../pages/login.html';
+  window.location.href = '/pages/login.html';
 }
 
 /**
@@ -105,9 +105,8 @@ async function signInWithGoogle() {
   if (!supabaseClient) return;
   
   // Redirect to the auth callback page so we can check admin role after login
-  const redirectTo = window.location.origin.includes('localhost') || window.location.protocol === 'file:'
-    ? window.location.href.replace(/pages\/.*$/, 'pages/auth-callback.html')  // local file
-    : window.location.origin + '/pages/auth-callback.html';
+  // Always use a proper http/https URL — Google OAuth does not support file:// redirects
+  const redirectTo = window.location.origin + '/pages/auth-callback.html';
 
   const { error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
@@ -128,13 +127,15 @@ async function checkAdminAndRedirect(userEmail) {
     if (userEmail === ADMIN_EMAIL) {
       isAdmin = true;
     } else if (supabaseClient) {
-      const { data: { user } } = await supabaseClient.auth.getUser();
+      const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+      if (userError) console.warn('getUser error:', userError);
       if (user) {
-        const { data: profile } = await supabaseClient
+        const { data: profile, error: profileError } = await supabaseClient
           .from('profiles')
           .select('role')
           .eq('id', user.id)
           .single();
+        if (profileError) console.warn('Profile role fetch error (non-fatal):', profileError.message);
         if (profile && profile.role === 'admin') {
           isAdmin = true;
         }
@@ -148,14 +149,14 @@ async function checkAdminAndRedirect(userEmail) {
     localStorage.setItem('ntc_is_admin', 'true');
     const viewMode = localStorage.getItem('ntc_view_mode') || 'admin';
     if (viewMode === 'admin') {
-      window.location.href = 'admin-lessons.html';
+      window.location.href = '/pages/admin-lessons.html';
       return;
     }
   } else {
     localStorage.removeItem('ntc_is_admin');
   }
 
-  window.location.href = 'dashboard.html';
+  window.location.href = '/pages/dashboard.html';
 }
 
 // --- Database Functions --- //

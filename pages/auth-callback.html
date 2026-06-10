@@ -66,9 +66,10 @@
     (async () => {
       try {
         // Wait a moment for Supabase to process the OAuth tokens from the URL hash
-        await new Promise(resolve => setTimeout(resolve, 800));
+        await new Promise(resolve => setTimeout(resolve, 1200));
 
         if (!supabaseClient) {
+          console.error('Supabase client not initialized');
           document.getElementById('errorMsg').style.display = 'block';
           return;
         }
@@ -76,13 +77,22 @@
         // Supabase automatically reads the tokens from the URL hash
         const { data: { session }, error } = await supabaseClient.auth.getSession();
 
-        if (error || !session) {
+        if (error) {
+          console.error('Session error:', error.message);
+          document.getElementById('errorMsg').style.display = 'block';
+          localStorage.removeItem('ntc_is_admin');
+          return;
+        }
+
+        if (!session) {
+          console.warn('No session found after OAuth callback. URL hash:', window.location.hash);
           document.getElementById('errorMsg').style.display = 'block';
           localStorage.removeItem('ntc_is_admin');
           return;
         }
 
         const userEmail = session.user.email;
+        console.log('Auth callback: signed in as', userEmail);
 
         // Ensure profile exists (in case db trigger is disabled/fails)
         if (window.supaDB && window.supaDB.createProfile) {
@@ -95,7 +105,7 @@
           await window.supaAuth.checkAdminAndRedirect(userEmail);
         } else {
           // Fallback: just go to dashboard
-          window.location.href = 'dashboard.html';
+          window.location.href = '/pages/dashboard.html';
         }
 
       } catch (err) {
