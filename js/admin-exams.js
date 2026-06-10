@@ -5,7 +5,11 @@
 document.addEventListener('DOMContentLoaded', async () => {
   if (!window.supaDB) return;
 
-  // Admin page — auth guard is handled by auth.js
+  // Protect route
+  if (localStorage.getItem('ntc_is_admin') !== 'true') {
+    window.location.href = 'dashboard.html';
+    return;
+  }
 
   const scheduleExamForm = document.getElementById('scheduleExamForm');
   const examSubjectSelect = document.getElementById('examSubject');

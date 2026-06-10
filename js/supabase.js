@@ -84,6 +84,8 @@ async function signIn(email, password) {
 async function signOut() {
   if (!supabaseClient) return;
   await supabaseClient.auth.signOut();
+  localStorage.removeItem('ntc_is_admin');
+  localStorage.removeItem('ntc_view_mode');
   window.location.href = '../pages/login.html';
 }
 

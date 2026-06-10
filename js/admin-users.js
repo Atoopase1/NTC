@@ -6,6 +6,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!window.supaDB) return;
 
   // Protect route
+  if (localStorage.getItem('ntc_is_admin') !== 'true') {
+    window.location.href = 'dashboard.html';
+    return;
+  }
   if (window.supaAuth && window.supaAuth.checkAdminAndRedirect) {
     const user = await window.supaAuth.getCurrentUser();
     if (!user) { window.location.href = 'login.html'; return; }

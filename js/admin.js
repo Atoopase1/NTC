@@ -5,6 +5,11 @@
 
 document.addEventListener('DOMContentLoaded', async () => {
 
+  // Protect route
+  if (localStorage.getItem('ntc_is_admin') !== 'true') {
+    window.location.href = 'dashboard.html';
+    return;
+  }
   // ─── Admin Tabs ─────────────────────────────────────────────────────────────
   const adminTabs = document.querySelectorAll('.admin-tab');
   const tabContents = document.querySelectorAll('.tab-content');

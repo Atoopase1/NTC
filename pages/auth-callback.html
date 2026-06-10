@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -78,6 +78,7 @@
 
         if (error || !session) {
           document.getElementById('errorMsg').style.display = 'block';
+          localStorage.removeItem('ntc_is_admin');
           return;
         }
 
@@ -100,6 +101,7 @@
       } catch (err) {
         console.error('Auth callback error:', err);
         document.getElementById('errorMsg').style.display = 'block';
+        localStorage.removeItem('ntc_is_admin');
       }
     })();
   </script>
