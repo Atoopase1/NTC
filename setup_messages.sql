@@ -18,24 +18,22 @@ CREATE POLICY "Anyone can view messages"
   ON public.messages FOR SELECT
   USING ( true );
 
--- Authenticated users can insert replies (parent_id is not null)
--- Allow admin to insert replies too
+-- Any logged-in user can insert a reply (parent_id IS NOT NULL)
 DROP POLICY IF EXISTS "Authenticated users can insert replies" ON public.messages;
 CREATE POLICY "Authenticated users can insert replies"
   ON public.messages FOR INSERT
   WITH CHECK (
-    auth.uid() = sender_id 
-    AND parent_id IS NOT NULL 
-    AND auth.role() = 'authenticated'
+    auth.uid() = sender_id
+    AND parent_id IS NOT NULL
+    AND auth.uid() IS NOT NULL
   );
 
--- Only admin can insert top-level announcements (parent_id is null)
+-- Admin can insert top-level announcements (parent_id IS NULL)
 DROP POLICY IF EXISTS "Admin can insert announcements" ON public.messages;
 CREATE POLICY "Admin can insert announcements"
   ON public.messages FOR INSERT
   WITH CHECK (
-    auth.uid() = sender_id 
-    AND parent_id IS NULL
+    auth.uid() = sender_id
     AND (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
   );
 

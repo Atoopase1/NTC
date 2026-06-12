@@ -529,12 +529,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!input.value.trim()) return;
       
       const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
-      if (!client) return;
+      if (!client) { window.showToast('No database connection', 'error'); return; }
 
       const user = await window.supaAuth.getCurrentUser();
-      if (!user || user.email !== 'atoopase@gmail.com') return;
+      if (!user) { window.showToast('Please login first', 'error'); return; }
+      if (user.email !== 'atoopase@gmail.com') { window.showToast('Only admin can post announcements', 'error'); return; }
 
-      const submitBtn = newAnnouncementForm.querySelector('button');
+      const submitBtn = newAnnouncementForm.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
 
       try {
@@ -542,18 +543,19 @@ document.addEventListener('DOMContentLoaded', () => {
           .from('messages')
           .insert({
             sender_id: user.id,
-            content: input.value.trim(),
-            parent_id: null // Top-level announcement
+            content: input.value.trim()
+            // parent_id intentionally omitted (defaults to null in DB)
           });
 
         if (error) throw error;
         
         input.value = '';
+        window.showToast('Announcement posted!', 'success');
         loadNotifications();
         
       } catch (err) {
         console.error('Post error:', err);
-        window.showToast('Failed to post announcement', 'error');
+        window.showToast(`Failed to post: ${err.message || 'Unknown error'}`, 'error');
       } finally {
         submitBtn.disabled = false;
       }
