@@ -3208,6 +3208,47 @@ p {
   border-top-right-radius: 4px;
 }
 
+/* Message action buttons (edit / delete) */
+.msg-header {
+  position: relative;
+}
+
+.msg-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.msg-content:hover .msg-actions {
+  opacity: 1;
+}
+
+.msg-action-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 4px;
+  color: var(--text-lighter);
+  display: flex;
+  align-items: center;
+  transition: all var(--transition-fast);
+}
+
+.msg-action-btn:hover {
+  background: var(--surface-hover);
+}
+
+.msg-action-btn.edit:hover {
+  color: var(--primary);
+}
+
+.msg-action-btn.delete:hover {
+  color: var(--danger);
+}
+
 .msg-reactions {
   display: flex;
   gap: 12px;

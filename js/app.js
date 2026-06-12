@@ -578,9 +578,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (error) throw error;
 
-      const { data: allReactions } = await client.from('message_reactions').select('*');
+      // Fetch reactions - non-fatal if table doesn't exist yet
+      const reactionsResult = await client.from('message_reactions').select('*').then(r => r).catch(() => ({ data: null }));
+      const allReactions = reactionsResult.data || null;
       const currentUser = await window.supaAuth.getCurrentUser();
       const currentUserId = currentUser ? currentUser.id : null;
+      const isAdmin = currentUser && currentUser.email === 'atoopase@gmail.com';
 
       function getReactionsHtml(msgId) {
         if (!allReactions) return '';
@@ -602,6 +605,21 @@ document.addEventListener('DOMContentLoaded', () => {
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-2"></path></svg>
               <span>${dislikesCount}</span>
             </button>
+          </div>
+        `;
+      }
+
+      function getActionsHtml(msgId, msgSenderId) {
+        const isOwner = currentUserId && msgSenderId === currentUserId;
+        if (!isOwner && !isAdmin) return '';
+        return `
+          <div class="msg-actions">
+            ${isOwner ? `<button class="msg-action-btn edit" onclick="window.handleEditMessage('${msgId}')" title="Edit">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>` : ''}
+            ${isOwner || isAdmin ? `<button class="msg-action-btn delete" onclick="window.handleDeleteMessage('${msgId}')" title="Delete">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button>` : ''}
           </div>
         `;
       }
@@ -638,14 +656,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const rTime = new Date(r.created_at).toLocaleString();
             const rAvatar = r.sender_avatar ? `<img src="${r.sender_avatar}" alt="Avatar">` : (r.sender_name ? r.sender_name.charAt(0) : 'U');
             return `
-              <div class="msg-item msg-reply">
+              <div class="msg-item msg-reply" data-msg-id="${r.id}">
                 <div class="msg-avatar">${rAvatar}</div>
                 <div class="msg-content">
                   <div class="msg-header">
                     <span class="msg-name">${r.sender_name || 'User'}</span>
                     <span class="msg-time">${rTime}</span>
+                    ${getActionsHtml(r.id, r.sender_id)}
                   </div>
-                  <div class="msg-text">${r.content}</div>
+                  <div class="msg-text" id="msg-text-${r.id}">${r.content}</div>
                   ${getReactionsHtml(r.id)}
                 </div>
               </div>
@@ -654,15 +673,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         html += `
-          <div class="msg-thread">
+          <div class="msg-thread" data-msg-id="${ann.id}">
             <div class="msg-item">
               <div class="msg-avatar">${avatar}</div>
               <div class="msg-content">
                 <div class="msg-header">
                   <span class="msg-name">${ann.sender_name}</span>
                   <span class="msg-time">${timeStr}</span>
+                  ${getActionsHtml(ann.id, ann.sender_id)}
                 </div>
-                <div class="msg-text">${ann.content}</div>
+                <div class="msg-text" id="msg-text-${ann.id}">${ann.content}</div>
                 ${getReactionsHtml(ann.id)}
               </div>
             </div>
@@ -688,6 +708,38 @@ document.addEventListener('DOMContentLoaded', () => {
     currentAnnouncementId = id;
     notificationFooter.style.display = 'block';
     replyInput.focus();
+  };
+
+  window.handleDeleteMessage = async (msgId) => {
+    if (!confirm('Are you sure you want to delete this message?')) return;
+    const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+    if (!client) return;
+    const { error } = await client.from('messages').delete().eq('id', msgId);
+    if (error) {
+      console.error('Delete error:', error);
+      window.showToast('Failed to delete message', 'error');
+    } else {
+      window.showToast('Message deleted', 'success');
+      loadNotifications();
+    }
+  };
+
+  window.handleEditMessage = async (msgId) => {
+    const textEl = document.getElementById(`msg-text-${msgId}`);
+    if (!textEl) return;
+    const currentText = textEl.textContent.trim();
+    const newText = prompt('Edit your message:', currentText);
+    if (!newText || newText.trim() === currentText) return;
+    const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+    if (!client) return;
+    const { error } = await client.from('messages').update({ content: newText.trim() }).eq('id', msgId);
+    if (error) {
+      console.error('Edit error:', error);
+      window.showToast('Failed to edit message', 'error');
+    } else {
+      window.showToast('Message updated', 'success');
+      loadNotifications();
+    }
   };
 
   window.handleReaction = async (msgId, isLike) => {

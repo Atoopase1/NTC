@@ -39,7 +39,20 @@ CREATE POLICY "Admin can insert announcements"
     AND (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
   );
 
--- Admin can delete messages
+-- Users can update their own messages
+DROP POLICY IF EXISTS "Users can update own messages" ON public.messages;
+CREATE POLICY "Users can update own messages"
+  ON public.messages FOR UPDATE
+  USING ( auth.uid() = sender_id )
+  WITH CHECK ( auth.uid() = sender_id );
+
+-- Users can delete their own messages
+DROP POLICY IF EXISTS "Users can delete own messages" ON public.messages;
+CREATE POLICY "Users can delete own messages"
+  ON public.messages FOR DELETE
+  USING ( auth.uid() = sender_id );
+
+-- Admin can delete anyone's messages
 DROP POLICY IF EXISTS "Admin can delete messages" ON public.messages;
 CREATE POLICY "Admin can delete messages"
   ON public.messages FOR DELETE
