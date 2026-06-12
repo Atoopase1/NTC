@@ -459,11 +459,17 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!document.getElementById('notificationPanel')) {
     const panelHtml = `
       <div class="notification-panel" id="notificationPanel">
-        <div class="notification-header">
-          <h3 style="margin: 0; font-size: var(--text-lg);">Announcements</h3>
-          <button class="viewer-btn" id="closeNotificationBtn" aria-label="Close Notifications">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </button>
+        <div class="notification-header" style="flex-direction: column; align-items: stretch; gap: var(--space-sm);">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: var(--text-lg);">Announcements</h3>
+            <button class="viewer-btn" id="closeNotificationBtn" aria-label="Close Notifications">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <form id="newAnnouncementForm" style="display: none; gap: 8px; margin-top: 8px;">
+            <input type="text" id="newAnnouncementInput" class="form-input" placeholder="Type a new announcement..." style="flex: 1; border-radius: 20px; padding: 8px 12px; font-size: 14px;" required>
+            <button type="submit" class="btn btn-primary" style="border-radius: 20px; padding: 0 16px; font-size: 14px;">Post</button>
+          </form>
         </div>
         <div class="notification-body" id="notificationList">
           <div class="empty-state" style="padding: var(--space-xl) var(--space-md);">
@@ -495,13 +501,62 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentAnnouncementId = null;
 
   if (notificationBtn && notificationPanel) {
-    notificationBtn.addEventListener('click', () => {
+    notificationBtn.addEventListener('click', async () => {
       notificationPanel.classList.add('active');
       loadNotifications();
+      
+      // Check if admin to show new announcement form
+      const newForm = document.getElementById('newAnnouncementForm');
+      if (newForm && window.supaAuth) {
+        const user = await window.supaAuth.getCurrentUser();
+        if (user && user.email === 'atoopase@gmail.com') {
+          newForm.style.display = 'flex';
+        }
+      }
     });
 
     closeNotificationBtn.addEventListener('click', () => {
       notificationPanel.classList.remove('active');
+    });
+  }
+
+  // Handle New Announcement
+  const newAnnouncementForm = document.getElementById('newAnnouncementForm');
+  if (newAnnouncementForm) {
+    newAnnouncementForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('newAnnouncementInput');
+      if (!input.value.trim()) return;
+      
+      const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+      if (!client) return;
+
+      const user = await window.supaAuth.getCurrentUser();
+      if (!user || user.email !== 'atoopase@gmail.com') return;
+
+      const submitBtn = newAnnouncementForm.querySelector('button');
+      submitBtn.disabled = true;
+
+      try {
+        const { error } = await client
+          .from('messages')
+          .insert({
+            sender_id: user.id,
+            content: input.value.trim(),
+            parent_id: null // Top-level announcement
+          });
+
+        if (error) throw error;
+        
+        input.value = '';
+        loadNotifications();
+        
+      } catch (err) {
+        console.error('Post error:', err);
+        window.showToast('Failed to post announcement', 'error');
+      } finally {
+        submitBtn.disabled = false;
+      }
     });
   }
 
