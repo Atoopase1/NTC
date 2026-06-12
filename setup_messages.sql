@@ -59,4 +59,43 @@ SELECT
   p.full_name as sender_name,
   null as sender_avatar
 FROM public.messages m
-LEFT JOIN public.profiles p ON m.sender_id = p.id;
+JOIN public.profiles p ON m.sender_id = p.id;
+
+-- ============================================
+-- Reactions System
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.message_reactions (
+  id uuid default gen_random_uuid() primary key,
+  message_id uuid references public.messages on delete cascade not null,
+  user_id uuid references auth.users on delete cascade not null,
+  is_like boolean not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()),
+  UNIQUE(message_id, user_id)
+);
+
+ALTER TABLE public.message_reactions ENABLE ROW LEVEL SECURITY;
+
+-- Anyone can view reactions
+DROP POLICY IF EXISTS "Anyone can view reactions" ON public.message_reactions;
+CREATE POLICY "Anyone can view reactions"
+  ON public.message_reactions FOR SELECT
+  USING ( true );
+
+-- Authenticated users can insert their own reactions
+DROP POLICY IF EXISTS "Auth users can insert reactions" ON public.message_reactions;
+CREATE POLICY "Auth users can insert reactions"
+  ON public.message_reactions FOR INSERT
+  WITH CHECK ( auth.uid() = user_id );
+
+-- Authenticated users can update their own reactions
+DROP POLICY IF EXISTS "Auth users can update reactions" ON public.message_reactions;
+CREATE POLICY "Auth users can update reactions"
+  ON public.message_reactions FOR UPDATE
+  USING ( auth.uid() = user_id );
+
+-- Authenticated users can delete their own reactions
+DROP POLICY IF EXISTS "Auth users can delete reactions" ON public.message_reactions;
+CREATE POLICY "Auth users can delete reactions"
+  ON public.message_reactions FOR DELETE
+  USING ( auth.uid() = user_id );

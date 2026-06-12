@@ -578,6 +578,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (error) throw error;
 
+      const { data: allReactions } = await client.from('message_reactions').select('*');
+      const currentUser = await window.supaAuth.getCurrentUser();
+      const currentUserId = currentUser ? currentUser.id : null;
+
+      function getReactionsHtml(msgId) {
+        if (!allReactions) return '';
+        const likesCount = allReactions.filter(r => r.message_id === msgId && r.is_like).length;
+        const dislikesCount = allReactions.filter(r => r.message_id === msgId && !r.is_like).length;
+        let userReaction = null;
+        if (currentUserId) {
+          const uReaction = allReactions.find(r => r.message_id === msgId && r.user_id === currentUserId);
+          if (uReaction) userReaction = uReaction.is_like ? 'like' : 'dislike';
+        }
+        
+        return `
+          <div class="msg-reactions">
+            <button class="reaction-btn ${userReaction === 'like' ? 'active like' : ''}" onclick="window.handleReaction('${msgId}', true)">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+              <span>${likesCount}</span>
+            </button>
+            <button class="reaction-btn ${userReaction === 'dislike' ? 'active dislike' : ''}" onclick="window.handleReaction('${msgId}', false)">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-2"></path></svg>
+              <span>${dislikesCount}</span>
+            </button>
+          </div>
+        `;
+      }
+
       if (!announcements || announcements.length === 0) {
         notificationList.innerHTML = `
           <div class="empty-state" style="padding: var(--space-xl) var(--space-md);">
@@ -618,6 +646,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="msg-time">${rTime}</span>
                   </div>
                   <div class="msg-text">${r.content}</div>
+                  ${getReactionsHtml(r.id)}
                 </div>
               </div>
             `;
@@ -634,6 +663,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   <span class="msg-time">${timeStr}</span>
                 </div>
                 <div class="msg-text">${ann.content}</div>
+                ${getReactionsHtml(ann.id)}
               </div>
             </div>
             ${repliesHtml}
@@ -658,6 +688,46 @@ document.addEventListener('DOMContentLoaded', () => {
     currentAnnouncementId = id;
     notificationFooter.style.display = 'block';
     replyInput.focus();
+  };
+
+  window.handleReaction = async (msgId, isLike) => {
+    const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+    if (!client) return;
+
+    const user = await window.supaAuth.getCurrentUser();
+    if (!user) {
+      window.showToast('Please login to react', 'error');
+      return;
+    }
+
+    try {
+      const { data: existing } = await client
+        .from('message_reactions')
+        .select('*')
+        .eq('message_id', msgId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (existing) {
+        if (existing.is_like === isLike) {
+          // Toggle off
+          await client.from('message_reactions').delete().eq('id', existing.id);
+        } else {
+          // Switch reaction
+          await client.from('message_reactions').update({ is_like: isLike }).eq('id', existing.id);
+        }
+      } else {
+        // Insert new
+        await client.from('message_reactions').insert({
+          message_id: msgId,
+          user_id: user.id,
+          is_like: isLike
+        });
+      }
+      loadNotifications(); // Reload to show updated reactions
+    } catch (err) {
+      console.error('Reaction error:', err);
+    }
   };
 
   if (replyForm) {

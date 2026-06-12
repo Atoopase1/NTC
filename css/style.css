@@ -3207,3 +3207,53 @@ p {
   border-top-left-radius: 14px;
   border-top-right-radius: 4px;
 }
+
+.msg-reactions {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+  padding: 0 4px;
+}
+
+.reaction-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-lighter);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.reaction-btn svg {
+  width: 14px;
+  height: 14px;
+  transition: transform var(--transition-fast);
+}
+
+.reaction-btn:hover {
+  color: var(--primary);
+  background: var(--surface-hover);
+}
+
+.reaction-btn:hover svg {
+  transform: translateY(-2px);
+}
+
+.reaction-btn.active.like {
+  color: var(--accent);
+}
+.reaction-btn.active.like svg {
+  fill: var(--accent);
+}
+
+.reaction-btn.active.dislike {
+  color: var(--danger);
+}
+.reaction-btn.active.dislike svg {
+  fill: var(--danger);
+}
