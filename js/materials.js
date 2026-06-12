@@ -368,6 +368,174 @@ document.addEventListener('DOMContentLoaded', async () => {
     subjectFilter.addEventListener('change', applyFilters);
   }
 
+  // --- Notification Logic ---
+  const notificationBtn = document.getElementById('notificationBtn');
+  const notificationBadge = document.getElementById('notificationBadge');
+  const notificationPanel = document.getElementById('notificationPanel');
+  const closeNotificationBtn = document.getElementById('closeNotificationBtn');
+  const notificationList = document.getElementById('notificationList');
+  const notificationFooter = document.getElementById('notificationFooter');
+  const replyForm = document.getElementById('replyForm');
+  const replyInput = document.getElementById('replyInput');
+  let currentAnnouncementId = null;
+
+  if (notificationBtn && notificationPanel) {
+    notificationBtn.addEventListener('click', () => {
+      notificationPanel.classList.add('active');
+      loadNotifications();
+    });
+
+    closeNotificationBtn.addEventListener('click', () => {
+      notificationPanel.classList.remove('active');
+    });
+  }
+
+  async function loadNotifications() {
+    if (!window.supabase) return;
+    notificationList.innerHTML = `<div class="empty-state" style="padding: var(--space-xl) var(--space-md);"><span class="spinner spinner-sm"></span><p>Loading messages...</p></div>`;
+    notificationFooter.style.display = 'none';
+
+    try {
+      // Fetch top-level announcements
+      const { data: announcements, error } = await window.supabase
+        .from('messages_with_profiles')
+        .select('*')
+        .is('parent_id', null)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (!announcements || announcements.length === 0) {
+        notificationList.innerHTML = `
+          <div class="empty-state" style="padding: var(--space-xl) var(--space-md);">
+            <p>No messages available.</p>
+          </div>
+        `;
+        notificationBadge.style.display = 'none';
+        return;
+      }
+
+      // Update badge
+      notificationBadge.textContent = announcements.length;
+      notificationBadge.style.display = 'flex';
+
+      let html = '';
+      for (const ann of announcements) {
+        // Fetch replies
+        const { data: replies } = await window.supabase
+          .from('messages_with_profiles')
+          .select('*')
+          .eq('parent_id', ann.id)
+          .order('created_at', { ascending: true });
+
+        const timeStr = new Date(ann.created_at).toLocaleString();
+        const avatar = ann.sender_avatar ? `<img src="${ann.sender_avatar}" alt="Avatar">` : ann.sender_name.charAt(0);
+        
+        let repliesHtml = '';
+        if (replies && replies.length > 0) {
+          repliesHtml = replies.map(r => {
+            const rTime = new Date(r.created_at).toLocaleString();
+            const rAvatar = r.sender_avatar ? `<img src="${r.sender_avatar}" alt="Avatar">` : (r.sender_name ? r.sender_name.charAt(0) : 'U');
+            return `
+              <div class="msg-item msg-reply">
+                <div class="msg-avatar">${rAvatar}</div>
+                <div class="msg-content">
+                  <div class="msg-header">
+                    <span class="msg-name">${r.sender_name || 'User'}</span>
+                    <span class="msg-time">${rTime}</span>
+                  </div>
+                  <div class="msg-text">${r.content}</div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+
+        html += `
+          <div class="msg-thread">
+            <div class="msg-item">
+              <div class="msg-avatar">${avatar}</div>
+              <div class="msg-content">
+                <div class="msg-header">
+                  <span class="msg-name">${ann.sender_name}</span>
+                  <span class="msg-time">${timeStr}</span>
+                </div>
+                <div class="msg-text">${ann.content}</div>
+              </div>
+            </div>
+            ${repliesHtml}
+            <button class="btn btn-ghost btn-sm" onclick="openReply('${ann.id}')" style="align-self: flex-start; margin-left: 50px;">Reply</button>
+          </div>
+        `;
+      }
+
+      notificationList.innerHTML = html;
+
+    } catch (err) {
+      console.error('Error loading notifications:', err);
+      notificationList.innerHTML = `
+        <div class="empty-state" style="padding: var(--space-xl) var(--space-md); color: var(--danger);">
+          <p>Failed to load messages.</p>
+        </div>
+      `;
+    }
+  }
+
+  window.openReply = (id) => {
+    currentAnnouncementId = id;
+    notificationFooter.style.display = 'block';
+    replyInput.focus();
+  };
+
+  if (replyForm) {
+    replyForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!currentAnnouncementId || !replyInput.value.trim() || !window.supabase) return;
+
+      const user = await window.supaAuth.getCurrentUser();
+      if (!user) {
+        window.showToast('Please login to reply', 'error');
+        return;
+      }
+
+      const submitBtn = replyForm.querySelector('button');
+      submitBtn.disabled = true;
+
+      try {
+        const { error } = await window.supabase
+          .from('messages')
+          .insert({
+            sender_id: user.id,
+            content: replyInput.value.trim(),
+            parent_id: currentAnnouncementId
+          });
+
+        if (error) throw error;
+        
+        replyInput.value = '';
+        notificationFooter.style.display = 'none';
+        currentAnnouncementId = null;
+        loadNotifications();
+        
+      } catch (err) {
+        console.error('Reply error:', err);
+        window.showToast('Failed to post reply', 'error');
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  }
+
   // Init
   loadData();
+  
+  // Try to load notifications silently to update badge
+  if (window.supabase) {
+    window.supabase.from('messages').select('id', { count: 'exact' }).is('parent_id', null).then(({count}) => {
+      if (count > 0 && notificationBadge) {
+        notificationBadge.textContent = count;
+        notificationBadge.style.display = 'flex';
+      }
+    });
+  }
 });

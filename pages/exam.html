@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -50,40 +50,8 @@
       </div>
     </div>
 
-    <h3 style="margin-bottom: var(--space-md);">Practice Exams (Self-Paced)</h3>
-    <div class="exam-setup-grid" id="examSubjectGrid">
-      <div class="exam-subject-card" data-subject="All Subjects">
-        <div class="subject-icon pedagogy" style="width: 64px; height: 64px; font-size: 32px;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
-        <h4>All Subjects (Mock)</h4>
-        <p>Mixed questions from all core modules</p>
-      </div>
-      <!-- Dynamic subjects will be injected here -->
-    </div>
-    
-    <div class="exam-config">
-      <h3 style="margin-bottom: var(--space-lg);">2. Configuration</h3>
-      <div class="exam-config-row">
-        <div>
-          <label class="exam-config-label">Number of Questions</label>
-          <select class="form-input form-select" id="questionCount">
-            <option value="20">20 Questions (Short)</option>
-            <option value="40">40 Questions (Standard)</option>
-            <option value="60" selected>60 Questions (Full)</option>
-          </select>
-        </div>
-        <div>
-          <label class="exam-config-label">Time Limit (Minutes)</label>
-          <select class="form-input form-select" id="examTime">
-            <option value="15">15 Minutes</option>
-            <option value="30">30 Minutes</option>
-            <option value="60" selected>60 Minutes</option>
-            <option value="90">90 Minutes</option>
-          </select>
-        </div>
-        <div style="display: flex; align-items: flex-end;">
-          <button class="btn btn-primary btn-block btn-lg disabled" id="startExamBtn" disabled>Start Examination</button>
-        </div>
-      </div>
+    <div style="margin-top: var(--space-xl); text-align: center;">
+      <button class="btn btn-primary btn-lg disabled" id="startExamBtn" disabled>Start Examination</button>
     </div>
   </div>
 

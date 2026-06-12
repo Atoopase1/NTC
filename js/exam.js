@@ -11,9 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Exam Setup Logic ---
   if (examSetup) {
     const startBtn = document.getElementById('startExamBtn');
-    const examSubjectGrid = document.getElementById('examSubjectGrid');
-    const scheduledExamGrid = document.getElementById('scheduledExamGrid');
-    let selectedSubject = null;
     let selectedScheduledExam = null;
     
     // Function to attach listeners to dynamic cards
@@ -23,18 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
         card.addEventListener('click', () => {
           // Remove selection from all
           subjectCards.forEach(c => c.classList.remove('selected'));
-          if (scheduledExamGrid) {
-            scheduledExamGrid.querySelectorAll('.exam-subject-card').forEach(c => c.classList.remove('selected'));
-          }
           // Add to clicked
           card.classList.add('selected');
           
           if (card.hasAttribute('data-scheduled-id')) {
             selectedScheduledExam = JSON.parse(decodeURIComponent(card.getAttribute('data-scheduled-data')));
-            selectedSubject = null; // Unset practice subject
-          } else {
-            selectedSubject = card.getAttribute('data-subject');
-            selectedScheduledExam = null;
           }
           
           // Enable start button
@@ -46,44 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     };
 
-    // Load subjects dynamically
+    // Load Scheduled Exams
     const loadExamSubjects = async () => {
-      if (examSubjectGrid && window.supaDB && window.supaDB.getSubjects) {
-        try {
-          const subjects = await window.supaDB.getSubjects();
-          if (subjects && subjects.length > 0) {
-            // Keep the "All Subjects" card, append others
-            let html = `
-              <div class="exam-subject-card" data-subject="All Subjects">
-                <div class="subject-icon pedagogy" style="width: 64px; height: 64px; font-size: 32px;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-                </div>
-                <h4>All Subjects (Mock)</h4>
-                <p>Mixed questions from all core modules</p>
-              </div>
-            `;
-            
-            subjects.forEach((sub, idx) => {
-              const iconClasses = ['pedagogy', 'general', 'curriculum', 'assessment', 'psychology'];
-              const iconClass = iconClasses[idx % iconClasses.length];
-              
-              html += `
-                <div class="exam-subject-card" data-subject="${sub.name}">
-                  <div class="subject-icon ${iconClass}" style="width: 64px; height: 64px; font-size: 32px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
-                  </div>
-                  <h4>${sub.name}</h4>
-                  <p>Practice test on ${sub.name}</p>
-                </div>
-              `;
-            });
-            
-            examSubjectGrid.innerHTML = html;
-          }
-        } catch (e) {
-          console.error('Error loading subjects:', e);
-        }
-      }
 
       // Load Scheduled Exams
       if (scheduledExamGrid && window.supaDB && window.supaDB.getScheduledExams) {
@@ -138,31 +92,18 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (startBtn) {
       startBtn.addEventListener('click', () => {
-        if (!selectedSubject && !selectedScheduledExam) return;
+        if (!selectedScheduledExam) return;
         
-        let config = {};
-
-        if (selectedScheduledExam) {
-          config = {
-            isScheduled: true,
-            id: selectedScheduledExam.id,
-            title: selectedScheduledExam.title,
-            subject: selectedScheduledExam.subject,
-            startTime: selectedScheduledExam.start_time,
-            endTime: selectedScheduledExam.end_time,
-            durationMins: selectedScheduledExam.duration_minutes || 60,
-            questions: selectedScheduledExam.questions_data
-          };
-        } else {
-          const questionCount = document.getElementById('questionCount').value;
-          const examTime = document.getElementById('examTime').value;
-          config = {
-            isScheduled: false,
-            subject: selectedSubject,
-            count: parseInt(questionCount),
-            timeMinutes: parseInt(examTime)
-          };
-        }
+        let config = {
+          isScheduled: true,
+          id: selectedScheduledExam.id,
+          title: selectedScheduledExam.title,
+          subject: selectedScheduledExam.subject,
+          startTime: selectedScheduledExam.start_time,
+          endTime: selectedScheduledExam.end_time,
+          durationMins: selectedScheduledExam.duration_minutes || 60,
+          questions: selectedScheduledExam.questions_data
+        };
         
         // Save config to session storage to use in exam interface
         sessionStorage.setItem('ntc_exam_config', JSON.stringify(config));
