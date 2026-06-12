@@ -391,13 +391,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function loadNotifications() {
-    if (!window.supabase) return;
+    const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+    if (!client) {
+      notificationList.innerHTML = `<div class="empty-state" style="padding: var(--space-xl) var(--space-md); color: var(--danger);"><p>Not connected to database.</p></div>`;
+      return;
+    }
     notificationList.innerHTML = `<div class="empty-state" style="padding: var(--space-xl) var(--space-md);"><span class="spinner spinner-sm"></span><p>Loading messages...</p></div>`;
     notificationFooter.style.display = 'none';
 
     try {
       // Fetch top-level announcements
-      const { data: announcements, error } = await window.supabase
+      const { data: announcements, error } = await client
         .from('messages_with_profiles')
         .select('*')
         .is('parent_id', null)
@@ -422,7 +426,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       let html = '';
       for (const ann of announcements) {
         // Fetch replies
-        const { data: replies } = await window.supabase
+        const { data: replies } = await client
           .from('messages_with_profiles')
           .select('*')
           .eq('parent_id', ann.id)
@@ -490,7 +494,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (replyForm) {
     replyForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (!currentAnnouncementId || !replyInput.value.trim() || !window.supabase) return;
+      if (!currentAnnouncementId || !replyInput.value.trim()) return;
+      const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+      if (!client) return;
 
       const user = await window.supaAuth.getCurrentUser();
       if (!user) {
@@ -502,7 +508,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       submitBtn.disabled = true;
 
       try {
-        const { error } = await window.supabase
+        const { error } = await client
           .from('messages')
           .insert({
             sender_id: user.id,
@@ -530,9 +536,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadData();
   
   // Try to load notifications silently to update badge
-  if (window.supabase) {
-    window.supabase.from('messages').select('id', { count: 'exact' }).is('parent_id', null).then(({count}) => {
-      if (count > 0 && notificationBadge) {
+  const _client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+  if (_client && notificationBadge) {
+    _client.from('messages').select('id', { count: 'exact', head: true }).is('parent_id', null).then(({ count }) => {
+      if (count > 0) {
         notificationBadge.textContent = count;
         notificationBadge.style.display = 'flex';
       }
