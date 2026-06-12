@@ -14,9 +14,15 @@
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/dashboard.css">
   <link rel="stylesheet" href="../css/responsive.css">
+  <link rel="stylesheet" href="../css/materials.css">
   
-  <!-- Supabase -->
+  <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- PDF.js for rendering PDF previews and viewers -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- Panzoom for image pinch-to-zoom -->
+  <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.0/dist/panzoom.min.js"></script>
+
   <!-- PWA -->
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#4f46e5">
@@ -24,7 +30,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="NTC Prep">
-  <link rel="apple-touch-icon" href="/icons/icon-192.png"></head>
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
 <body>
   
   <!-- Navigation -->
@@ -82,219 +89,105 @@
     </aside>
     
     <!-- Main Content -->
-    <main class="dashboard-main">
-      <div class="page-header" style="border-radius: var(--radius-xl); padding: var(--space-2xl); margin-bottom: var(--space-xl);">
-        <h1>Study Resources & Notes</h1>
-        <p>Download comprehensive PDF guides, past question analyses, and subject summaries.</p>
-      </div>
-
-      <div class="tabs" style="margin-bottom: var(--space-xl);" id="resourceTabs">
-        <button class="tab-btn active" data-tab="tab-all">All Materials</button>
-      </div>
-
-      <div class="tab-content active" id="tab-all">
-        <div class="resources-grid" id="allResourcesGrid">
-          <div class="empty-state">
-            <p>Loading study materials...</p>
-          </div>
+    <main class="dashboard-main" style="padding-bottom: 80px;">
+      
+      <!-- Materials Header & Filters -->
+      <div class="materials-header">
+        <div style="display:flex; align-items:center; gap:var(--space-md);">
+          <div style="font-size:32px;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></div>
+          <h1 style="font-size:var(--text-2xl); font-weight:800; margin:0;">Materials</h1>
+        </div>
+        
+        <div class="materials-search">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="searchMaterials" placeholder="Search topics, subjects...">
         </div>
       </div>
-      
-      <div id="dynamicTabContents">
-        <!-- Dynamic tab contents will be injected here -->
+
+      <div class="materials-filters" style="margin-bottom: var(--space-xl);">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="pdfs">PDFs</button>
+        <button class="filter-btn" data-filter="images">Images</button>
+        <button class="filter-btn" data-filter="videos">Videos</button>
+        <button class="filter-btn" data-filter="text">Text</button>
+        <button class="filter-btn" data-filter="saved">Saved</button>
+      </div>
+
+      <!-- Materials Grid -->
+      <div class="materials-grid" id="materialsGrid">
+        <!-- Generated dynamically via js/materials.js -->
       </div>
 
     </main>
   </div>
 
+  <!-- Viewer Modals -->
+  
+  <!-- Image Viewer Modal -->
+  <div class="viewer-modal" id="modalImage">
+    <div class="viewer-header">
+      <div class="viewer-title" id="modalImageTitle">Image</div>
+      <div class="viewer-actions">
+        <button class="viewer-btn close-modal"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+    </div>
+    <div class="image-viewer-body" id="imageViewerBody">
+      <img id="viewerImg" class="image-viewer-img" src="" alt="Fullscreen image">
+    </div>
+  </div>
+
+  <!-- PDF Reader Modal -->
+  <div class="viewer-modal" id="modalPdf">
+    <div class="viewer-header">
+      <div class="viewer-title" id="modalPdfTitle">PDF Reader</div>
+      <div class="viewer-actions">
+        <button class="viewer-btn close-modal"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+    </div>
+    <div class="pdf-viewer-body" id="pdfContainer">
+      <!-- Canvas rendered here -->
+    </div>
+  </div>
+
+  <!-- Text Reader Modal -->
+  <div class="viewer-modal" id="modalText">
+    <div class="viewer-header">
+      <div class="viewer-title" id="modalTextTitle">Article</div>
+      <div class="viewer-actions">
+        <button class="viewer-btn close-modal"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+    </div>
+    <div class="text-reader-body">
+      <div class="text-reader-content">
+        <h1 id="trTitle">Title</h1>
+        <div class="meta">
+          <span id="trSubject">Subject</span>
+          <span id="trTime">0 min read</span>
+        </div>
+        <div class="body-text" id="trBody"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Video Viewer Modal -->
+  <div class="viewer-modal" id="modalVideo">
+    <div class="viewer-header">
+      <div class="viewer-title" id="modalVideoTitle">Video Player</div>
+      <div class="viewer-actions">
+        <button class="viewer-btn close-modal"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+    </div>
+    <div class="video-viewer-body">
+      <video id="videoPlayer" class="video-player" controls autoplay></video>
+    </div>
+  </div>
+
+  <!-- Scripts -->
   <script src="../js/supabase.js"></script>
   <script src="../js/app.js"></script>
   <script src="../js/auth.js"></script>
+  <script src="../js/materials.js"></script>
   
-  <style>
-    .desc-text {
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      margin-bottom: 4px;
-      font-size: var(--text-sm);
-      color: var(--text-light);
-      line-height: 1.5;
-    }
-    .desc-text.expanded {
-      -webkit-line-clamp: unset;
-    }
-    .read-more-btn {
-      background: none;
-      border: none;
-      color: var(--primary);
-      font-weight: 600;
-      font-size: var(--text-sm);
-      cursor: pointer;
-      padding: 0;
-      margin-bottom: var(--space-sm);
-    }
-    .read-more-btn:hover {
-      text-decoration: underline;
-    }
-  </style>
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const resourceTabs = document.getElementById('resourceTabs');
-      const dynamicTabContents = document.getElementById('dynamicTabContents');
-      const allResourcesGrid = document.getElementById('allResourcesGrid');
-      
-      // Expand/Collapse description
-      window.toggleDescription = (btn) => {
-        const p = btn.previousElementSibling;
-        p.classList.toggle('expanded');
-        if (p.classList.contains('expanded')) {
-          btn.textContent = 'Show less';
-        } else {
-          btn.textContent = 'Read more';
-        }
-      };
-
-      if (resourceTabs && dynamicTabContents && window.supaDB && window.supaDB.getSubjects) {
-        try {
-          // Fetch Subjects and Lessons in parallel
-          const [subRes, lesRes] = await Promise.all([
-            window.supaDB.getSubjects(),
-            window.supaDB.getLessons ? window.supaDB.getLessons() : {data:[]}
-          ]);
-          
-          const subjects = subRes.data || subRes || [];
-          const lessons = lesRes.data || [];
-
-          // Helper to get SVG icon based on media_type
-          const getIcon = (type) => {
-            if (type === 'video') return `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
-            if (type === 'pdf') return `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
-            if (type === 'image') return `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
-            if (type === 'audio') return `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`;
-            return `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>`;
-          };
-
-          // Helper to generate a resource card HTML
-          const createCardHtml = (lesson) => {
-            const desc = lesson.description || lesson.content || '';
-            const isLong = desc.length > 120;
-            const dateStr = new Date(lesson.created_at).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
-            
-            let actionBtn = '';
-            let mediaEmbed = '';
-            
-            if (lesson.media_url) {
-              const url = lesson.media_url;
-              const type = lesson.media_type;
-              
-              if (type === 'video') {
-                mediaEmbed = `<video controls style="max-width:100%; border-radius:8px; margin-top:var(--space-md);"><source src="${url}">Your browser does not support video.</video>`;
-              } else if (type === 'image') {
-                mediaEmbed = `<img src="${url}" style="max-width:100%; border-radius:8px; margin-top:var(--space-md);" alt="Study Resource" loading="lazy">`;
-              } else if (type === 'audio') {
-                mediaEmbed = `<audio controls style="width:100%; margin-top:var(--space-md);"><source src="${url}">Your browser does not support audio.</audio>`;
-              } else if (type === 'pdf') {
-                mediaEmbed = `<iframe src="${url}" style="width:100%; height:300px; border:none; border-radius:8px; margin-top:var(--space-md);" title="PDF Document"></iframe>`;
-                actionBtn = `<a href="${url}" target="_blank" class="btn btn-primary btn-block" style="margin-top:var(--space-md);">Open PDF in New Tab</a>`;
-              } else {
-                actionBtn = `<a href="${url}" target="_blank" class="btn btn-primary btn-block" style="margin-top:var(--space-md);">Download / View File</a>`;
-              }
-            } else if (lesson.content) {
-              // If it's just text, we can show it fully or let them read the description
-              actionBtn = `<button class="btn btn-outline btn-block" style="margin-top:var(--space-md);" onclick="alert('Text notes\\n\\n' + \`${lesson.content.replace(/`/g, "'")}\`)">Read Full Notes</button>`;
-            }
-
-            return `
-              <div class="resource-card" style="display:flex; flex-direction:column; overflow:hidden;">
-                <div style="display:flex; align-items:center; gap:var(--space-sm); margin-bottom:var(--space-md);">
-                  <div class="resource-icon" style="margin-bottom:0;">${getIcon(lesson.media_type)}</div>
-                  <div>
-                    <h3 class="resource-title" style="margin-bottom:4px; word-wrap:break-word;">${lesson.title || lesson.subtopic || 'Lesson'}</h3>
-                    <div style="font-size:var(--text-xs); color:var(--primary); font-weight:600;">${lesson.subject || ''}</div>
-                  </div>
-                </div>
-                
-                <div style="flex:1;">
-                  <p class="desc-text" style="word-wrap:break-word; white-space:pre-wrap;">${desc}</p>
-                  ${isLong ? `<button class="read-more-btn" onclick="toggleDescription(this)">Read more</button>` : ''}
-                </div>
-
-                ${mediaEmbed}
-
-                <div class="resource-meta" style="margin-top: var(--space-md);">
-                  <span style="text-transform: capitalize;">${lesson.media_type || 'Document'}</span>
-                  <span>Added: ${dateStr}</span>
-                </div>
-                ${actionBtn}
-              </div>
-            `;
-          };
-
-          // Render "All Materials"
-          if (lessons.length === 0) {
-            allResourcesGrid.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;"><p>No study materials have been published yet.</p></div>`;
-          } else {
-            allResourcesGrid.innerHTML = lessons.map(createCardHtml).join('');
-          }
-
-          if (subjects && subjects.length > 0) {
-            let tabsHtml = '';
-            let contentsHtml = '';
-            
-            subjects.forEach((sub, idx) => {
-              const tabId = `tab-sub-${sub.id}`;
-              const subLessons = lessons.filter(l => l.subject === sub.name);
-
-              tabsHtml += `<button class="tab-btn" data-tab="${tabId}">${sub.name}</button>`;
-              
-              let subContentHtml = `<div class="empty-state" style="grid-column: 1/-1;">
-                <div class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
-                <h3>${sub.name} Resources</h3>
-                <p>No materials published for this subject yet.</p>
-              </div>`;
-
-              if (subLessons.length > 0) {
-                subContentHtml = subLessons.map(createCardHtml).join('');
-              }
-
-              contentsHtml += `
-                <div class="tab-content" id="${tabId}">
-                  <div class="resources-grid">
-                    ${subContentHtml}
-                  </div>
-                </div>
-              `;
-            });
-            
-            resourceTabs.innerHTML += tabsHtml;
-            dynamicTabContents.innerHTML = contentsHtml;
-            
-            // Re-attach tab listeners
-            const tabBtns = document.querySelectorAll('.tab-btn');
-            tabBtns.forEach(btn => {
-              btn.addEventListener('click', () => {
-                const tabId = btn.getAttribute('data-tab');
-                
-                // Remove active class from all buttons and content
-                btn.parentElement.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                
-                // Add active class to current button and target content
-                btn.classList.add('active');
-                const target = document.getElementById(tabId);
-                if (target) target.classList.add('active');
-              });
-            });
-          }
-        } catch (e) {
-          console.error("Error loading resources:", e);
-          allResourcesGrid.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;color:var(--danger);"><p>Failed to load study materials.</p></div>`;
-        }
-      }
-    });
-  </script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -303,6 +196,6 @@
           .catch(err => console.warn('[NTC] SW registration failed:', err));
       });
     }
-  </script></body>
+  </script>
+</body>
 </html>
-
