@@ -9,6 +9,33 @@
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS blocked_until timestamp with time zone default null;
 
+-- ── 0.5. Bulletproof Profile Creation Trigger ───────────────────
+-- If this trigger fails (e.g. schema mismatch), it won't crash the OAuth login!
+CREATE OR REPLACE FUNCTION public.handle_new_user() 
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name, email, phone, avatar_url)
+  VALUES (
+    new.id, 
+    new.raw_user_meta_data->>'full_name',
+    new.email,
+    new.raw_user_meta_data->>'phone',
+    new.raw_user_meta_data->>'avatar_url'
+  )
+  ON CONFLICT (id) DO NOTHING;
+  RETURN new;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE WARNING 'Profile creation failed for user %: %', new.id, SQLERRM;
+    RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
 -- ── 1. DROP ALL policies on profiles ────────────────────────────
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone." ON public.profiles;
 DROP POLICY IF EXISTS "Users can insert their own profile."       ON public.profiles;

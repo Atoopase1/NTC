@@ -73,6 +73,10 @@ BEGIN
   )
   ON CONFLICT (id) DO NOTHING;
   RETURN new;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE WARNING 'Profile creation failed for user %: %', new.id, SQLERRM;
+    RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
