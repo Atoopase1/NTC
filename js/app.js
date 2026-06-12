@@ -528,7 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const input = document.getElementById('newAnnouncementInput');
       if (!input.value.trim()) return;
       
-      const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+      const client = window.getSupabaseClient ? window.getSupabaseClient() : supabaseClient;
       if (!client) { window.showToast('No database connection', 'error'); return; }
 
       const user = await window.supaAuth.getCurrentUser();
@@ -563,7 +563,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function loadNotifications() {
-    const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+    const client = window.getSupabaseClient ? window.getSupabaseClient() : supabaseClient;
     if (!client) {
       notificationList.innerHTML = `<div class="empty-state" style="padding: var(--space-xl) var(--space-md); color: var(--danger);"><p>Not connected to database.</p></div>`;
       return;
@@ -714,7 +714,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.handleDeleteMessage = async (msgId) => {
     if (!confirm('Are you sure you want to delete this message?')) return;
-    const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+    const client = window.getSupabaseClient ? window.getSupabaseClient() : supabaseClient;
     if (!client) return;
     const { error } = await client.from('messages').delete().eq('id', msgId);
     if (error) {
@@ -732,7 +732,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentText = textEl.textContent.trim();
     const newText = prompt('Edit your message:', currentText);
     if (!newText || newText.trim() === currentText) return;
-    const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+    const client = window.getSupabaseClient ? window.getSupabaseClient() : supabaseClient;
     if (!client) return;
     const { error } = await client.from('messages').update({ content: newText.trim() }).eq('id', msgId);
     if (error) {
@@ -745,7 +745,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   window.handleReaction = async (msgId, isLike) => {
-    const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+    const client = window.getSupabaseClient ? window.getSupabaseClient() : supabaseClient;
     if (!client) return;
 
     const user = await window.supaAuth.getCurrentUser();
@@ -788,7 +788,7 @@ document.addEventListener('DOMContentLoaded', () => {
     replyForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!currentAnnouncementId || !replyInput.value.trim()) return;
-      const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+      const client = window.getSupabaseClient ? window.getSupabaseClient() : supabaseClient;
       if (!client) return;
 
       const user = await window.supaAuth.getCurrentUser();
@@ -826,7 +826,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Initial badge load
-  const _client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+  const _client = window.getSupabaseClient ? window.getSupabaseClient() : supabaseClient;
   if (_client) {
     _client.from('messages').select('id', { count: 'exact', head: true }).is('parent_id', null).then(({ count }) => {
       if (count > 0 && document.getElementById('notificationBadge')) {

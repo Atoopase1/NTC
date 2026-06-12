@@ -23,6 +23,13 @@ function initSupabase() {
 
 // Initialize on load
 initSupabase();
+// Expose live reference functions globally
+window.getSupabaseClient = function() { return supabaseClient; };
+// Also set window.supabaseClient for legacy references
+Object.defineProperty(window, 'supabaseClient', {
+  get: function() { return supabaseClient; },
+  configurable: true
+});
 
 // --- Auth Functions --- //
 
