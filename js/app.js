@@ -436,3 +436,224 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
+
+// === Global Notification System ===
+document.addEventListener('DOMContentLoaded', () => {
+  // Only initialize on dashboard-like pages
+  const isDashboard = document.querySelector('.user-dropdown') || document.querySelector('.admin-sidebar');
+  if (!isDashboard) return;
+
+  // 1. Inject Notification Button into Navbar
+  const navbarLeft = document.querySelector('.navbar .container > div:first-child');
+  if (navbarLeft && !document.getElementById('notificationBtn')) {
+    const btnHtml = `
+      <button id="notificationBtn" class="notification-btn" aria-label="Notifications" style="width: 36px; height: 36px; background: transparent; border: none; margin-left: 8px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+        <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+      </button>
+    `;
+    navbarLeft.insertAdjacentHTML('beforeend', btnHtml);
+  }
+
+  // 2. Inject Notification Panel into Body
+  if (!document.getElementById('notificationPanel')) {
+    const panelHtml = `
+      <div class="notification-panel" id="notificationPanel">
+        <div class="notification-header">
+          <h3 style="margin: 0; font-size: var(--text-lg);">Announcements</h3>
+          <button class="viewer-btn" id="closeNotificationBtn" aria-label="Close Notifications">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div class="notification-body" id="notificationList">
+          <div class="empty-state" style="padding: var(--space-xl) var(--space-md);">
+            <p>No messages available.</p>
+          </div>
+        </div>
+        <div class="notification-footer" id="notificationFooter" style="display: none; padding: var(--space-md); border-top: 1px solid var(--border); background: var(--bg);">
+          <form id="replyForm" style="display: flex; gap: 8px;">
+            <input type="text" id="replyInput" class="form-input" placeholder="Type a reply..." style="flex: 1;" required>
+            <button type="submit" class="btn btn-primary" style="padding: 0 16px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+          </form>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', panelHtml);
+  }
+
+  // 3. Notification Logic
+  const notificationBtn = document.getElementById('notificationBtn');
+  const notificationBadge = document.getElementById('notificationBadge');
+  const notificationPanel = document.getElementById('notificationPanel');
+  const closeNotificationBtn = document.getElementById('closeNotificationBtn');
+  const notificationList = document.getElementById('notificationList');
+  const notificationFooter = document.getElementById('notificationFooter');
+  const replyForm = document.getElementById('replyForm');
+  const replyInput = document.getElementById('replyInput');
+  let currentAnnouncementId = null;
+
+  if (notificationBtn && notificationPanel) {
+    notificationBtn.addEventListener('click', () => {
+      notificationPanel.classList.add('active');
+      loadNotifications();
+    });
+
+    closeNotificationBtn.addEventListener('click', () => {
+      notificationPanel.classList.remove('active');
+    });
+  }
+
+  async function loadNotifications() {
+    const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+    if (!client) {
+      notificationList.innerHTML = `<div class="empty-state" style="padding: var(--space-xl) var(--space-md); color: var(--danger);"><p>Not connected to database.</p></div>`;
+      return;
+    }
+    notificationList.innerHTML = `<div class="empty-state" style="padding: var(--space-xl) var(--space-md);"><span class="spinner spinner-sm"></span><p>Loading messages...</p></div>`;
+    notificationFooter.style.display = 'none';
+
+    try {
+      const { data: announcements, error } = await client
+        .from('messages_with_profiles')
+        .select('*')
+        .is('parent_id', null)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (!announcements || announcements.length === 0) {
+        notificationList.innerHTML = `
+          <div class="empty-state" style="padding: var(--space-xl) var(--space-md);">
+            <p>No messages available.</p>
+          </div>
+        `;
+        if (notificationBadge) notificationBadge.style.display = 'none';
+        return;
+      }
+
+      if (notificationBadge) {
+        notificationBadge.textContent = announcements.length;
+        notificationBadge.style.display = 'flex';
+      }
+
+      let html = '';
+      for (const ann of announcements) {
+        const { data: replies } = await client
+          .from('messages_with_profiles')
+          .select('*')
+          .eq('parent_id', ann.id)
+          .order('created_at', { ascending: true });
+
+        const timeStr = new Date(ann.created_at).toLocaleString();
+        const avatar = ann.sender_avatar ? `<img src="${ann.sender_avatar}" alt="Avatar">` : ann.sender_name.charAt(0);
+        
+        let repliesHtml = '';
+        if (replies && replies.length > 0) {
+          repliesHtml = replies.map(r => {
+            const rTime = new Date(r.created_at).toLocaleString();
+            const rAvatar = r.sender_avatar ? `<img src="${r.sender_avatar}" alt="Avatar">` : (r.sender_name ? r.sender_name.charAt(0) : 'U');
+            return `
+              <div class="msg-item msg-reply">
+                <div class="msg-avatar">${rAvatar}</div>
+                <div class="msg-content">
+                  <div class="msg-header">
+                    <span class="msg-name">${r.sender_name || 'User'}</span>
+                    <span class="msg-time">${rTime}</span>
+                  </div>
+                  <div class="msg-text">${r.content}</div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+
+        html += `
+          <div class="msg-thread">
+            <div class="msg-item">
+              <div class="msg-avatar">${avatar}</div>
+              <div class="msg-content">
+                <div class="msg-header">
+                  <span class="msg-name">${ann.sender_name}</span>
+                  <span class="msg-time">${timeStr}</span>
+                </div>
+                <div class="msg-text">${ann.content}</div>
+              </div>
+            </div>
+            ${repliesHtml}
+            <button class="btn btn-ghost btn-sm" onclick="window.openReply('${ann.id}')" style="align-self: flex-start; margin-left: 50px;">Reply</button>
+          </div>
+        `;
+      }
+
+      notificationList.innerHTML = html;
+
+    } catch (err) {
+      console.error('Error loading notifications:', err);
+      notificationList.innerHTML = `
+        <div class="empty-state" style="padding: var(--space-xl) var(--space-md); color: var(--danger);">
+          <p>Failed to load messages.</p>
+        </div>
+      `;
+    }
+  }
+
+  window.openReply = (id) => {
+    currentAnnouncementId = id;
+    notificationFooter.style.display = 'block';
+    replyInput.focus();
+  };
+
+  if (replyForm) {
+    replyForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!currentAnnouncementId || !replyInput.value.trim()) return;
+      const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+      if (!client) return;
+
+      const user = await window.supaAuth.getCurrentUser();
+      if (!user) {
+        window.showToast('Please login to reply', 'error');
+        return;
+      }
+
+      const submitBtn = replyForm.querySelector('button');
+      submitBtn.disabled = true;
+
+      try {
+        const { error } = await client
+          .from('messages')
+          .insert({
+            sender_id: user.id,
+            content: replyInput.value.trim(),
+            parent_id: currentAnnouncementId
+          });
+
+        if (error) throw error;
+        
+        replyInput.value = '';
+        notificationFooter.style.display = 'none';
+        currentAnnouncementId = null;
+        loadNotifications();
+        
+      } catch (err) {
+        console.error('Reply error:', err);
+        window.showToast('Failed to post reply', 'error');
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  }
+
+  // Initial badge load
+  const _client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+  if (_client) {
+    _client.from('messages').select('id', { count: 'exact', head: true }).is('parent_id', null).then(({ count }) => {
+      if (count > 0 && document.getElementById('notificationBadge')) {
+        document.getElementById('notificationBadge').textContent = count;
+        document.getElementById('notificationBadge').style.display = 'flex';
+      }
+    });
+  }
+});
