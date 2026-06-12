@@ -57,6 +57,6 @@ SELECT
   m.created_at,
   p.id as sender_id,
   p.full_name as sender_name,
-  p.avatar_url as sender_avatar
+  null as sender_avatar
 FROM public.messages m
 LEFT JOIN public.profiles p ON m.sender_id = p.id;
