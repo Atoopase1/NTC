@@ -127,19 +127,37 @@ async function checkAdminAndRedirect(userEmail) {
     if (userEmail === ADMIN_EMAIL) {
       isAdmin = true;
     } else if (supabaseClient) {
-      const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-      if (userError) console.warn('getUser error:', userError);
-      if (user) {
-        const { data: profile, error: profileError } = await supabaseClient
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-        if (profileError) console.warn('Profile role fetch error (non-fatal):', profileError.message);
-        if (profile && profile.role === 'admin') {
-          isAdmin = true;
+      // Wrap in a timeout so a slow/stuck profile query doesn't hang forever
+      const profileCheck = new Promise(async (resolve) => {
+        try {
+          const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+          if (userError) {
+            console.warn('getUser error:', userError);
+            resolve(false);
+            return;
+          }
+          if (user) {
+            const { data: profile, error: profileError } = await supabaseClient
+              .from('profiles')
+              .select('role')
+              .eq('id', user.id)
+              .single();
+            if (profileError) console.warn('Profile role fetch error (non-fatal):', profileError.message);
+            if (profile && profile.role === 'admin') {
+              resolve(true);
+              return;
+            }
+          }
+          resolve(false);
+        } catch (innerErr) {
+          console.warn('Profile check inner error:', innerErr);
+          resolve(false);
         }
-      }
+      });
+
+      // Race against a 5-second timeout
+      const timeout = new Promise((resolve) => setTimeout(() => resolve(false), 5000));
+      isAdmin = await Promise.race([profileCheck, timeout]);
     }
   } catch (err) {
     console.warn('Role check failed, defaulting to dashboard', err);

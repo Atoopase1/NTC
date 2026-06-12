@@ -65,48 +65,96 @@
   <script>
     (async () => {
       try {
-        // Wait a moment for Supabase to process the OAuth tokens from the URL hash
-        await new Promise(resolve => setTimeout(resolve, 1200));
-
         if (!supabaseClient) {
           console.error('Supabase client not initialized');
           document.getElementById('errorMsg').style.display = 'block';
           return;
         }
 
-        // Supabase automatically reads the tokens from the URL hash
-        const { data: { session }, error } = await supabaseClient.auth.getSession();
-
+        // Check if there's an error passed from Supabase in the URL
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const searchParams = new URLSearchParams(window.location.search);
+        
+        const error = hashParams.get('error') || searchParams.get('error');
+        const errorDesc = hashParams.get('error_description') || searchParams.get('error_description');
+        
         if (error) {
-          console.error('Session error:', error.message);
+          console.error('OAuth Error:', error, errorDesc);
+          document.getElementById('errorMsg').innerHTML = `Sign-in failed: <strong>${errorDesc ? errorDesc.replace(/\+/g, ' ') : error}</strong> <br><a href="login.html" style="color:#1196e8;">Try again</a>`;
           document.getElementById('errorMsg').style.display = 'block';
-          localStorage.removeItem('ntc_is_admin');
+          // Hide spinner
+          document.querySelector('.spinner').style.display = 'none';
+          document.querySelector('h2').textContent = 'Sign-in Error';
+          document.querySelector('p').style.display = 'none';
           return;
         }
 
-        if (!session) {
-          console.warn('No session found after OAuth callback. URL hash:', window.location.hash);
-          document.getElementById('errorMsg').style.display = 'block';
-          localStorage.removeItem('ntc_is_admin');
-          return;
+        // Helper: once we have a session, finish the login flow
+        async function handleSession(session) {
+          const userEmail = session.user.email;
+          console.log('Auth callback: signed in as', userEmail);
+
+          // Ensure profile exists (in case db trigger is disabled/fails)
+          try {
+            if (window.supaDB && window.supaDB.createProfile) {
+              const fullName = session.user.user_metadata?.full_name || userEmail.split('@')[0];
+              await window.supaDB.createProfile(session.user.id, fullName, null, userEmail);
+            }
+          } catch (profileErr) {
+            console.warn('Profile creation in callback failed (non-fatal):', profileErr);
+          }
+
+          // Use the shared admin redirect logic
+          if (window.supaAuth && window.supaAuth.checkAdminAndRedirect) {
+            await window.supaAuth.checkAdminAndRedirect(userEmail);
+          } else {
+            // Fallback: just go to dashboard
+            window.location.href = '/pages/dashboard.html';
+          }
         }
 
-        const userEmail = session.user.email;
-        console.log('Auth callback: signed in as', userEmail);
+        // ── Strategy 1: Listen for Supabase auth state changes ──
+        // Supabase v2 processes the URL hash (#access_token=...) internally
+        // and fires onAuthStateChange with 'SIGNED_IN' when done.
+        let handled = false;
 
-        // Ensure profile exists (in case db trigger is disabled/fails)
-        if (window.supaDB && window.supaDB.createProfile) {
-          const fullName = session.user.user_metadata?.full_name || userEmail.split('@')[0];
-          await window.supaDB.createProfile(session.user.id, fullName, null, userEmail);
-        }
+        const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(
+          async (event, session) => {
+            console.log('Auth state changed:', event);
+            if (handled) return; // Prevent double-fire
+            if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+              handled = true;
+              subscription.unsubscribe();
+              await handleSession(session);
+            }
+          }
+        );
 
-        // Use the shared admin redirect logic
-        if (window.supaAuth && window.supaAuth.checkAdminAndRedirect) {
-          await window.supaAuth.checkAdminAndRedirect(userEmail);
-        } else {
-          // Fallback: just go to dashboard
-          window.location.href = '/pages/dashboard.html';
-        }
+        // ── Strategy 2: Fallback timeout ──
+        // If the auth event hasn't fired within 8 seconds, try getSession()
+        // as a last resort, then show error if still no session.
+        setTimeout(async () => {
+          if (handled) return;
+
+          console.warn('Auth state change did not fire within timeout, trying getSession()...');
+          try {
+            const { data: { session }, error } = await supabaseClient.auth.getSession();
+            if (session && !handled) {
+              handled = true;
+              subscription.unsubscribe();
+              await handleSession(session);
+              return;
+            }
+          } catch (e) {
+            console.error('Fallback getSession error:', e);
+          }
+
+          if (!handled) {
+            console.error('No session found after timeout. URL hash:', window.location.hash);
+            document.getElementById('errorMsg').style.display = 'block';
+            localStorage.removeItem('ntc_is_admin');
+          }
+        }, 8000);
 
       } catch (err) {
         console.error('Auth callback error:', err);

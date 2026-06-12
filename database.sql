@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   school text,
   bio text,
   role text default 'student',
+  blocked_until timestamp with time zone default null,
   updated_at timestamp with time zone default timezone('utc'::text, now())
 );
 

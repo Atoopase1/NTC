@@ -5,6 +5,10 @@
 -- No recursive profile lookups anywhere.
 -- ================================================================
 
+-- ── 0. Add missing blocked_until column to profiles ─────────────
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS blocked_until timestamp with time zone default null;
+
 -- ── 1. DROP ALL policies on profiles ────────────────────────────
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone." ON public.profiles;
 DROP POLICY IF EXISTS "Users can insert their own profile."       ON public.profiles;
@@ -195,6 +199,7 @@ ON CONFLICT (id) DO UPDATE SET
 DROP POLICY IF EXISTS "Admin can upload lesson materials" ON storage.objects;
 DROP POLICY IF EXISTS "Anyone can view lesson materials"  ON storage.objects;
 DROP POLICY IF EXISTS "Admin can delete lesson materials" ON storage.objects;
+DROP POLICY IF EXISTS "Users can upload avatars"          ON storage.objects;
 
 -- Admin can upload
 CREATE POLICY "Admin can upload lesson materials"
@@ -202,6 +207,15 @@ CREATE POLICY "Admin can upload lesson materials"
   WITH CHECK (
     bucket_id = 'lesson-materials'
     AND (auth.jwt() ->> 'email') = 'atoopase@gmail.com'
+  );
+
+-- Authenticated users can upload avatars
+CREATE POLICY "Users can upload avatars"
+  ON storage.objects FOR INSERT
+  WITH CHECK (
+    bucket_id = 'lesson-materials'
+    AND (storage.foldername(name))[1] = 'avatars'
+    AND auth.role() = 'authenticated'
   );
 
 -- Everyone can view/download
