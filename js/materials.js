@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const materialsGrid = document.getElementById('materialsGrid');
   const searchInput = document.getElementById('searchMaterials');
   const filterBtns = document.querySelectorAll('.filter-btn');
+  const subjectFilter = document.getElementById('subjectFilter');
   
   let allMaterials = [];
   let savedIds = JSON.parse(localStorage.getItem('ntc_saved_materials') || '[]');
@@ -44,6 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (window.supaDB && window.supaDB.getLessons) {
         const res = await window.supaDB.getLessons();
         allMaterials = res.data || [];
+        populateSubjectFilter(allMaterials);
         renderGrid(allMaterials);
       } else {
         throw new Error('Supabase DB not initialized');
@@ -52,6 +54,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.error(e);
       materialsGrid.innerHTML = `<div class="empty-state"><p>Failed to load materials.</p></div>`;
     }
+  }
+
+  function populateSubjectFilter(materials) {
+    if (!subjectFilter) return;
+    const subjects = new Set();
+    materials.forEach(m => {
+      if (m.subject) {
+        subjects.add(m.subject);
+      }
+    });
+
+    subjectFilter.innerHTML = '<option value="all">All Subjects</option>';
+    
+    Array.from(subjects).sort().forEach(subject => {
+      const option = document.createElement('option');
+      option.value = subject;
+      option.textContent = subject;
+      subjectFilter.appendChild(option);
+    });
   }
 
   function getWordCount(str) {
@@ -304,6 +325,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function applyFilters() {
     const query = searchInput.value.toLowerCase();
+    const selectedSubject = subjectFilter ? subjectFilter.value : 'all';
     
     const filtered = allMaterials.filter(item => {
       // Filter by type
@@ -316,11 +338,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       else if (currentFilter === 'text') matchesType = (type === 'text' || !item.media_type);
       else if (currentFilter === 'saved') matchesType = savedIds.includes(item.id);
 
+      // Filter by subject
+      let matchesSubject = true;
+      if (selectedSubject !== 'all') {
+        matchesSubject = (item.subject === selectedSubject);
+      }
+
       // Filter by search
       const textToSearch = `${item.title} ${item.subtopic} ${item.description} ${item.content} ${item.subject}`.toLowerCase();
       const matchesSearch = textToSearch.includes(query);
 
-      return matchesType && matchesSearch;
+      return matchesType && matchesSearch && matchesSubject;
     });
 
     renderGrid(filtered);
@@ -336,6 +364,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   searchInput.addEventListener('input', applyFilters);
+  if (subjectFilter) {
+    subjectFilter.addEventListener('change', applyFilters);
+  }
 
   // Init
   loadData();

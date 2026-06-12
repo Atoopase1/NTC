@@ -93,9 +93,14 @@
       
       <!-- Materials Header & Filters -->
       <div class="materials-header">
-        <div style="display:flex; align-items:center; gap:var(--space-md);">
-          <div style="font-size:32px;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></div>
-          <h1 style="font-size:var(--text-2xl); font-weight:800; margin:0;">Materials</h1>
+        <div style="display:flex; align-items:center; gap:var(--space-md); flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:var(--space-md);">
+            <div style="font-size:32px;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></div>
+            <h1 style="font-size:var(--text-2xl); font-weight:800; margin:0;">Materials</h1>
+          </div>
+          <select id="subjectFilter" class="materials-subject-select">
+            <option value="all">All Subjects</option>
+          </select>
         </div>
         
         <div class="materials-search">
