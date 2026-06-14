@@ -267,6 +267,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const img = document.getElementById('viewerImg');
     img.src = item.media_url;
     
+    // Update Details
+    const titleEl = document.getElementById('imageViewerTitle');
+    const descEl = document.getElementById('imageViewerDesc');
+    const detailsContainer = document.getElementById('imageViewerDetails');
+    
+    if (titleEl && descEl && detailsContainer) {
+      titleEl.textContent = item.title || item.subtopic || 'Image';
+      descEl.textContent = item.description || item.content || '';
+      
+      // If no details at all, we could hide it, but title is always present due to fallback
+      detailsContainer.style.display = 'block';
+    }
+    
     // Update Badge & Navigation
     const badge = document.getElementById('imageCountBadge');
     const btnPrev = document.getElementById('imageNavPrev');
