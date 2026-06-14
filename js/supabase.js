@@ -739,6 +739,147 @@ async function deleteLesson(id) {
   }
 }
 
+// --- Social Features (Likes & Comments for Lessons) --- //
+
+/**
+ * Toggle a like for a lesson
+ */
+async function toggleLessonLike(lessonId, userId) {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    
+    // Check if already liked
+    const { data: existing, error: selectError } = await supabaseClient
+      .from('lesson_likes')
+      .select('id')
+      .eq('lesson_id', lessonId)
+      .eq('user_id', userId)
+      .maybeSingle();
+      
+    if (selectError) throw selectError;
+    
+    if (existing) {
+      // Unlike
+      const { error: deleteError } = await supabaseClient
+        .from('lesson_likes')
+        .delete()
+        .eq('id', existing.id);
+      if (deleteError) throw deleteError;
+      return { action: 'unliked', error: null };
+    } else {
+      // Like
+      const { error: insertError } = await supabaseClient
+        .from('lesson_likes')
+        .insert({ lesson_id: lessonId, user_id: userId });
+      if (insertError) throw insertError;
+      return { action: 'liked', error: null };
+    }
+  } catch (error) {
+    console.error('Failed to toggle like:', error);
+    return { error };
+  }
+}
+
+/**
+ * Fetch all likes for a specific lesson
+ */
+async function getLessonLikes(lessonId) {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const { data, error } = await supabaseClient
+      .from('lesson_likes')
+      .select('user_id')
+      .eq('lesson_id', lessonId);
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Failed to fetch likes:', error);
+    return { data: [], error };
+  }
+}
+
+/**
+ * Fetch all likes for all lessons (for bulk loading)
+ */
+async function getAllLessonLikes() {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const { data, error } = await supabaseClient
+      .from('lesson_likes')
+      .select('lesson_id, user_id');
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Failed to fetch all likes:', error);
+    return { data: [], error };
+  }
+}
+
+/**
+ * Add a comment (or reply) to a lesson
+ */
+async function addLessonComment(lessonId, userId, content, parentId = null) {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const payload = {
+      lesson_id: lessonId,
+      user_id: userId,
+      content: content
+    };
+    if (parentId) payload.parent_id = parentId;
+    
+    const { data, error } = await supabaseClient
+      .from('lesson_comments')
+      .insert(payload)
+      .select()
+      .single();
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Failed to add comment:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Fetch all comments for a specific lesson
+ */
+async function getLessonComments(lessonId) {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const { data, error } = await supabaseClient
+      .from('lesson_comments')
+      .select('*')
+      .eq('lesson_id', lessonId)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Failed to fetch comments:', error);
+    return { data: [], error };
+  }
+}
+
+/**
+ * Fetch all comments for all lessons (for bulk loading)
+ */
+async function getAllLessonComments() {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    // We fetch user profile info directly via a join if possible, but since users are in auth.users, 
+    // we fetch comments and we'll map the profile info client side or rely on existing profile map.
+    const { data, error } = await supabaseClient
+      .from('lesson_comments')
+      .select('*')
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Failed to fetch all comments:', error);
+    return { data: [], error };
+  }
+}
+
 window.supaDB = {
   createProfile,
   getProfile,
@@ -763,5 +904,11 @@ window.supaDB = {
   createLesson,
   updateLesson,
   getLessons,
-  deleteLesson
+  deleteLesson,
+  toggleLessonLike,
+  getLessonLikes,
+  addLessonComment,
+  getLessonComments,
+  getAllLessonLikes,
+  getAllLessonComments
 };

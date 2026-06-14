@@ -12,6 +12,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   let allMaterials = [];
   let savedIds = JSON.parse(localStorage.getItem('ntc_saved_materials') || '[]');
   
+  // Social State
+  let allLikes = [];
+  let allComments = [];
+  let profileMap = {};
+  let currentUser = null;
+  let currentUserId = null;
+  let isAdmin = false;
+
   // Viewer Elements
   const modals = {
     image: document.getElementById('modalImage'),
@@ -43,8 +51,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       if (window.supaDB && window.supaDB.getLessons) {
-        const res = await window.supaDB.getLessons();
+        // Fetch current user
+        if (window.supaAuth && window.supaAuth.getCurrentUser) {
+          currentUser = await window.supaAuth.getCurrentUser();
+          currentUserId = currentUser ? currentUser.id : null;
+          isAdmin = currentUser && currentUser.email === 'atoopase@gmail.com';
+        }
+        
+        // Fetch profiles
+        const client = window.supaDB.supabaseClient;
+        if (client) {
+          const { data: profiles } = await client.from('profiles').select('id, full_name');
+          if (profiles) {
+            profiles.forEach(p => { profileMap[p.id] = p.full_name; });
+          }
+        }
+        
+        // Fetch lessons, likes, and comments
+        const [res, likesRes, commentsRes] = await Promise.all([
+          window.supaDB.getLessons(),
+          window.supaDB.getAllLessonLikes ? window.supaDB.getAllLessonLikes() : { data: [] },
+          window.supaDB.getAllLessonComments ? window.supaDB.getAllLessonComments() : { data: [] }
+        ]);
+        
         allMaterials = res.data || [];
+        allLikes = likesRes.data || [];
+        allComments = commentsRes.data || [];
+        
         populateSubjectFilter(allMaterials);
         renderGrid(allMaterials);
       } else {
@@ -117,12 +150,59 @@ document.addEventListener('DOMContentLoaded', async () => {
       const btnHtml = `<button class="mat-bookmark ${bookmarkClass}" data-id="${item.id}" onclick="event.stopPropagation(); toggleSave('${item.id}')">${bookmarkIcon}</button>`;
 
       if (type === 'image') {
+        const likes = allLikes.filter(l => l.lesson_id === item.id);
+        const hasLiked = currentUserId && likes.some(l => l.user_id === currentUserId);
+        const commentsCount = allComments.filter(c => c.lesson_id === item.id).length;
+        
         cardHtml = `
-          <div class="mat-card mat-image-card" onclick="openImage('${item.id}')">
+          <div class="mat-card mat-image-card social-post" id="post-${item.id}">
             ${btnHtml}
-            <div class="mat-image-bg" style="background-image: url('${item.media_url}')"></div>
-            <div class="mat-image-overlay">
-              <h3 class="mat-image-title">${item.title || item.subtopic}</h3>
+            <div class="post-image-wrapper" onclick="openImage('${item.id}')" style="cursor:pointer;">
+              <div class="mat-image-bg" style="background-image: url('${item.media_url}')"></div>
+              <div class="mat-image-overlay">
+                <h3 class="mat-image-title">${item.title || item.subtopic}</h3>
+              </div>
+            </div>
+            <div class="post-content-wrapper">
+              <div class="post-subject">${item.subject || 'Resource'}</div>
+              <div class="post-caption" id="caption-${item.id}">
+                ${item.content || item.description || ''}
+              </div>
+              <button class="post-read-more" id="readmore-${item.id}" onclick="toggleCaption('${item.id}')" style="display:none;">Read More</button>
+              
+              <div class="post-actions">
+                <button class="post-action-btn like-btn ${hasLiked ? 'liked' : ''}" onclick="window.togglePostLike('${item.id}')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="${hasLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                  <span id="like-count-${item.id}">${likes.length}</span>
+                </button>
+                <button class="post-action-btn comment-btn" onclick="window.toggleComments('${item.id}')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                  <span id="comment-count-${item.id}">${commentsCount}</span>
+                </button>
+                <button class="post-action-btn share-btn" onclick="window.sharePost('${item.id}')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                </button>
+                <div class="post-admin-actions">
+                  ${isAdmin ? `
+                    <button class="post-action-btn admin-btn edit-btn" onclick="window.editPost('${item.id}')" title="Edit Post">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </button>
+                    <button class="post-action-btn admin-btn delete-btn" onclick="window.deletePost('${item.id}')" title="Delete Post">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                  ` : ''}
+                </div>
+              </div>
+              
+              <div class="post-comments-section" id="comments-section-${item.id}" style="display:none;">
+                <div class="comments-list" id="comments-list-${item.id}"></div>
+                <div class="comment-input-wrapper">
+                  <input type="text" id="comment-input-${item.id}" class="comment-input" placeholder="Write a comment..." onkeypress="if(event.key==='Enter') window.submitComment('${item.id}')">
+                  <button class="comment-submit-btn" onclick="window.submitComment('${item.id}')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         `;
@@ -188,6 +268,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Trigger PDF rendering
     setTimeout(renderPdfThumbnails, 100);
+    // Check captions for "Read More" button
+    setTimeout(checkCaptions, 150);
   }
 
   // --- PDF Thumbnail Rendering ---
@@ -466,6 +548,225 @@ document.addEventListener('DOMContentLoaded', async () => {
     localStorage.setItem('ntc_saved_materials', JSON.stringify(savedIds));
     applyFilters(); // Re-render to update bookmark icons
   };
+  // --- Social Interactions --- //
+
+  window.toggleCaption = (postId) => {
+    const caption = document.getElementById(`caption-${postId}`);
+    const btn = document.getElementById(`readmore-${postId}`);
+    if (!caption || !btn) return;
+    if (caption.classList.contains('expanded')) {
+      caption.classList.remove('expanded');
+      btn.textContent = 'Read More';
+    } else {
+      caption.classList.add('expanded');
+      btn.textContent = 'Show Less';
+    }
+  };
+
+  // Re-check caption overflow after render
+  function checkCaptions() {
+    document.querySelectorAll('.post-caption').forEach(caption => {
+      if (caption.scrollHeight > caption.clientHeight) {
+        const id = caption.id.replace('caption-', '');
+        const btn = document.getElementById(`readmore-${id}`);
+        if (btn) btn.style.display = 'inline-block';
+      }
+    });
+  }
+
+  window.togglePostLike = async (postId) => {
+    if (!currentUser) {
+      window.showToast('Please log in to like posts.', 'warning');
+      return;
+    }
+    const btn = document.querySelector(`#post-${postId} .like-btn`);
+    const countSpan = document.getElementById(`like-count-${postId}`);
+    
+    // Optimistic UI update
+    const isLiked = btn.classList.contains('liked');
+    let count = parseInt(countSpan.textContent) || 0;
+    
+    if (isLiked) {
+      btn.classList.remove('liked');
+      btn.querySelector('svg').setAttribute('fill', 'none');
+      countSpan.textContent = Math.max(0, count - 1);
+      allLikes = allLikes.filter(l => !(l.lesson_id === postId && l.user_id === currentUserId));
+    } else {
+      btn.classList.add('liked');
+      btn.querySelector('svg').setAttribute('fill', 'currentColor');
+      countSpan.textContent = count + 1;
+      allLikes.push({ lesson_id: postId, user_id: currentUserId });
+    }
+    
+    // Server update
+    if (window.supaDB && window.supaDB.toggleLessonLike) {
+      const res = await window.supaDB.toggleLessonLike(postId, currentUserId);
+      if (res.error) {
+        window.showToast('Failed to save like.', 'error');
+        // Revert UI on failure
+        applyFilters(); 
+      }
+    }
+  };
+
+  window.toggleComments = (postId) => {
+    const section = document.getElementById(`comments-section-${postId}`);
+    if (!section) return;
+    if (section.style.display === 'none') {
+      section.style.display = 'block';
+      renderComments(postId);
+    } else {
+      section.style.display = 'none';
+    }
+  };
+
+  function renderComments(postId) {
+    const list = document.getElementById(`comments-list-${postId}`);
+    if (!list) return;
+    
+    const postComments = allComments.filter(c => c.lesson_id === postId);
+    if (postComments.length === 0) {
+      list.innerHTML = '<div style="color:var(--text-light); font-size:12px; padding:10px 0;">No comments yet. Be the first!</div>';
+      return;
+    }
+    
+    // Build thread tree
+    const rootComments = postComments.filter(c => !c.parent_id);
+    const replies = postComments.filter(c => c.parent_id);
+    
+    let html = '';
+    rootComments.forEach(c => {
+      const cReplies = replies.filter(r => r.parent_id === c.id);
+      html += generateCommentHtml(c, cReplies);
+    });
+    list.innerHTML = html;
+  }
+
+  function generateCommentHtml(comment, replies = [], isReply = false) {
+    const name = profileMap[comment.user_id] || 'Student';
+    const avatar = name.charAt(0);
+    const time = new Date(comment.created_at).toLocaleString();
+    
+    let repliesHtml = '';
+    if (replies.length > 0) {
+      repliesHtml = `<div class="comment-replies">` + replies.map(r => generateCommentHtml(r, [], true)).join('') + `</div>`;
+    }
+    
+    return `
+      <div class="comment-item ${isReply ? 'is-reply' : ''}" id="comment-${comment.id}">
+        <div class="comment-avatar">${avatar}</div>
+        <div class="comment-content">
+          <div class="comment-header">
+            <span class="comment-name">${name}</span>
+            <span class="comment-time">${time}</span>
+          </div>
+          <div class="comment-text">${comment.content}</div>
+          <div class="comment-actions">
+            <button onclick="window.replyToComment('${comment.lesson_id}', '${comment.id}', '${name}')">Reply</button>
+            ${isAdmin ? `<button style="color:var(--danger)" onclick="window.deleteComment('${comment.id}', '${comment.lesson_id}')">Delete</button>` : ''}
+          </div>
+          ${repliesHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  window.replyToComment = (postId, parentId, parentName) => {
+    if (!currentUser) {
+      window.showToast('Please log in to reply.', 'warning');
+      return;
+    }
+    const input = document.getElementById(`comment-input-${postId}`);
+    if (input) {
+      input.value = `@${parentName} `;
+      input.dataset.parentId = parentId;
+      input.focus();
+    }
+  };
+
+  window.submitComment = async (postId) => {
+    if (!currentUser) {
+      window.showToast('Please log in to comment.', 'warning');
+      return;
+    }
+    const input = document.getElementById(`comment-input-${postId}`);
+    if (!input) return;
+    const content = input.value.trim();
+    if (!content) return;
+    
+    const parentId = input.dataset.parentId || null;
+    input.value = '';
+    input.disabled = true;
+    
+    if (window.supaDB && window.supaDB.addLessonComment) {
+      const { data, error } = await window.supaDB.addLessonComment(postId, currentUserId, content, parentId);
+      if (error) {
+        window.showToast('Failed to post comment.', 'error');
+      } else if (data) {
+        allComments.push(data);
+        const countSpan = document.getElementById(`comment-count-${postId}`);
+        if (countSpan) {
+          const currentCount = parseInt(countSpan.textContent) || 0;
+          countSpan.textContent = currentCount + 1;
+        }
+        renderComments(postId);
+      }
+    }
+    input.disabled = false;
+    delete input.dataset.parentId;
+  };
+
+  window.deleteComment = async (commentId, postId) => {
+    if (!isAdmin) return;
+    if (!confirm('Delete this comment?')) return;
+    
+    const client = window.supaDB.supabaseClient;
+    if (client) {
+      const { error } = await client.from('lesson_comments').delete().eq('id', commentId);
+      if (!error) {
+        allComments = allComments.filter(c => c.id !== commentId && c.parent_id !== commentId);
+        renderComments(postId);
+        const countSpan = document.getElementById(`comment-count-${postId}`);
+        if (countSpan) countSpan.textContent = allComments.filter(c => c.lesson_id === postId).length;
+      }
+    }
+  };
+
+  window.sharePost = async (postId) => {
+    const url = window.location.href.split('?')[0] + '?post=' + postId;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'NTC Prep Material',
+          url: url
+        });
+      } catch (err) {
+        console.log('Share dismissed');
+      }
+    } else {
+      navigator.clipboard.writeText(url);
+      window.showToast('Link copied to clipboard!', 'success');
+    }
+  };
+
+  window.editPost = (postId) => {
+    // Redirect admin to dashboard to edit
+    window.location.href = '/pages/dashboard.html#lessons';
+  };
+
+  window.deletePost = async (postId) => {
+    if (!isAdmin) return;
+    if (!confirm('Are you sure you want to delete this post?')) return;
+    if (window.supaDB && window.supaDB.deleteLesson) {
+      const { error } = await window.supaDB.deleteLesson(postId);
+      if (!error) {
+        allMaterials = allMaterials.filter(m => m.id !== postId);
+        applyFilters();
+        window.showToast('Post deleted.', 'success');
+      }
+    }
+  };
+
 
   // --- Filtering & Search ---
   let currentFilter = 'all';
