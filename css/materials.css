@@ -1020,12 +1020,12 @@
 }
 
 .post-action-btn.like-btn.liked svg {
-  fill: #e53e3e;
-  stroke: #e53e3e;
+  fill: #22c55e;
+  stroke: #22c55e;
 }
 
 .post-action-btn.like-btn.liked span {
-  color: #e53e3e;
+  color: #22c55e;
 }
 
 .share-label {

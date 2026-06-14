@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               
               <div class="post-actions">
                 <button class="post-action-btn like-btn ${hasLiked ? 'liked' : ''}" onclick="event.stopPropagation(); window.togglePostLike('${item.id}')">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${hasLiked ? '#e53e3e' : 'none'}" stroke="${hasLiked ? '#e53e3e' : '#718096'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${hasLiked ? '#22c55e' : 'none'}" stroke="${hasLiked ? '#22c55e' : '#718096'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                   <span id="like-count-${item.id}">${likes.length}</span>
                 </button>
                 <button class="post-action-btn comment-btn" onclick="event.stopPropagation(); window.toggleComments('${item.id}')">
@@ -610,11 +610,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (isLiked) {
       btn.classList.remove('liked');
       btn.querySelector('svg').setAttribute('fill', 'none');
+      btn.querySelector('svg').setAttribute('stroke', '#718096');
       countSpan.textContent = Math.max(0, count - 1);
       allLikes = allLikes.filter(l => !(l.lesson_id === postId && l.user_id === currentUserId));
     } else {
       btn.classList.add('liked');
-      btn.querySelector('svg').setAttribute('fill', 'currentColor');
+      btn.querySelector('svg').setAttribute('fill', '#22c55e');
+      btn.querySelector('svg').setAttribute('stroke', '#22c55e');
       countSpan.textContent = count + 1;
       allLikes.push({ lesson_id: postId, user_id: currentUserId });
     }
