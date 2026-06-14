@@ -187,10 +187,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (topicSelect.querySelector(`option[value="${lesson.subject}"]`)) {
           topicSelect.value = lesson.subject;
         }
-        document.getElementById('lessonSubtopic').value = lesson.title || '';
-        document.getElementById('lessonDescription').value = lesson.description || '';
-
         const formType = (lesson.media_type === 'video' || lesson.media_type === 'pdf' || lesson.media_type === 'image' || lesson.media_type === 'audio' || lesson.media_type === 'file') ? 'file' : lesson.media_type === 'link' ? 'link' : 'text';
+
+        document.getElementById('lessonSubtopic').value = lesson.title || '';
+        
+        if (formType === 'text') {
+          document.getElementById('lessonContent').value = lesson.content || '';
+          document.getElementById('lessonDescription').value = '';
+        } else {
+          document.getElementById('lessonDescription').value = lesson.content || '';
+          document.getElementById('lessonContent').value = '';
+        }
         
         switchMaterialType(formType);
         const radio = document.querySelector(`input[name="lessonType"][value="${formType}"]`);
@@ -208,8 +215,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         } else if (formType === 'link') {
           document.getElementById('lessonLink').value = lesson.media_url || '';
-        } else {
-          document.getElementById('lessonContent').value = lesson.content || '';
         }
 
         const btnSubmit = document.getElementById('publishBtn');
@@ -345,6 +350,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (materialType === 'file') {
           if (!selectedFile && !editingLessonId) { window.showToast('Please select a file to upload.', 'error'); return; }
+          content = description || ''; // Save description into the content column for files/images
           
           if (selectedFile) {
             // Show progress bar only if actually uploading a new file
@@ -372,15 +378,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             media_type = getMediaType(selectedFile);
           } else if (editingLessonId) {
             // We are keeping the old file
-            // Let the database keep the old media_type by not changing it
-            // but we need to supply a type so the schema check passes
-            // the previous code set media_type = 'text' at the top, let's omit type so it uses the old one if we don't supply it!
-            // Actually our supabase.js wrapper updateLesson handles omitting undefined.
             media_type = undefined; // Signal to not update
           }
 
         } else if (materialType === 'link') {
           media_url = document.getElementById('lessonLink').value.trim();
+          content = description || ''; // Save description into the content column for links
           if (!media_url) { window.showToast('Please enter an external URL.', 'error'); return; }
           // Detect type from URL
           if (media_url.includes('youtube.com') || media_url.includes('youtu.be') || media_url.includes('vimeo.com')) {
