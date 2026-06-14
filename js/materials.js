@@ -193,6 +193,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
                   <span class="share-label">Share</span>
                 </button>
+                <button class="post-action-btn download-btn" onclick="event.stopPropagation(); window.downloadMedia('${item.media_url}', '${(item.title || 'download').replace(/'/g, "\\'")}')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span class="share-label">Download</span>
+                </button>
                 ${isAdmin ? `
                 <button class="post-action-btn admin-btn edit-btn" onclick="event.stopPropagation(); window.editPost('${item.id}')" title="Edit">
                   <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#3182ce" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -355,7 +359,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (currentImageIndex < 0 || currentImageIndex >= currentImageGallery.length) return;
     const item = currentImageGallery[currentImageIndex];
     
-    document.getElementById('modalImageTitle').textContent = item.title || item.subtopic || 'Image Viewer';
+    const titleElModal = document.getElementById('modalImageTitle');
+    if (titleElModal) titleElModal.textContent = item.title || item.subtopic || 'Image Viewer';
+    
+    const downloadBtn = document.getElementById('imageDownloadBtn');
+    if (downloadBtn) downloadBtn.dataset.url = item.media_url;
+
     const img = document.getElementById('viewerImg');
     img.src = item.media_url;
     
@@ -514,6 +523,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   window.openPdf = async (url, title) => {
     document.getElementById('modalPdfTitle').textContent = title || 'PDF Document';
+    const downloadBtn = document.getElementById('pdfDownloadBtn');
+    if (downloadBtn) downloadBtn.dataset.url = url;
     modals.pdf.classList.add('active');
     
     const container = document.getElementById('pdfContainer');
@@ -764,8 +775,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('Share dismissed');
       }
     } else {
-      navigator.clipboard.writeText(url);
-      window.showToast('Link copied to clipboard!', 'success');
+      navigator.clipboard.writeText(url).then(() => {
+        window.showToast('Link copied to clipboard!', 'success');
+      });
+    }
+  };
+
+  window.downloadMedia = async (url, title) => {
+    try {
+      window.showToast('Starting download...', 'success');
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      
+      // Clean up title for filename
+      let safeTitle = (title || 'download').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      // Try to get extension from URL
+      const extMatch = url.match(/\.([a-zA-Z0-9]+)(?:\?|$)/);
+      const ext = extMatch ? extMatch[1] : 'jpg';
+      
+      a.download = `${safeTitle}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch (e) {
+      console.warn('Blob download failed, falling back to direct link:', e);
+      // Fallback: just open in new tab and let browser handle it
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = title || 'download';
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
   };
 

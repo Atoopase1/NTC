@@ -487,6 +487,32 @@
   background: var(--border);
 }
 
+.image-viewer-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 50;
+  background: rgba(0,0,0,0.5);
+  color: white;
+}
+
+.image-viewer-close:hover {
+  background: rgba(0,0,0,0.8);
+}
+
+.image-viewer-download {
+  position: absolute;
+  top: 16px;
+  right: 60px; /* next to close */
+  z-index: 50;
+  background: rgba(0,0,0,0.5);
+  color: white;
+}
+
+.image-viewer-download:hover {
+  background: rgba(0,0,0,0.8);
+}
+
 /* Image Viewer */
 .image-viewer-body {
   flex: 1;
