@@ -276,8 +276,31 @@ document.addEventListener('DOMContentLoaded', async () => {
       titleEl.textContent = item.title || item.subtopic || 'Image';
       descEl.textContent = item.description || item.content || '';
       
-      // If no details at all, we could hide it, but title is always present due to fallback
       detailsContainer.style.display = 'block';
+      
+      // Handle Read More Toggle
+      descEl.classList.remove('expanded');
+      const readMoreBtn = document.getElementById('imageViewerReadMore');
+      if (readMoreBtn) {
+        readMoreBtn.style.display = 'none';
+        readMoreBtn.textContent = 'Read More';
+        
+        // Use timeout to let DOM render and calculate heights
+        setTimeout(() => {
+          if (descEl.scrollHeight > descEl.clientHeight) {
+            readMoreBtn.style.display = 'inline-block';
+            readMoreBtn.onclick = () => {
+              if (descEl.classList.contains('expanded')) {
+                descEl.classList.remove('expanded');
+                readMoreBtn.textContent = 'Read More';
+              } else {
+                descEl.classList.add('expanded');
+                readMoreBtn.textContent = 'Show Less';
+              }
+            };
+          }
+        }, 50);
+      }
     }
     
     // Update Badge & Navigation
