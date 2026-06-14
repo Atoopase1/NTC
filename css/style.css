@@ -3217,11 +3217,6 @@ p {
   display: flex;
   gap: 4px;
   margin-left: auto;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-}
-
-.msg-content:hover .msg-actions {
   opacity: 1;
 }
 
