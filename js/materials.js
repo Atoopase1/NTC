@@ -111,13 +111,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (type === 'image') {
         cardHtml = `
-          <div class="mat-card mat-media-card" onclick="openImage('${item.media_url}', '${item.title || item.subtopic}')">
+          <div class="mat-card mat-image-card" onclick="openImage('${item.id}')">
             ${btnHtml}
-            <div class="mat-media-bg" style="background-image: url('${item.media_url}')"></div>
-            <div class="mat-media-overlay">
-              <div class="mat-badge-top"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg> Image</div>
-              <h3 class="mat-media-title">${item.title || item.subtopic}</h3>
-              <div class="mat-media-meta">${item.subject || 'Resource'}</div>
+            <div class="mat-image-bg" style="background-image: url('${item.media_url}')"></div>
+            <div class="mat-image-overlay">
+              <h3 class="mat-image-title">${item.title || item.subtopic}</h3>
             </div>
           </div>
         `;
@@ -226,19 +224,125 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // --- Global Viewer Functions ---
   let panzoomInstance = null;
+  
+  // Gallery State
+  let currentImageGallery = [];
+  let currentImageIndex = -1;
 
-  window.openImage = (url, title) => {
-    document.getElementById('modalImageTitle').textContent = title || 'Image Viewer';
-    const img = document.getElementById('viewerImg');
-    img.src = url;
+  window.openImage = (id) => {
+    // Determine the current gallery (all images currently visible)
+    const galleryItems = Array.from(materialsGrid.querySelectorAll('.mat-image-card')).map(card => {
+      const btn = card.querySelector('.mat-bookmark');
+      const matId = btn.getAttribute('data-id');
+      return allMaterials.find(m => m.id === matId);
+    }).filter(Boolean);
+    
+    // Fallback if not found in grid (e.g. called from somewhere else)
+    if (galleryItems.length === 0) {
+      const item = allMaterials.find(m => m.id === id);
+      if (item) galleryItems.push(item);
+    }
+    
+    currentImageGallery = galleryItems;
+    currentImageIndex = currentImageGallery.findIndex(m => m.id === id);
+    
+    if (currentImageIndex === -1) return;
+    
+    renderImageModal();
     modals.image.classList.add('active');
+  };
+
+  function renderImageModal() {
+    if (currentImageIndex < 0 || currentImageIndex >= currentImageGallery.length) return;
+    const item = currentImageGallery[currentImageIndex];
+    
+    document.getElementById('modalImageTitle').textContent = item.title || item.subtopic || 'Image Viewer';
+    const img = document.getElementById('viewerImg');
+    img.src = item.media_url;
+    
+    // Update Badge & Navigation
+    const badge = document.getElementById('imageCountBadge');
+    const btnPrev = document.getElementById('imageNavPrev');
+    const btnNext = document.getElementById('imageNavNext');
+    
+    if (currentImageGallery.length > 1) {
+      badge.style.display = 'block';
+      badge.textContent = `${currentImageIndex + 1} / ${currentImageGallery.length}`;
+      btnPrev.style.display = 'flex';
+      btnNext.style.display = 'flex';
+      
+      // Update states
+      btnPrev.style.opacity = currentImageIndex > 0 ? '1' : '0.5';
+      btnPrev.style.pointerEvents = currentImageIndex > 0 ? 'auto' : 'none';
+      
+      btnNext.style.opacity = currentImageIndex < currentImageGallery.length - 1 ? '1' : '0.5';
+      btnNext.style.pointerEvents = currentImageIndex < currentImageGallery.length - 1 ? 'auto' : 'none';
+    } else {
+      badge.style.display = 'none';
+      btnPrev.style.display = 'none';
+      btnNext.style.display = 'none';
+    }
     
     if (panzoomInstance) panzoomInstance.destroy();
     if (window.Panzoom) {
       panzoomInstance = Panzoom(img, { maxScale: 5, contain: 'outside' });
       img.parentElement.addEventListener('wheel', panzoomInstance.zoomWithWheel);
     }
+  }
+
+  // Navigation handlers
+  window.nextImageGallery = () => {
+    if (currentImageIndex < currentImageGallery.length - 1) {
+      currentImageIndex++;
+      renderImageModal();
+    }
   };
+  
+  window.prevImageGallery = () => {
+    if (currentImageIndex > 0) {
+      currentImageIndex--;
+      renderImageModal();
+    }
+  };
+
+  // Add event listeners for navigation buttons if they exist
+  const btnPrev = document.getElementById('imageNavPrev');
+  const btnNext = document.getElementById('imageNavNext');
+  if (btnPrev) btnPrev.addEventListener('click', (e) => { e.stopPropagation(); window.prevImageGallery(); });
+  if (btnNext) btnNext.addEventListener('click', (e) => { e.stopPropagation(); window.nextImageGallery(); });
+
+  // Swipe detection
+  let touchStartX = 0;
+  let touchEndX = 0;
+  const imageViewerBody = document.getElementById('imageViewerBody');
+  
+  if (imageViewerBody) {
+    imageViewerBody.addEventListener('touchstart', e => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+    
+    imageViewerBody.addEventListener('touchend', e => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    }, { passive: true });
+  }
+
+  function handleSwipe() {
+    if (currentImageGallery.length <= 1) return;
+    // Don't swipe if zoomed in
+    if (panzoomInstance && panzoomInstance.getScale() > 1.05) return;
+    
+    const diff = touchStartX - touchEndX;
+    const threshold = 50; // minimum distance to be considered a swipe
+    
+    if (diff > threshold) {
+      // Swiped left -> next image
+      window.nextImageGallery();
+    } else if (diff < -threshold) {
+      // Swiped right -> prev image
+      window.prevImageGallery();
+    }
+  }
 
   window.openVideo = (url, title) => {
     document.getElementById('modalVideoTitle').textContent = title || 'Video Player';
