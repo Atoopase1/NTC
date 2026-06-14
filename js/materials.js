@@ -163,45 +163,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         const likes = allLikes.filter(l => l.lesson_id === item.id);
         const hasLiked = currentUserId && likes.some(l => l.user_id === currentUserId);
         const commentsCount = allComments.filter(c => c.lesson_id === item.id).length;
+        const caption = (item.content || item.description || '').trim();
         
         cardHtml = `
-          <div class="mat-card mat-image-card social-post" id="post-${item.id}">
+          <div class="mat-card social-post" id="post-${item.id}">
             ${btnHtml}
-            <div class="post-image-wrapper" onclick="openImage('${item.id}')" style="cursor:pointer;">
-              <div class="mat-image-bg" style="background-image: url('${item.media_url}')"></div>
-              <div class="mat-image-overlay">
-                <h3 class="mat-image-title">${item.title || item.subtopic}</h3>
-              </div>
+            <div class="post-image-wrapper" onclick="openImage('${item.id}')">
+              <img class="post-img" src="${item.media_url}" alt="${item.title || item.subtopic}" loading="lazy">
             </div>
             <div class="post-content-wrapper">
-              <div class="post-subject">${item.subject || 'Resource'}</div>
-              <div class="post-caption" id="caption-${item.id}">
-                ${item.content || item.description || ''}
+              <h3 class="post-title">${item.title || item.subtopic}</h3>
+              ${caption ? `
+              <div class="post-caption-row">
+                <span class="post-caption-text" id="caption-${item.id}">${caption}</span>
+                <button class="post-more-btn" id="readmore-${item.id}" onclick="event.stopPropagation(); window.toggleCaption('${item.id}')" style="display:none;">More</button>
               </div>
-              <button class="post-read-more" id="readmore-${item.id}" onclick="toggleCaption('${item.id}')" style="display:none;">Read More</button>
+              ` : ''}
               
               <div class="post-actions">
-                <button class="post-action-btn like-btn ${hasLiked ? 'liked' : ''}" onclick="window.togglePostLike('${item.id}')">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="${hasLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                <button class="post-action-btn like-btn ${hasLiked ? 'liked' : ''}" onclick="event.stopPropagation(); window.togglePostLike('${item.id}')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${hasLiked ? '#e53e3e' : 'none'}" stroke="${hasLiked ? '#e53e3e' : '#718096'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                   <span id="like-count-${item.id}">${likes.length}</span>
                 </button>
-                <button class="post-action-btn comment-btn" onclick="window.toggleComments('${item.id}')">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                <button class="post-action-btn comment-btn" onclick="event.stopPropagation(); window.toggleComments('${item.id}')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                   <span id="comment-count-${item.id}">${commentsCount}</span>
                 </button>
-                <button class="post-action-btn share-btn" onclick="window.sharePost('${item.id}')">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                <button class="post-action-btn share-btn" onclick="event.stopPropagation(); window.sharePost('${item.id}')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                  <span class="share-label">Share</span>
                 </button>
-                <div class="post-admin-actions">
-                  ${isAdmin ? `
-                    <button class="post-action-btn admin-btn edit-btn" onclick="window.editPost('${item.id}')" title="Edit Post">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                    </button>
-                    <button class="post-action-btn admin-btn delete-btn" onclick="window.deletePost('${item.id}')" title="Delete Post">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                    </button>
-                  ` : ''}
-                </div>
+                ${isAdmin ? `
+                <button class="post-action-btn admin-btn edit-btn" onclick="event.stopPropagation(); window.editPost('${item.id}')" title="Edit">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#3182ce" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                </button>
+                <button class="post-action-btn admin-btn delete-btn" onclick="event.stopPropagation(); window.deletePost('${item.id}')" title="Delete">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#e53e3e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+                ` : ''}
               </div>
               
               <div class="post-comments-section" id="comments-section-${item.id}" style="display:none;">
@@ -209,14 +208,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="comment-input-wrapper">
                   <input type="text" id="comment-input-${item.id}" class="comment-input" placeholder="Write a comment..." onkeypress="if(event.key==='Enter') window.submitComment('${item.id}')">
                   <button class="comment-submit-btn" onclick="window.submitComment('${item.id}')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                   </button>
                 </div>
               </div>
             </div>
           </div>
         `;
-      } 
+      }
+ 
       else if (type === 'video') {
         const ytId = getYouTubeId(item.media_url);
         const thumb = ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&q=80';
@@ -566,20 +566,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!caption || !btn) return;
     if (caption.classList.contains('expanded')) {
       caption.classList.remove('expanded');
-      btn.textContent = 'Read More';
+      btn.textContent = 'More';
     } else {
       caption.classList.add('expanded');
-      btn.textContent = 'Show Less';
+      btn.textContent = 'Less';
     }
   };
 
   // Re-check caption overflow after render
   function checkCaptions() {
-    document.querySelectorAll('.post-caption').forEach(caption => {
-      if (caption.scrollHeight > caption.clientHeight) {
+    document.querySelectorAll('.post-caption-text').forEach(caption => {
+      if (caption.scrollHeight > caption.clientHeight + 2) {
         const id = caption.id.replace('caption-', '');
         const btn = document.getElementById(`readmore-${id}`);
-        if (btn) btn.style.display = 'inline-block';
+        if (btn) btn.style.display = 'inline';
       }
     });
   }

@@ -859,89 +859,112 @@
 }
 
 /* ============================================
-   Social Post Layout (Image Cards)
+   Social Post Layout — matches reference design
    ============================================ */
-.mat-image-card.social-post {
+.social-post {
   display: flex;
   flex-direction: column;
-  height: auto; /* Allow content to dictate height */
-  min-height: 350px;
-}
-
-.post-image-wrapper {
-  position: relative;
-  width: 100%;
-  height: 250px; /* Fixed height for image area to match previous card style */
-  flex-shrink: 0;
+  height: auto;
   overflow: hidden;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  border: 1px solid var(--border);
+  cursor: default;
+  position: relative;
 }
 
-.post-image-wrapper .mat-image-bg {
-  border-radius: 0;
+/* Bookmark button stays top-right */
+.social-post .mat-bookmark {
+  z-index: 5;
 }
 
-.post-image-wrapper .mat-image-overlay {
-  border-radius: 0;
+/* Image section — plain, no overlay */
+.post-image-wrapper {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 16px 16px 0 0;
+  cursor: pointer;
+  background: #000;
+  flex-shrink: 0;
 }
 
+.post-img {
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.2s;
+}
+
+.post-img:hover {
+  opacity: 0.93;
+}
+
+/* Content below image */
 .post-content-wrapper {
-  flex: 1;
-  padding: var(--space-md) var(--space-lg);
+  padding: 14px 16px 12px;
   display: flex;
   flex-direction: column;
+  gap: 0;
   background: var(--surface);
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  border-radius: 0 0 16px 16px;
 }
 
-.post-subject {
-  font-size: var(--text-xs);
+/* Title — large, below the image */
+.post-title {
+  font-size: 1.1rem;
   font-weight: 700;
-  color: var(--primary);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: var(--space-xs);
+  color: var(--text);
+  margin: 0 0 8px;
+  line-height: 1.3;
 }
 
-.post-caption {
-  font-size: var(--text-sm);
+/* Caption row — inline text + More button */
+.post-caption-row {
+  font-size: 0.92rem;
   color: var(--text);
-  line-height: 1.5;
+  line-height: 1.55;
+  margin-bottom: 14px;
+}
+
+.post-caption-text {
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  transition: all 0.3s ease;
 }
 
-.post-caption.expanded {
+.post-caption-text.expanded {
+  display: block;
   -webkit-line-clamp: unset;
+  overflow: visible;
 }
 
-.post-read-more {
+.post-more-btn {
   background: none;
   border: none;
-  color: var(--text-light);
-  font-size: var(--text-xs);
+  color: #3182ce;
+  font-size: 0.92rem;
   font-weight: 600;
   cursor: pointer;
-  padding: 0;
-  margin-top: 4px;
-  text-align: left;
+  padding: 0 0 0 4px;
+  vertical-align: baseline;
+  display: none;
 }
 
-.post-read-more:hover {
-  color: var(--primary);
+.post-more-btn:hover {
+  text-decoration: underline;
 }
 
+/* Action bar */
 .post-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
-  margin-top: var(--space-md);
-  padding-top: var(--space-sm);
+  gap: 4px;
+  padding-top: 10px;
   border-top: 1px solid var(--border);
+  margin-top: auto;
 }
 
 .post-action-btn {
@@ -950,45 +973,53 @@
   gap: 6px;
   background: none;
   border: none;
-  color: var(--text-light);
-  font-size: var(--text-sm);
-  font-weight: 600;
+  color: #718096;
+  font-size: 0.88rem;
+  font-weight: 500;
   cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
-  transition: all var(--transition-fast);
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background 0.15s;
+  white-space: nowrap;
 }
 
 .post-action-btn:hover {
-  background: var(--surface-hover);
-  color: var(--text);
+  background: rgba(0,0,0,0.05);
 }
 
-.post-action-btn.like-btn.liked {
-  color: var(--danger);
+.post-action-btn span {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #4a5568;
 }
 
 .post-action-btn.like-btn.liked svg {
-  fill: var(--danger);
-  stroke: var(--danger);
+  fill: #e53e3e;
+  stroke: #e53e3e;
 }
 
-.post-admin-actions {
-  margin-left: auto;
-  display: flex;
-  gap: 4px;
+.post-action-btn.like-btn.liked span {
+  color: #e53e3e;
 }
 
+.share-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+/* Admin icons pushed right */
 .post-action-btn.admin-btn {
   padding: 6px;
+  margin-left: auto;
 }
 
-.post-action-btn.admin-btn.edit-btn:hover {
-  color: var(--primary);
+.post-action-btn.admin-btn:first-of-type {
+  margin-left: auto;
 }
 
-.post-action-btn.admin-btn.delete-btn:hover {
-  color: var(--danger);
+.post-action-btn.admin-btn + .post-action-btn.admin-btn {
+  margin-left: 0;
 }
 
 /* Comments Section */
