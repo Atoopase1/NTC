@@ -58,25 +58,35 @@ document.addEventListener('DOMContentLoaded', async () => {
           isAdmin = currentUser && currentUser.email === 'atoopase@gmail.com';
         }
         
-        // Fetch profiles
-        const client = window.supaDB.supabaseClient;
-        if (client) {
-          const { data: profiles } = await client.from('profiles').select('id, full_name');
-          if (profiles) {
-            profiles.forEach(p => { profileMap[p.id] = p.full_name; });
+        // Fetch profiles (fail silently)
+        try {
+          const client = window.getSupabaseClient ? window.getSupabaseClient() : null;
+          if (client) {
+            const { data: profiles } = await client.from('profiles').select('id, full_name');
+            if (profiles) {
+              profiles.forEach(p => { profileMap[p.id] = p.full_name; });
+            }
           }
-        }
+        } catch(e) { console.warn('Profiles fetch failed:', e); }
         
-        // Fetch lessons, likes, and comments
-        const [res, likesRes, commentsRes] = await Promise.all([
-          window.supaDB.getLessons(),
-          window.supaDB.getAllLessonLikes ? window.supaDB.getAllLessonLikes() : { data: [] },
-          window.supaDB.getAllLessonComments ? window.supaDB.getAllLessonComments() : { data: [] }
-        ]);
-        
+        // Fetch lessons first (critical)
+        const res = await window.supaDB.getLessons();
         allMaterials = res.data || [];
-        allLikes = likesRes.data || [];
-        allComments = commentsRes.data || [];
+        
+        // Fetch social data (fail silently if tables not yet created)
+        try {
+          if (window.supaDB.getAllLessonLikes) {
+            const likesRes = await window.supaDB.getAllLessonLikes();
+            allLikes = likesRes.data || [];
+          }
+        } catch(e) { console.warn('Likes table not ready yet:', e.message); allLikes = []; }
+        
+        try {
+          if (window.supaDB.getAllLessonComments) {
+            const commentsRes = await window.supaDB.getAllLessonComments();
+            allComments = commentsRes.data || [];
+          }
+        } catch(e) { console.warn('Comments table not ready yet:', e.message); allComments = []; }
         
         populateSubjectFilter(allMaterials);
         renderGrid(allMaterials);
@@ -609,11 +619,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
-  window.toggleComments = (postId) => {
+  window.toggleComments = async (postId) => {
     const section = document.getElementById(`comments-section-${postId}`);
     if (!section) return;
-    if (section.style.display === 'none') {
+    if (section.style.display === 'none' || section.style.display === '') {
       section.style.display = 'block';
+      // Always fetch fresh comments when opening
+      try {
+        if (window.supaDB && window.supaDB.getLessonComments) {
+          const { data } = await window.supaDB.getLessonComments(postId);
+          if (data) {
+            // Merge these fresh comments into global state (replace for this post)
+            allComments = allComments.filter(c => c.lesson_id !== postId).concat(data);
+          }
+        }
+      } catch(e) { console.warn('Could not fetch comments:', e.message); }
       renderComments(postId);
     } else {
       section.style.display = 'none';
@@ -720,7 +740,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!isAdmin) return;
     if (!confirm('Delete this comment?')) return;
     
-    const client = window.supaDB.supabaseClient;
+    const client = window.getSupabaseClient ? window.getSupabaseClient() : null;
     if (client) {
       const { error } = await client.from('lesson_comments').delete().eq('id', commentId);
       if (!error) {
