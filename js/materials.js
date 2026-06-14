@@ -104,7 +104,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>`;
 
       let cardHtml = '';
-      const type = (item.media_type || 'text').toLowerCase();
+      let type = (item.media_type || 'text').toLowerCase();
+      
+      // Auto-detect images stored as text in DB
+      if (type === 'text' && item.media_url) {
+        if (item.media_url.match(/\.(jpeg|jpg|gif|png|webp|svg|bmp)(\?.*)?$/i)) {
+          type = 'image';
+        }
+      }
       
       // Bookmark button HTML
       const btnHtml = `<button class="mat-bookmark ${bookmarkClass}" data-id="${item.id}" onclick="event.stopPropagation(); toggleSave('${item.id}')">${bookmarkIcon}</button>`;
@@ -433,7 +440,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     const filtered = allMaterials.filter(item => {
       // Filter by type
-      const type = (item.media_type || 'text').toLowerCase();
+      let type = (item.media_type || 'text').toLowerCase();
+      if (type === 'text' && item.media_url && item.media_url.match(/\.(jpeg|jpg|gif|png|webp|svg|bmp)(\?.*)?$/i)) {
+        type = 'image';
+      }
+      
       let matchesType = true;
       
       if (currentFilter === 'pdfs') matchesType = (type === 'pdf' || type === 'document');

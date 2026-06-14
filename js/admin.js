@@ -144,7 +144,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     tbody.innerHTML = data.map(l => {
-      const type = l.media_type || 'text';
+      let type = l.media_type || 'text';
+      if (type === 'text' && l.media_url && l.media_url.match(/\.(jpeg|jpg|gif|png|webp|svg|bmp)(\?.*)?$/i)) {
+        type = 'image';
+      }
+      
       const badgeClass = type === 'video' ? 'badge-video' : type === 'pdf' ? 'badge-pdf' : type === 'image' ? 'badge-image' : type === 'audio' ? 'badge-audio' : type === 'file' ? 'badge-doc' : 'badge-text';
       const badgeLabel = type.charAt(0).toUpperCase() + type.slice(1);
       const date = new Date(l.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
