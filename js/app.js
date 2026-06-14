@@ -775,32 +775,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const { data: existing } = await client
+      const { data: existing, error: selectError } = await client
         .from('message_reactions')
         .select('*')
         .eq('message_id', msgId)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
+
+      if (selectError) {
+        console.error('Error checking existing reaction:', selectError);
+        return;
+      }
 
       if (existing) {
         if (existing.is_like === isLike) {
           // Toggle off
-          await client.from('message_reactions').delete().eq('id', existing.id);
+          const { error: delError } = await client.from('message_reactions').delete().eq('id', existing.id);
+          if (delError) throw delError;
         } else {
           // Switch reaction
-          await client.from('message_reactions').update({ is_like: isLike }).eq('id', existing.id);
+          const { error: updError } = await client.from('message_reactions').update({ is_like: isLike }).eq('id', existing.id);
+          if (updError) throw updError;
         }
       } else {
         // Insert new
-        await client.from('message_reactions').insert({
+        const { error: insError } = await client.from('message_reactions').insert({
           message_id: msgId,
           user_id: user.id,
           is_like: isLike
         });
+        if (insError) throw insError;
       }
       loadNotifications(); // Reload to show updated reactions
     } catch (err) {
       console.error('Reaction error:', err);
+      window.showToast('Failed to save reaction', 'error');
     }
   };
 
