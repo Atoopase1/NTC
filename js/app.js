@@ -572,18 +572,35 @@ document.addEventListener('DOMContentLoaded', () => {
     notificationFooter.style.display = 'none';
 
     try {
+      // Query messages table directly (no view needed)
       const { data: announcements, error } = await client
-        .from('messages_with_profiles')
+        .from('messages')
         .select('*')
         .is('parent_id', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
+      // Fetch all profiles to map sender names
+      const { data: allProfiles } = await client
+        .from('profiles')
+        .select('id, full_name');
+      const profileMap = {};
+      if (allProfiles) {
+        allProfiles.forEach(p => { profileMap[p.id] = p.full_name; });
+      }
+
+      // Attach sender_name from profile map
+      if (announcements) {
+        announcements.forEach(a => {
+          a.sender_name = profileMap[a.sender_id] || null;
+        });
+      }
+
       // Fetch reactions - non-fatal if table doesn't exist yet
       const reactionsResult = await client.from('message_reactions').select('*').then(r => r).catch(() => ({ data: null }));
       const allReactions = reactionsResult.data || null;
-      const currentUser = await window.supaAuth.getCurrentUser();
+      const currentUser = window.supaAuth ? await window.supaAuth.getCurrentUser() : null;
       const currentUserId = currentUser ? currentUser.id : null;
       const isAdmin = currentUser && currentUser.email === 'atoopase@gmail.com';
 
@@ -643,26 +660,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
       let html = '';
       for (const ann of announcements) {
+        // Query replies directly from messages table
         const { data: replies } = await client
-          .from('messages_with_profiles')
+          .from('messages')
           .select('*')
           .eq('parent_id', ann.id)
           .order('created_at', { ascending: true });
 
         const timeStr = new Date(ann.created_at).toLocaleString();
-        const avatar = ann.sender_avatar ? `<img src="${ann.sender_avatar}" alt="Avatar">` : ann.sender_name.charAt(0);
+        const senderName = ann.sender_name || 'Admin';
+        const avatar = senderName.charAt(0);
         
         let repliesHtml = '';
         if (replies && replies.length > 0) {
           repliesHtml = replies.map(r => {
+            const rName = profileMap[r.sender_id] || 'User';
             const rTime = new Date(r.created_at).toLocaleString();
-            const rAvatar = r.sender_avatar ? `<img src="${r.sender_avatar}" alt="Avatar">` : (r.sender_name ? r.sender_name.charAt(0) : 'U');
+            const rAvatar = rName.charAt(0);
             return `
               <div class="msg-item msg-reply" data-msg-id="${r.id}">
                 <div class="msg-avatar">${rAvatar}</div>
                 <div class="msg-content">
                   <div class="msg-header">
-                    <span class="msg-name">${r.sender_name || 'User'}</span>
+                    <span class="msg-name">${rName}</span>
                     <span class="msg-time">${rTime}</span>
                     ${getActionsHtml(r.id, r.sender_id)}
                   </div>
@@ -680,7 +700,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="msg-avatar">${avatar}</div>
               <div class="msg-content">
                 <div class="msg-header">
-                  <span class="msg-name">${ann.sender_name}</span>
+                  <span class="msg-name">${senderName}</span>
                   <span class="msg-time">${timeStr}</span>
                   ${getActionsHtml(ann.id, ann.sender_id)}
                 </div>
@@ -700,7 +720,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error loading notifications:', err);
       notificationList.innerHTML = `
         <div class="empty-state" style="padding: var(--space-xl) var(--space-md); color: var(--danger);">
-          <p>Failed to load messages.</p>
+          <p>Failed to load messages: ${err.message || err.toString()}</p>
         </div>
       `;
     }

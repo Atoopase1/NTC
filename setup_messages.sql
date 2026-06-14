@@ -70,7 +70,7 @@ SELECT
   p.full_name as sender_name,
   null as sender_avatar
 FROM public.messages m
-JOIN public.profiles p ON m.sender_id = p.id;
+LEFT JOIN public.profiles p ON m.sender_id = p.id;
 
 -- ============================================
 -- Reactions System
