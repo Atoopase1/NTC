@@ -169,9 +169,13 @@ document.addEventListener('DOMContentLoaded', () => {
   
   if (sidebarToggle && sidebar && sidebarOverlay) {
     sidebarToggle.addEventListener('click', () => {
-      sidebar.classList.add('open');
-      sidebarOverlay.classList.add('active');
-      document.body.style.overflow = 'hidden';
+      if (window.innerWidth >= 1024) {
+        document.querySelector('.dashboard-layout').classList.toggle('collapsed');
+      } else {
+        sidebar.classList.add('open');
+        sidebarOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
     });
     
     sidebarOverlay.addEventListener('click', () => {
