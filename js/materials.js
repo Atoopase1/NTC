@@ -255,7 +255,8 @@ document.addEventListener('DOMContentLoaded', async () => {
               <div class="mat-media-meta" style="color:var(--text-muted); font-size:0.8rem; font-weight:600; margin-bottom: 8px;">${item.subject || 'Resource'}</div>
               ${caption ? `
               <div class="feed-caption-row" style="margin-bottom:0;">
-                <span class="feed-caption-text">${caption}</span>
+                <span class="feed-caption-text" id="caption-${item.id}">${caption}</span>
+                <button class="feed-more-btn" id="readmore-${item.id}" onclick="event.stopPropagation(); window.toggleCaption('${item.id}')" style="display:none;">More</button>
               </div>
               ` : ''}
             </div>
