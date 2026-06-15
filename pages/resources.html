@@ -185,16 +185,42 @@
     </div>
   </div>
 
-  <!-- Video Viewer Modal -->
-  <div class="viewer-modal" id="modalVideo">
-    <div class="viewer-header">
-      <div class="viewer-title" id="modalVideoTitle">Video Player</div>
-      <div class="viewer-actions">
-        <button class="viewer-btn close-modal"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+  <!-- Video Viewer Modal (Professional Cinema View) -->
+  <div class="viewer-modal video-viewer-modal" id="modalVideo">
+    <!-- Top Bar -->
+    <div class="video-modal-topbar">
+      <div class="video-modal-topbar-left">
+        <div class="video-modal-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        </div>
+        <div class="video-modal-meta">
+          <div class="video-modal-title" id="modalVideoTitle">Video Player</div>
+          <div class="video-modal-subtitle">NTC Prep · Study Resource</div>
+        </div>
+      </div>
+      <div class="video-modal-topbar-right">
+        <a id="videoOpenYT" href="#" target="_blank" rel="noopener" class="video-modal-yt-btn" title="Open on YouTube">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31.3 31.3 0 0 0 0 12a31.3 31.3 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31.3 31.3 0 0 0 24 12a31.3 31.3 0 0 0-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>
+          <span>YouTube</span>
+        </a>
+        <button class="video-modal-close-btn close-modal" title="Close">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
       </div>
     </div>
-    <div class="video-viewer-body">
-      <video id="videoPlayer" class="video-player" controls autoplay></video>
+
+    <!-- Video Stage -->
+    <div class="video-viewer-body" id="videoViewerBody">
+      <video id="videoPlayer" class="video-player" controls></video>
+    </div>
+
+    <!-- Bottom Info Bar -->
+    <div class="video-modal-bottombar">
+      <div class="video-modal-bottom-title" id="videoBottomTitle"></div>
+      <div class="video-modal-bottom-badge">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31.3 31.3 0 0 0 0 12a31.3 31.3 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31.3 31.3 0 0 0 24 12a31.3 31.3 0 0 0-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>
+        Video
+      </div>
     </div>
   </div>
 
