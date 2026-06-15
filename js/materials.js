@@ -233,18 +233,31 @@ document.addEventListener('DOMContentLoaded', async () => {
       else if (type === 'video') {
         const ytId = getYouTubeId(item.media_url);
         const thumb = ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&q=80';
+        const caption = (item.content || item.description || '').trim();
         // Store URL safely in map — avoids apostrophe/special char issues in onclick
         window._videoUrlMap[item.id] = { url: item.media_url, title: item.title || item.subtopic || '' };
         
         cardHtml = `
-          <div class="mat-card mat-media-card" data-video-id="${item.id}" onclick="(function(el){var c=el.closest('[data-video-id]');var d=c&&window._videoUrlMap[c.dataset.videoId];if(d)openVideo(d.url,d.title);})(this)">
+          <div class="mat-card feed-item" data-video-id="${item.id}" onclick="(function(el){var c=el.closest('[data-video-id]');var d=c&&window._videoUrlMap[c.dataset.videoId];if(d)openVideo(d.url,d.title);})(this)">
             ${btnHtml}
-            <div class="mat-media-bg" style="background-image: url('${thumb}')"></div>
-            <div class="mat-media-overlay">
-              <div class="mat-badge-top"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Video</div>
-              <div class="mat-play-btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></div>
-              <h3 class="mat-media-title">${item.title || item.subtopic}</h3>
-              <div class="mat-media-meta">${item.subject || 'Resource'}</div>
+            <div class="feed-media-wrap">
+              <div class="mat-badge-top" style="position:absolute; top:12px; left:12px; z-index:10; background:rgba(0,0,0,0.6); padding:4px 8px; border-radius:4px; color:white; font-size:0.75rem; font-weight:600; display:flex; align-items:center; gap:4px; backdrop-filter:blur(4px);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Video
+              </div>
+              <div class="mat-play-btn" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:10; width:48px; height:48px; background:rgba(255,255,255,0.2); backdrop-filter:blur(4px); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" style="margin-left:4px;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              </div>
+              <div style="position:absolute; inset:0; background-image: url('${thumb}'); background-size:cover; background-position:center; transition:transform 0.5s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"></div>
+              <div style="position:absolute; inset:0; background:rgba(0,0,0,0.2); z-index:5; pointer-events:none;"></div>
+            </div>
+            <div class="feed-content-wrap">
+              <h3 class="feed-title" style="margin-bottom: 4px;">${item.title || item.subtopic}</h3>
+              <div class="mat-media-meta" style="color:var(--text-muted); font-size:0.8rem; font-weight:600; margin-bottom: 8px;">${item.subject || 'Resource'}</div>
+              ${caption ? `
+              <div class="feed-caption-row" style="margin-bottom:0;">
+                <span class="feed-caption-text">${caption}</span>
+              </div>
+              ` : ''}
             </div>
           </div>
         `;
