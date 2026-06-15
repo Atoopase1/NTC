@@ -1137,16 +1137,19 @@
 }
 
 .feed-caption-text {
-  display: -webkit-box;
+  display: -webkit-box !important;
   -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
+  -webkit-box-orient: vertical !important;
   overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: 4.65em; /* Fallback: 3 lines * 1.55 line-height */
 }
 
 .feed-caption-text.expanded {
-  display: block;
+  display: block !important;
   -webkit-line-clamp: unset;
   overflow: visible;
+  max-height: none;
 }
 
 .feed-more-btn {
