@@ -494,7 +494,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (ytId) {
       // YouTube embed
-      player.outerHTML = `<iframe id="videoPlayer" class="video-player" src="https://www.youtube.com/embed/${ytId}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
+      player.outerHTML = `<iframe id="videoPlayer" class="video-player" src="https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&rel=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
     } else {
       player.outerHTML = `<video id="videoPlayer" class="video-player" controls autoplay><source src="${url}">Your browser does not support the video tag.</video>`;
     }
