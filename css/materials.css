@@ -1060,9 +1060,9 @@
 }
 
 /* ============================================
-   Social Post Layout — matches reference design
+   Feed Layout (Replaces social-post)
    ============================================ */
-.social-post {
+.feed-item {
   display: flex;
   flex-direction: column;
   height: auto;
@@ -1076,44 +1076,50 @@
 }
 
 /* Bookmark button stays top-right */
-.social-post .mat-bookmark {
+.feed-item .mat-bookmark {
   z-index: 5;
 }
 
-/* Image section — plain, no overlay */
-.post-image-wrapper {
+/* Image section */
+.feed-media-wrap {
   width: 100%;
+  aspect-ratio: 4 / 3;
   overflow: hidden;
   border-radius: 16px 16px 0 0;
   cursor: pointer;
-  background: #000;
+  background: var(--surface-alt, #f1f5f9);
   flex-shrink: 0;
+  position: relative;
 }
 
-.post-img {
+.feed-media-content {
   width: 100%;
-  height: 260px;
+  height: 100%;
   object-fit: cover;
   display: block;
   transition: opacity 0.2s;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
-.post-img:hover {
+.feed-media-content:hover {
   opacity: 0.93;
 }
 
 /* Content below image */
-.post-content-wrapper {
+.feed-content-wrap {
   padding: 14px 16px 12px;
   display: flex;
   flex-direction: column;
   gap: 0;
   background: var(--surface);
   border-radius: 0 0 16px 16px;
+  flex-grow: 1;
 }
 
 /* Title — large, below the image */
-.post-title {
+.feed-title {
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--text);
@@ -1122,27 +1128,27 @@
 }
 
 /* Caption row — inline text + More button */
-.post-caption-row {
+.feed-caption-row {
   font-size: 0.92rem;
   color: var(--text);
   line-height: 1.55;
   margin-bottom: 14px;
 }
 
-.post-caption-text {
+.feed-caption-text {
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.post-caption-text.expanded {
+.feed-caption-text.expanded {
   display: block;
   -webkit-line-clamp: unset;
   overflow: visible;
 }
 
-.post-more-btn {
+.feed-more-btn {
   background: none;
   border: none;
   color: #3182ce;
