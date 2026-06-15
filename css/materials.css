@@ -1083,7 +1083,8 @@
 /* Image section */
 .feed-media-wrap {
   width: 100%;
-  aspect-ratio: 4 / 3;
+  /* Fallback for aspect-ratio bug in flex children on some desktop browsers */
+  padding-top: 75%; /* 4:3 Aspect Ratio */
   overflow: hidden;
   border-radius: 16px 16px 0 0;
   cursor: pointer;
