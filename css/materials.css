@@ -436,12 +436,14 @@
   flex-direction: column;
   opacity: 0;
   visibility: hidden;
+  pointer-events: none;
   transition: all 0.3s ease;
 }
 
 .viewer-modal.active {
   opacity: 1;
   visibility: visible;
+  pointer-events: all;
 }
 
 .viewer-header {
@@ -695,7 +697,6 @@
    =========================== */
 .video-viewer-modal {
   background: #000 !important;
-  display: flex !important;
   flex-direction: column;
   padding: 0 !important;
 }
