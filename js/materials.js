@@ -145,6 +145,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    // Build a safe lookup map for video URLs (avoids breaking onclick with special chars)
+    window._videoUrlMap = window._videoUrlMap || {};
+
     materialsGrid.innerHTML = items.map(item => {
       const isSaved = savedIds.includes(item.id);
       const bookmarkClass = isSaved ? 'saved' : '';
@@ -229,9 +232,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       else if (type === 'video') {
         const ytId = getYouTubeId(item.media_url);
         const thumb = ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&q=80';
+        // Store URL safely in map — avoids apostrophe/special char issues in onclick
+        window._videoUrlMap[item.id] = { url: item.media_url, title: item.title || item.subtopic || '' };
         
         cardHtml = `
-          <div class="mat-card mat-media-card" onclick="openVideo('${item.media_url}', '${(item.title || item.subtopic).replace(/'/g, "\\'")}')">
+          <div class="mat-card mat-media-card" data-video-id="${item.id}" onclick="(function(el){var d=window._videoUrlMap[el.dataset.videoId];if(d)openVideo(d.url,d.title);})(this)">
             ${btnHtml}
             <div class="mat-media-bg" style="background-image: url('${thumb}')"></div>
             <div class="mat-media-overlay">
