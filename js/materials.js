@@ -34,7 +34,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       e.target.closest('.viewer-modal').classList.remove('active');
       // Stop video if playing
       const video = document.getElementById('videoPlayer');
-      if (video) video.pause();
+      if (video) {
+        if (video.tagName === 'IFRAME') {
+          video.src = '';
+        } else if (typeof video.pause === 'function') {
+          video.pause();
+        }
+      }
     });
   });
 
@@ -128,9 +134,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   function getYouTubeId(url) {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const regExp = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/;
     const match = url?.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : null;
+    return match ? match[1] : null;
   }
 
   function renderGrid(items) {
@@ -225,7 +231,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const thumb = ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&q=80';
         
         cardHtml = `
-          <div class="mat-card mat-media-card" onclick="openVideo('${item.media_url}', '${item.title || item.subtopic}')">
+          <div class="mat-card mat-media-card" onclick="openVideo('${item.media_url}', '${(item.title || item.subtopic).replace(/'/g, "\\'")}')">
             ${btnHtml}
             <div class="mat-media-bg" style="background-image: url('${thumb}')"></div>
             <div class="mat-media-overlay">
@@ -239,7 +245,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       else if (type === 'pdf' || type === 'document') {
         cardHtml = `
-          <div class="mat-card mat-pdf-card" onclick="openPdf('${item.media_url}', '${item.title || item.subtopic}')">
+          <div class="mat-card mat-pdf-card" onclick="openPdf('${item.media_url}', '${(item.title || item.subtopic).replace(/'/g, "\\'")}')">
             ${btnHtml}
             <div class="mat-pdf-preview" data-pdf="${item.media_url}">
               <canvas class="mat-pdf-canvas"></canvas>
@@ -333,7 +339,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   window.openImage = (id) => {
     // Determine the current gallery (all images currently visible)
-    const galleryItems = Array.from(materialsGrid.querySelectorAll('.mat-image-card')).map(card => {
+    const galleryItems = Array.from(materialsGrid.querySelectorAll('.social-post')).map(card => {
       const btn = card.querySelector('.mat-bookmark');
       const matId = btn.getAttribute('data-id');
       return allMaterials.find(m => m.id === matId);
@@ -489,14 +495,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   window.openVideo = (url, title) => {
     document.getElementById('modalVideoTitle').textContent = title || 'Video Player';
-    const player = document.getElementById('videoPlayer');
+    const container = document.querySelector('.video-viewer-body');
     const ytId = getYouTubeId(url);
     
     if (ytId) {
       // YouTube embed
-      player.outerHTML = `<iframe id="videoPlayer" class="video-player" src="https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&rel=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      container.innerHTML = `<iframe id="videoPlayer" class="video-player" src="https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&rel=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
     } else {
-      player.outerHTML = `<video id="videoPlayer" class="video-player" controls autoplay><source src="${url}">Your browser does not support the video tag.</video>`;
+      container.innerHTML = `<video id="videoPlayer" class="video-player" controls autoplay><source src="${url}">Your browser does not support the video tag.</video>`;
     }
     
     modals.video.classList.add('active');
