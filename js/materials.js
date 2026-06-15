@@ -499,28 +499,61 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   window.openVideo = (url, title) => {
-    // Set topbar title
+    // Set titles
     document.getElementById('modalVideoTitle').textContent = title || 'Video Player';
-    // Set bottom bar title
     const bottomTitle = document.getElementById('videoBottomTitle');
     if (bottomTitle) bottomTitle.textContent = title || '';
-    // Set YouTube open link
-    const ytLink = document.getElementById('videoOpenYT');
-    const ytId = getYouTubeId(url);
-    if (ytLink) {
-      if (ytId) {
-        ytLink.href = `https://www.youtube.com/watch?v=${ytId}`;
-        ytLink.style.display = 'flex';
-      } else {
-        ytLink.style.display = 'none';
+
+    // --- Extract YouTube video ID (all URL formats) ---
+    let ytId = null;
+    try {
+      const u = new URL(url);
+      if (u.hostname.includes('youtu.be')) {
+        ytId = u.pathname.split('/')[1];
+      } else if (u.hostname.includes('youtube.com')) {
+        if (u.pathname.includes('/shorts/')) {
+          ytId = u.pathname.split('/shorts/')[1].split('/')[0];
+        } else if (u.pathname.includes('/embed/')) {
+          ytId = u.pathname.split('/embed/')[1].split('/')[0];
+        } else {
+          ytId = u.searchParams.get('v');
+        }
       }
+    } catch(e) {
+      const m = url.match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([a-zA-Z0-9_-]{11})/);
+      if (m) ytId = m[1];
     }
+    if (ytId) ytId = ytId.split('&')[0].split('?')[0];
+
+    // Show YouTube button
+    const ytLink = document.getElementById('videoOpenYT');
+    if (ytLink) {
+      ytLink.href = ytId ? 'https://www.youtube.com/watch?v=' + ytId : url;
+      ytLink.style.display = 'flex';
+    }
+
+    // Build the player — responsive 16:9 iframe, no <video> tag for YouTube
     const container = document.querySelector('.video-viewer-body');
     if (ytId) {
-      container.innerHTML = `<iframe id="videoPlayer" class="video-player" src="https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+      container.innerHTML =
+        '<div class="yt-container">' +
+          '<iframe id="videoPlayer"' +
+          ' src="https://www.youtube.com/embed/' + ytId + '?autoplay=1&rel=0&modestbranding=1"' +
+          ' frameborder="0"' +
+          ' allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"' +
+          ' allowfullscreen></iframe>' +
+        '</div>';
     } else {
-      container.innerHTML = `<video id="videoPlayer" class="video-player" controls autoplay><source src="${url}">Your browser does not support the video tag.</video>`;
+      container.innerHTML =
+        '<div class="yt-container">' +
+          '<video id="videoPlayer" controls autoplay' +
+          ' style="width:100%;height:100%;object-fit:contain;">' +
+          '<source src="' + url + '">' +
+          'Your browser does not support video.' +
+          '</video>' +
+        '</div>';
     }
+
     modals.video.classList.add('active');
   };
 
