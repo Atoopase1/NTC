@@ -15,7 +15,6 @@ const PRECACHE_ASSETS = [
   '/pages/login.html',
   '/pages/register.html',
   '/pages/resources.html',
-  '/pages/leaderboard.html',
   '/pages/contact.html',
   '/css/style.css',
   '/css/dashboard.css',

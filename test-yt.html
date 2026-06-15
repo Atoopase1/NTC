@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { margin: 0; background: #000; display: flex; align-items: center; justify-content: center; height: 100vh; }
+  .video-viewer-body { flex: 1; background: #222; display: flex; align-items: center; justify-content: center; overflow: auto; width: 100%; height: 100%; padding: 0; }
+  .yt-container { width: 100%; max-width: 1280px; aspect-ratio: 16 / 9; background: red; }
+  .yt-container iframe { width: 100%; height: 100%; border: none; display: block; }
+</style>
+</head>
+<body>
+  <div class="video-viewer-body">
+    <div class="yt-container">
+      <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" allowfullscreen></iframe>
+    </div>
+  </div>
+</body>
+</html>
