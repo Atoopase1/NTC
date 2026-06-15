@@ -134,9 +134,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   function getYouTubeId(url) {
-    const regExp = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/;
-    const match = url?.match(regExp);
-    return match ? match[1] : null;
+    if (!url) return null;
+    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?)|(shorts\/)|(live\/))\??v?=?([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[9] && match[9].length === 11) ? match[9] : null;
   }
 
   function renderGrid(items) {
@@ -504,26 +505,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const bottomTitle = document.getElementById('videoBottomTitle');
     if (bottomTitle) bottomTitle.textContent = title || '';
 
-    // --- Extract YouTube video ID (all URL formats) ---
-    let ytId = null;
-    try {
-      const u = new URL(url);
-      if (u.hostname.includes('youtu.be')) {
-        ytId = u.pathname.split('/')[1];
-      } else if (u.hostname.includes('youtube.com')) {
-        if (u.pathname.includes('/shorts/')) {
-          ytId = u.pathname.split('/shorts/')[1].split('/')[0];
-        } else if (u.pathname.includes('/embed/')) {
-          ytId = u.pathname.split('/embed/')[1].split('/')[0];
-        } else {
-          ytId = u.searchParams.get('v');
-        }
-      }
-    } catch(e) {
-      const m = url.match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([a-zA-Z0-9_-]{11})/);
-      if (m) ytId = m[1];
-    }
-    if (ytId) ytId = ytId.split('&')[0].split('?')[0];
+    // --- Extract YouTube video ID ---
+    let ytId = getYouTubeId(url);
 
     // Show YouTube button
     const ytLink = document.getElementById('videoOpenYT');
@@ -532,9 +515,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       ytLink.style.display = 'flex';
     }
 
-    // Build the player — responsive 16:9 iframe, no <video> tag for YouTube
+    // Build the player
     const container = document.querySelector('.video-viewer-body');
+    const isYouTubeUrl = url && (url.includes('youtube.com') || url.includes('youtu.be'));
+
     if (ytId) {
+      // Valid YouTube Video -> Iframe
       container.innerHTML =
         '<div class="yt-container">' +
           '<iframe id="videoPlayer"' +
@@ -543,7 +529,18 @@ document.addEventListener('DOMContentLoaded', async () => {
           ' allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"' +
           ' allowfullscreen></iframe>' +
         '</div>';
+    } else if (isYouTubeUrl) {
+      // Invalid/Unparseable YouTube Video -> Error (avoids black screen <video> tag)
+      container.innerHTML =
+        '<div class="yt-container" style="display:flex;align-items:center;justify-content:center;color:#ff4444;text-align:center;padding:20px;">' +
+          '<div>' +
+            '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:10px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>' +
+            '<h3>Invalid YouTube Link</h3>' +
+            '<p style="font-size:0.9rem;opacity:0.8;margin-top:5px;word-break:break-all;">' + url + '</p>' +
+          '</div>' +
+        '</div>';
     } else {
+      // Standard Direct Video -> <video> tag
       container.innerHTML =
         '<div class="yt-container">' +
           '<video id="videoPlayer" controls autoplay' +
