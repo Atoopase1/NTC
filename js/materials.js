@@ -236,7 +236,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         window._videoUrlMap[item.id] = { url: item.media_url, title: item.title || item.subtopic || '' };
         
         cardHtml = `
-          <div class="mat-card mat-media-card" data-video-id="${item.id}" onclick="(function(el){var d=window._videoUrlMap[el.dataset.videoId];if(d)openVideo(d.url,d.title);})(this)">
+          <div class="mat-card mat-media-card" data-video-id="${item.id}" onclick="(function(el){var c=el.closest('[data-video-id]');var d=c&&window._videoUrlMap[c.dataset.videoId];if(d)openVideo(d.url,d.title);})(this)">
             ${btnHtml}
             <div class="mat-media-bg" style="background-image: url('${thumb}')"></div>
             <div class="mat-media-overlay">
