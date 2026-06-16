@@ -409,10 +409,16 @@
   font-size: var(--text-sm);
   color: var(--text-light);
   line-height: 1.6;
-  /* No line-clamp — let text fill the card height to match image cards */
   overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 8;
   margin-bottom: var(--space-md);
-  flex: 1;
+}
+
+.mat-text-snippet.expanded {
+  display: block;
+  -webkit-line-clamp: unset;
 }
 
 .mat-text-footer {

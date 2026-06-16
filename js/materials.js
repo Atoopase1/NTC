@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const caption = (item.content || item.description || '').trim();
         
         cardHtml = `
-          <div class="mat-card social-post" id="post-${item.id}">
+          <div class="mat-card feed-item social-post" id="post-${item.id}">
             ${btnHtml}
             <div class="post-image-wrapper" onclick="openImage('${item.id}')">
               <img class="post-img" src="${item.media_url}" alt="${item.title || item.subtopic}" loading="lazy">
@@ -298,7 +298,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="post-content-wrapper">
               <div class="mat-text-badge"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg> Article</div>
               <h3 class="mat-text-title post-title">${item.title || item.subtopic}</h3>
-              <p class="mat-text-snippet">${content}</p>
+              <p class="mat-text-snippet" id="snippet-${item.id}">${content}</p>
+              <button class="post-more-btn" id="readmore-${item.id}" onclick="event.stopPropagation(); window.toggleCaption('${item.id}')" style="display:none; margin-bottom:var(--space-md);">More</button>
               <div class="mat-text-footer">
                 <div class="mat-meta-row">
                   <span>${readTime}</span>
@@ -647,25 +648,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   // --- Social Interactions --- //
 
   window.toggleCaption = (postId) => {
-    const caption = document.getElementById(`caption-${postId}`);
+    const el = document.getElementById(`caption-${postId}`) || document.getElementById(`snippet-${postId}`);
     const btn = document.getElementById(`readmore-${postId}`);
-    if (!caption || !btn) return;
-    if (caption.classList.contains('expanded')) {
-      caption.classList.remove('expanded');
+    if (!el || !btn) return;
+    if (el.classList.contains('expanded')) {
+      el.classList.remove('expanded');
       btn.textContent = 'More';
     } else {
-      caption.classList.add('expanded');
+      el.classList.add('expanded');
       btn.textContent = 'Less';
     }
   };
 
   // Re-check caption overflow after render
   function checkCaptions() {
-    document.querySelectorAll('.post-caption-text').forEach(caption => {
-      if (caption.scrollHeight > caption.clientHeight + 2) {
-        const id = caption.id.replace('caption-', '');
+    document.querySelectorAll('.post-caption-text, .mat-text-snippet').forEach(el => {
+      if (el.scrollHeight > el.clientHeight + 2) {
+        const id = el.id.replace('caption-', '').replace('snippet-', '');
         const btn = document.getElementById(`readmore-${id}`);
-        if (btn) btn.style.display = 'inline';
+        if (btn) btn.style.display = 'inline-block';
       }
     });
   }

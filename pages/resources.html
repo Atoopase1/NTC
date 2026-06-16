@@ -222,10 +222,10 @@
   </div>
 
   <!-- Scripts -->
-  <script src="../js/supabase.js?v=2"></script>
-  <script src="../js/app.js?v=2"></script>
-  <script src="../js/auth.js?v=2"></script>
-  <script src="../js/materials.js?v=2"></script>
+  <script src="../js/app.js?v=3"></script>
+  <script src="../js/auth.js?v=3"></script>
+  <script src="../js/supabase.js?v=3"></script>
+  <script src="../js/materials.js?v=3"></script>
   
   <script>
     if ('serviceWorker' in navigator) {
@@ -236,9 +236,9 @@
             // Force update on load
             reg.update();
             
-            // Check if we need to force reload for v4 cache bust
-            if (localStorage.getItem('ntc_cache_v4_cleared') !== 'true') {
-              localStorage.setItem('ntc_cache_v4_cleared', 'true');
+            // Check if we need to force reload for v6 cache bust
+            if (localStorage.getItem('ntc_cache_v6_cleared') !== 'true') {
+              localStorage.setItem('ntc_cache_v6_cleared', 'true');
               
               // Unregister all workers and reload
               navigator.serviceWorker.getRegistrations().then(function(registrations) {
