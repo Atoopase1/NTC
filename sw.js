@@ -3,7 +3,7 @@
 // Caches assets for offline use
 // ============================================
 
-const CACHE_NAME = 'ntcprep-v3';
+const CACHE_NAME = 'ntcprep-v4';
 
 // Core assets to cache on install
 const PRECACHE_ASSETS = [
@@ -19,6 +19,7 @@ const PRECACHE_ASSETS = [
   '/css/style.css',
   '/css/dashboard.css',
   '/css/responsive.css',
+  '/css/materials.css',
   '/js/app.js',
   '/js/auth.js',
   '/js/supabase.js',
@@ -27,6 +28,7 @@ const PRECACHE_ASSETS = [
   '/js/profile.js',
   '/js/dashboard.js',
   '/js/admin-exams.js',
+  '/js/materials.js',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/manifest.json'

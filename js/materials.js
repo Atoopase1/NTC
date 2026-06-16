@@ -310,9 +310,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
           </div>
         `;
-      }   }
+      }
 
-      return cardHtml;
+      return cardHtml; // Always return inside the map callback
     }).join('');
 
     // Trigger PDF rendering

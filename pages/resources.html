@@ -129,7 +129,7 @@
   <div class="viewer-modal image-viewer" id="modalImage">
     <button class="viewer-btn image-viewer-download" id="imageDownloadBtn" title="Download Image" onclick="if(this.dataset.url) window.downloadMedia(this.dataset.url, document.getElementById('imageViewerTitle').textContent)"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></button>
     <button class="viewer-btn close-modal image-viewer-close" title="Close"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-    <div class="image-viewer-content">
+    <div class="image-viewer-content" id="imageViewerBody">
       <div class="image-count-badge" id="imageCountBadge" style="display:none;">1 / 1</div>
       <button class="image-nav-btn image-nav-prev" id="imageNavPrev" style="display:none;">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -231,7 +231,24 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('[NTC] SW registered:', reg.scope))
+          .then(reg => {
+            console.log('[NTC] SW registered:', reg.scope);
+            // Force update on load
+            reg.update();
+            
+            // Check if we need to force reload for v4 cache bust
+            if (localStorage.getItem('ntc_cache_v4_cleared') !== 'true') {
+              localStorage.setItem('ntc_cache_v4_cleared', 'true');
+              
+              // Unregister all workers and reload
+              navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                  registration.unregister();
+                }
+                setTimeout(() => window.location.reload(true), 500);
+              });
+            }
+          })
           .catch(err => console.warn('[NTC] SW registration failed:', err));
       });
     }
