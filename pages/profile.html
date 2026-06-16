@@ -184,11 +184,20 @@
           </div>
         </div>
 
-        <!-- Main Form Area -->
+          <!-- Main Form Area -->
         <div class="profile-content reveal delay-2">
-          <div class="widget" style="margin-bottom: var(--space-xl);">
-            <div class="widget-header">
+          <!-- Edit Profile Toggle Button -->
+          <div style="margin-bottom: var(--space-xl);">
+            <button type="button" class="btn btn-primary" id="showProfileFormBtn" onclick="document.getElementById('personalInfoWidget').style.display='block'; this.style.display='none';">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit Profile
+            </button>
+          </div>
+
+          <div class="widget" id="personalInfoWidget" style="display:none; margin-bottom: var(--space-xl);">
+            <div class="widget-header" style="display:flex; align-items:center; justify-content:space-between;">
               <h3 class="widget-title">Personal Information</h3>
+              <button type="button" class="btn btn-ghost" style="font-size:0.8rem; padding:4px 10px;" onclick="document.getElementById('personalInfoWidget').style.display='none'; document.getElementById('showProfileFormBtn').style.display='inline-flex';">Cancel</button>
             </div>
             <div class="widget-body">
               <form id="profileForm">
@@ -227,11 +236,13 @@
                     placeholder="A little about yourself..."></textarea>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <div style="display:flex; gap:var(--space-md); flex-wrap:wrap;">
+                  <button type="submit" class="btn btn-primary">Save Changes</button>
+                  <button type="button" class="btn btn-ghost" onclick="document.getElementById('personalInfoWidget').style.display='none'; document.getElementById('showProfileFormBtn').style.display='inline-flex';">Cancel</button>
+                </div>
               </form>
             </div>
           </div>
-
           <!-- Change Password Toggle Button -->
           <div style="margin-bottom: var(--space-xl);">
             <button type="button" class="btn btn-outline" id="showPasswordFormBtn" onclick="document.getElementById('securityWidget').style.display='block'; this.style.display='none';">
