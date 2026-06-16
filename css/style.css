@@ -32,11 +32,11 @@
   --info: #3B82F6;
   --info-ghost: rgba(59, 130, 246, 0.1);
 
-  /* Surfaces */
-  --background: #F8FAFC;
-  --surface: #FFFFFF;
-  --surface-hover: #F1F5F9;
-  --surface-elevated: #FFFFFF;
+  /* Surfaces - Softened for eye comfort (no pure white) */
+  --background: #F1F5F9;
+  --surface: #F8FAFC;
+  --surface-hover: #E2E8F0;
+  --surface-elevated: #F8FAFC;
 
   /* Text */
   --text: #1E293B;
@@ -393,7 +393,7 @@ p {
   left: 0;
   right: 0;
   height: var(--navbar-height);
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(248, 250, 252, 0.9);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
