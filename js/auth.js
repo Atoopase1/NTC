@@ -332,6 +332,11 @@ document.addEventListener('DOMContentLoaded', () => {
       dropdownMenu.classList.toggle('open');
     });
 
+    // Prevent clicks inside the dropdown from closing it
+    dropdownMenu.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
     // Close dropdown when clicking anywhere outside
     document.addEventListener('click', () => {
       dropdownMenu.classList.remove('open');
