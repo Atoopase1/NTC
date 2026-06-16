@@ -2956,7 +2956,10 @@ p {
 
 .ntc-banner-img {
   height: 100%;
+  width: 100%;
   object-fit: cover;
+  flex: 1;
+  min-height: 0;
 }
 
 /* Flowchart Card */

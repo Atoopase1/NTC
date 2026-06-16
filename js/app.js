@@ -327,9 +327,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         homeSubjectsGrid.innerHTML = html;
         
-        // Re-trigger intersection observer for newly added elements
-        const newReveals = homeSubjectsGrid.querySelectorAll('.reveal');
-        newReveals.forEach(el => revealObserver.observe(el));
+        // Re-trigger intersection observer for newly added elements.
+        // Use requestAnimationFrame so the browser has painted the new elements
+        // before we check their positions — this prevents the flash-and-vanish
+        // bug where cards are invisible because the async observer fires too late.
+        requestAnimationFrame(() => {
+          const newReveals = homeSubjectsGrid.querySelectorAll('.reveal');
+          newReveals.forEach(el => {
+            const rect = el.getBoundingClientRect();
+            const alreadyVisible = rect.top < window.innerHeight && rect.bottom > 0;
+            if (alreadyVisible) {
+              // Already in viewport — reveal immediately, no need to observe
+              el.classList.add('revealed');
+            } else {
+              revealObserver.observe(el);
+            }
+          });
+        });
       }
     }).catch(e => console.error("Error loading home subjects:", e));
   }
