@@ -284,24 +284,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const isMobile = window.innerWidth <= 1023;
     
     userNames.forEach(el => {
+      // Remove chevron arrow SVG from parent (user-profile-btn or user-dropdown-toggle) globally
+      const parent = el.closest('.user-profile-btn') || el.closest('.user-dropdown-toggle');
+      if (parent) {
+        const chevron = parent.querySelector(':scope > svg');
+        if (chevron) chevron.remove();
+      }
+      
+      // Hide the dropdown menu entirely via JS globally
+      const dropdownContainer = el.closest('.user-dropdown') || (parent && parent.parentElement);
+      if (dropdownContainer) {
+        const menu = dropdownContainer.querySelector('.user-dropdown-menu');
+        if (menu) menu.style.display = 'none';
+      }
+
       if (isMobile) {
         // On mobile, show only first name
         const firstName = displayName.trim().split(' ')[0];
         el.textContent = firstName;
-        
-        // Remove chevron arrow SVG from parent (user-profile-btn or user-dropdown-toggle)
-        const parent = el.closest('.user-profile-btn') || el.closest('.user-dropdown-toggle');
-        if (parent) {
-          const chevron = parent.querySelector(':scope > svg');
-          if (chevron) chevron.remove();
-        }
-        
-        // Hide the dropdown menu entirely via JS
-        const dropdownContainer = el.closest('.user-dropdown') || (parent && parent.parentElement);
-        if (dropdownContainer) {
-          const menu = dropdownContainer.querySelector('.user-dropdown-menu');
-          if (menu) menu.style.display = 'none';
-        }
       } else {
         el.textContent = displayName;
       }
@@ -351,16 +351,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (profileBtn && dropdownMenu) {
     profileBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      if (window.innerWidth <= 1023) {
-        if (window.supaAuth) {
-          await window.supaAuth.signOut();
-        } else {
-          localStorage.removeItem('ntc_user');
-          window.location.href = 'login.html';
-        }
-        return;
+      if (window.supaAuth) {
+        await window.supaAuth.signOut();
+      } else {
+        localStorage.removeItem('ntc_user');
+        window.location.href = 'login.html';
       }
-      dropdownMenu.classList.toggle('open');
     });
 
     // Prevent clicks inside the dropdown from closing it
