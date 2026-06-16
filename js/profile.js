@@ -4,7 +4,7 @@
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (!document.querySelector('.profile-grid')) return;
+  if (!document.getElementById('profileDisplayName')) return;
 
   const profileForm = document.getElementById('profileForm');
   const passwordForm = document.getElementById('passwordForm');
