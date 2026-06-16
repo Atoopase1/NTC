@@ -232,9 +232,18 @@
             </div>
           </div>
 
-          <div class="widget">
-            <div class="widget-header">
+          <!-- Change Password Toggle Button -->
+          <div style="margin-bottom: var(--space-xl);">
+            <button type="button" class="btn btn-outline" id="showPasswordFormBtn" onclick="document.getElementById('securityWidget').style.display='block'; this.style.display='none';">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Change Password
+            </button>
+          </div>
+
+          <div class="widget" id="securityWidget" style="display:none;">
+            <div class="widget-header" style="display:flex; align-items:center; justify-content:space-between;">
               <h3 class="widget-title">Security Settings</h3>
+              <button type="button" class="btn btn-ghost" style="font-size:0.8rem; padding:4px 10px;" onclick="document.getElementById('securityWidget').style.display='none'; document.getElementById('showPasswordFormBtn').style.display='inline-flex';">Cancel</button>
             </div>
             <div class="widget-body">
               <form id="passwordForm">
@@ -269,7 +278,10 @@
                   </div>
                 </div>
 
-                <button type="submit" class="btn btn-secondary">Update Password</button>
+                <div style="display:flex; gap:var(--space-md); flex-wrap:wrap;">
+                  <button type="submit" class="btn btn-secondary">Update Password</button>
+                  <button type="button" class="btn btn-ghost" onclick="document.getElementById('securityWidget').style.display='none'; document.getElementById('showPasswordFormBtn').style.display='inline-flex';">Cancel</button>
+                </div>
               </form>
             </div>
           </div>
