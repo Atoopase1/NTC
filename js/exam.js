@@ -4,7 +4,7 @@
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  const examSetup = document.querySelector('.exam-setup');
+  const examSetup = document.getElementById('examSetupView');
   const examInterface = document.querySelector('.exam-interface');
   
   // ── Exam Setup Logic ──────────────────────────────────────────────
