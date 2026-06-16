@@ -648,9 +648,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   // --- Social Interactions --- //
 
   window.toggleCaption = (postId) => {
+    console.log('Toggling caption for', postId);
     const el = document.getElementById(`caption-${postId}`) || document.getElementById(`snippet-${postId}`);
     const btn = document.getElementById(`readmore-${postId}`);
-    if (!el || !btn) return;
+    if (!el || !btn) {
+      console.log('Element or button not found for', postId);
+      return;
+    }
     if (el.classList.contains('expanded')) {
       el.classList.remove('expanded');
       btn.textContent = 'More';

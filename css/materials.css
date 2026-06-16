@@ -417,8 +417,10 @@
 }
 
 .mat-text-snippet.expanded {
-  display: block;
-  -webkit-line-clamp: unset;
+  display: block !important;
+  -webkit-line-clamp: unset !important;
+  max-height: none !important;
+  overflow: visible !important;
 }
 
 .mat-text-footer {
