@@ -105,12 +105,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             scheduledExamGrid.innerHTML = hasActiveOrUpcoming ? html : '<div style="grid-column: 1/-1; text-align: center; color: var(--text-light); padding: var(--space-md);">No live exams available right now.</div>';
+            if (!hasActiveOrUpcoming && startBtn) startBtn.style.display = 'none';
           } else {
             scheduledExamGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-light); padding: var(--space-md);">No scheduled exams at this time.</div>';
+            if (startBtn) startBtn.style.display = 'none';
           }
         } catch(e) {
           console.error(e);
           scheduledExamGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--danger); padding: var(--space-md);">Failed to load scheduled exams.</div>';
+          if (startBtn) startBtn.style.display = 'none';
         }
       }
       attachCardListeners();
