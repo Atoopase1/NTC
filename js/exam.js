@@ -33,11 +33,24 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const loadExamSubjects = async () => {
-      if (scheduledExamGrid && window.supaDB && window.supaDB.getScheduledExams) {
-        try {
-          const exams = await window.supaDB.getScheduledExams();
-          if (exams && exams.length > 0) {
-            let html = '';
+      if (!scheduledExamGrid) return;
+      
+      let retries = 0;
+      while ((!window.supaDB || !window.supaDB.getScheduledExams) && retries < 10) {
+        await new Promise(r => setTimeout(r, 500));
+        retries++;
+      }
+      
+      if (!window.supaDB || !window.supaDB.getScheduledExams) {
+        scheduledExamGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--danger); padding: var(--space-md);">Failed to connect to database. Please refresh.</div>';
+        if (startBtn) startBtn.style.display = 'none';
+        return;
+      }
+      
+      try {
+        const exams = await window.supaDB.getScheduledExams();
+        if (exams && exams.length > 0) {
+          let html = '';
             const now = new Date();
             let hasActiveOrUpcoming = false;
 
@@ -113,14 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             `;
             scheduledExamGrid.innerHTML = hasActiveOrUpcoming ? html : emptyStateHtml;
-            const startContainer = document.getElementById('startExamContainer');
-            if (hasActiveOrUpcoming) {
-              if (startContainer) startContainer.style.display = 'block';
-              if (startBtn) startBtn.style.display = 'inline-block';
-            } else {
-              if (startContainer) startContainer.style.display = 'none';
-              if (startBtn) startBtn.style.display = 'none';
-            }
+            if (!hasActiveOrUpcoming && startBtn) startBtn.style.display = 'none';
           } else {
             const emptyStateHtml = `
               <div style="grid-column: 1/-1; text-align: center; padding: var(--space-xl); background: var(--surface-2); border-radius: var(--radius-lg);">
@@ -131,18 +137,13 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             `;
             scheduledExamGrid.innerHTML = emptyStateHtml;
-            const startContainer = document.getElementById('startExamContainer');
-            if (startContainer) startContainer.style.display = 'none';
             if (startBtn) startBtn.style.display = 'none';
           }
         } catch(e) {
           console.error(e);
           scheduledExamGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--danger); padding: var(--space-md);">Failed to load scheduled exams.</div>';
-          const startContainer = document.getElementById('startExamContainer');
-          if (startContainer) startContainer.style.display = 'none';
           if (startBtn) startBtn.style.display = 'none';
         }
-      }
       attachCardListeners();
     };
     

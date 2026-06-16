@@ -120,12 +120,13 @@
       <span style="font-size: var(--text-sm); color: var(--text-light); background: var(--surface-2); padding: 4px 12px; border-radius: 99px;">Requires Admin Setup</span>
     </div>
     <div class="exam-setup-grid" id="scheduledExamGrid" style="margin-bottom: var(--space-xl);">
-      <div style="grid-column: 1 / -1; text-align: center; padding: var(--space-xl);">
-        <span class="spinner" style="width: 40px; height: 40px; border-width: 3px; color: var(--primary);"></span>
+      <div style="grid-column: 1 / -1; padding: var(--space-lg); text-align: center; color: var(--text-light); background: var(--surface-2); border-radius: var(--radius-lg);">
+        <span class="spinner spinner-sm" style="margin-bottom: var(--space-sm);"></span>
+        <p>Loading scheduled exams...</p>
       </div>
     </div>
 
-    <div id="startExamContainer" style="display: none; margin-top: var(--space-xl); text-align: center;">
+    <div style="margin-top: var(--space-xl); text-align: center;">
       <button class="btn btn-primary btn-lg disabled" id="startExamBtn" disabled>Start Examination</button>
     </div>
         </div> <!-- /container -->
