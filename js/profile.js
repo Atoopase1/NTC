@@ -27,8 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     
-    // Fallback to localStorage if nothing came back
-    if (!history || history.length === 0) {
+    // Fallback to localStorage ONLY if Supabase is completely unavailable
+    if (!window.supaAuth && (!history || history.length === 0)) {
       try {
         const local = JSON.parse(localStorage.getItem('ntc_exam_results') || '[]');
         if (local.length > 0) history = local;
