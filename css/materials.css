@@ -123,8 +123,8 @@
 @media (min-width: 1024px) {
   .materials-grid {
     grid-template-columns: repeat(3, 1fr);
-    grid-auto-rows: minmax(100px, auto); /* Allows masonry-like varying heights */
-    align-items: start;
+    /* Cards in the same row stretch to equal height */
+    align-items: stretch;
   }
 }
 
@@ -409,9 +409,7 @@
   font-size: var(--text-sm);
   color: var(--text-light);
   line-height: 1.6;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
+  /* No line-clamp — let text fill the card height to match image cards */
   overflow: hidden;
   margin-bottom: var(--space-md);
   flex: 1;
