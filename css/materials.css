@@ -1060,6 +1060,105 @@
 }
 
 /* ============================================
+   Social Post / Image Card Layout
+   ============================================ */
+.social-post {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  position: relative;
+  cursor: default;
+}
+
+/* Image wrapper — fixed 4:3 aspect ratio so image never collapses */
+.post-image-wrapper {
+  width: 100%;
+  padding-top: 75%; /* 4:3 aspect ratio */
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  cursor: pointer;
+  background: var(--surface-alt, #f1f5f9);
+  flex-shrink: 0;
+}
+
+.post-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s ease, opacity 0.2s;
+}
+
+.social-post:hover .post-img {
+  transform: scale(1.03);
+  opacity: 0.95;
+}
+
+/* Content below the image */
+.post-content-wrapper {
+  padding: 14px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex-grow: 1;
+}
+
+.post-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 8px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Caption row */
+.post-caption-row {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.post-caption-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.post-caption-text.expanded {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+.post-more-btn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 0 0 4px;
+}
+
+.post-more-btn:hover {
+  text-decoration: underline;
+}
+
+/* ============================================
    Feed Layout (Replaces social-post)
    ============================================ */
 .feed-item {
