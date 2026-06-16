@@ -113,7 +113,14 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             `;
             scheduledExamGrid.innerHTML = hasActiveOrUpcoming ? html : emptyStateHtml;
-            if (!hasActiveOrUpcoming && startBtn) startBtn.style.display = 'none';
+            const startContainer = document.getElementById('startExamContainer');
+            if (hasActiveOrUpcoming) {
+              if (startContainer) startContainer.style.display = 'block';
+              if (startBtn) startBtn.style.display = 'inline-block';
+            } else {
+              if (startContainer) startContainer.style.display = 'none';
+              if (startBtn) startBtn.style.display = 'none';
+            }
           } else {
             const emptyStateHtml = `
               <div style="grid-column: 1/-1; text-align: center; padding: var(--space-xl); background: var(--surface-2); border-radius: var(--radius-lg);">
@@ -124,11 +131,15 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             `;
             scheduledExamGrid.innerHTML = emptyStateHtml;
+            const startContainer = document.getElementById('startExamContainer');
+            if (startContainer) startContainer.style.display = 'none';
             if (startBtn) startBtn.style.display = 'none';
           }
         } catch(e) {
           console.error(e);
           scheduledExamGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--danger); padding: var(--space-md);">Failed to load scheduled exams.</div>';
+          const startContainer = document.getElementById('startExamContainer');
+          if (startContainer) startContainer.style.display = 'none';
           if (startBtn) startBtn.style.display = 'none';
         }
       }
