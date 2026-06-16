@@ -164,7 +164,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   // ── Exam Interface Logic ──────────────────────────────────────────
-  if (examInterface) {
+  const configStr = sessionStorage.getItem('ntc_exam_config');
+  const isSetupMode = window.location.search.includes('setup=1');
+  
+  if (examInterface && configStr && !isSetupMode) {
     let examQuestions = [];
     let currentQuestionIndex = 0;
     let answers = {};
@@ -176,13 +179,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initExam();
     
     async function initExam() {
-      const configStr = sessionStorage.getItem('ntc_exam_config');
-      if (!configStr) {
-        window.showToast('No exam session found. Returning to exam setup.', 'error');
-        setTimeout(() => { window.location.href = 'exam.html?setup=1'; }, 2000);
-        return;
-      }
-      
       examConfig = JSON.parse(configStr);
       
       // Restore any saved progress
