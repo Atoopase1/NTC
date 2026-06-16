@@ -118,164 +118,152 @@
       </div>
     </aside>
 
-    <!-- Main Content -->
-    <main class="dashboard-main">
-      <h1 style="margin-bottom: var(--space-xl);">Account Profile</h1>
+      <!-- Profile Hero Card -->
+      <div class="widget reveal" style="margin-bottom: var(--space-xl); overflow: hidden;">
+        <!-- Gradient Banner -->
+        <div style="height: 100px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark, #3730a3) 100%); position: relative;"></div>
 
-      <div class="profile-grid">
-        <!-- Sidebar stats -->
-        <div class="profile-sidebar reveal">
-          <div class="widget">
-            <div class="widget-body text-center" style="padding: var(--space-2xl) var(--space-lg);">
-              <label class="profile-photo-upload" title="Change Profile Photo">
-                <div class="avatar avatar-2xl" style="margin: 0 auto var(--space-md); border-width: 4px;">
-                  <span id="profileAvatarInitials">U</span>
-                </div>
-                <div class="upload-badge" title="Change Photo">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                    <circle cx="12" cy="13" r="4"></circle>
-                  </svg>
-                </div>
-                <input type="file" id="avatarUpload" accept="image/*">
-              </label>
+        <!-- Avatar + Info -->
+        <div style="padding: 0 var(--space-xl) var(--space-xl); position: relative;">
+          <div style="display: flex; align-items: flex-end; gap: var(--space-lg); flex-wrap: wrap; margin-top: -48px; margin-bottom: var(--space-lg);">
+            <label class="profile-photo-upload" title="Change Profile Photo" style="flex-shrink:0;">
+              <div class="avatar avatar-2xl" style="border: 4px solid var(--surface); box-shadow: 0 4px 16px rgba(0,0,0,0.15);">
+                <span id="profileAvatarInitials">U</span>
+              </div>
+              <div class="upload-badge" title="Change Photo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              </div>
+              <input type="file" id="avatarUpload" accept="image/*">
+            </label>
 
-              <h3 id="profileDisplayName" style="font-size: var(--text-xl); margin-bottom: 4px;">User Name</h3>
-              <p id="profileDisplayEmail"
-                style="color: var(--text-light); font-size: var(--text-sm); margin-bottom: var(--space-xl);">
-                student@example.com</p>
+            <div style="flex:1; min-width:0; padding-bottom: 4px;">
+              <h2 id="profileDisplayName" style="font-size: var(--text-2xl); font-weight: 800; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">User Name</h2>
+              <p id="profileDisplayEmail" style="color: var(--text-light); font-size: var(--text-sm); margin:0;">student@example.com</p>
+            </div>
 
-              <div class="profile-stats">
-                <div class="profile-stat">
-                  <div class="profile-stat-value" id="profileExamsCount">0</div>
-                  <div class="profile-stat-label">Exams</div>
+            <div style="display:flex; gap: var(--space-md); flex-wrap: wrap; padding-bottom: 4px;">
+              <button type="button" class="btn btn-primary" id="showProfileFormBtn" onclick="document.getElementById('personalInfoWidget').style.display='block'; this.style.display='none'; document.getElementById('showPasswordFormBtn').style.display='none';">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Edit Profile
+              </button>
+              <button type="button" class="btn btn-outline" id="showPasswordFormBtn" onclick="document.getElementById('securityWidget').style.display='block'; this.style.display='none'; document.getElementById('showProfileFormBtn').style.display='none';">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Change Password
+              </button>
+            </div>
+          </div>
+
+          <!-- Stats Row -->
+          <div style="display: flex; gap: var(--space-xl); padding: var(--space-lg) var(--space-xl); background: var(--surface-alt, var(--surface-hover)); border-radius: var(--radius-lg); flex-wrap: wrap;">
+            <div style="text-align: center; flex:1; min-width: 80px;">
+              <div style="font-size: var(--text-2xl); font-weight: 800; color: var(--primary);" id="profileExamsCount">0</div>
+              <div style="font-size: var(--text-xs); color: var(--text-light); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Exams Taken</div>
+            </div>
+            <div style="width: 1px; background: var(--border); flex-shrink:0;"></div>
+            <div style="text-align: center; flex:1; min-width: 80px;">
+              <div style="font-size: var(--text-2xl); font-weight: 800; color: var(--success, #22c55e);" id="profileAvgScore">0%</div>
+              <div style="font-size: var(--text-xs); color: var(--text-light); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Avg Score</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Profile Form (hidden by default) -->
+      <div class="widget reveal delay-1" id="personalInfoWidget" style="display:none; margin-bottom: var(--space-xl);">
+        <div class="widget-header" style="display:flex; align-items:center; justify-content:space-between;">
+          <h3 class="widget-title">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px; vertical-align:middle;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Edit Profile
+          </h3>
+          <button type="button" class="btn btn-ghost" style="font-size:0.85rem;" onclick="document.getElementById('personalInfoWidget').style.display='none'; document.getElementById('showProfileFormBtn').style.display='inline-flex'; document.getElementById('showPasswordFormBtn').style.display='inline-flex';">✕ Cancel</button>
+        </div>
+        <div class="widget-body">
+          <form id="profileForm">
+            <div class="form-row profile-form-row">
+              <div class="form-group">
+                <label class="form-label" for="profileName">Full Name</label>
+                <input type="text" id="profileName" class="form-input" required placeholder="Your full name">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="profilePhone">Phone Number</label>
+                <input type="tel" id="profilePhone" class="form-input" placeholder="+233 xx xxx xxxx">
+              </div>
+            </div>
+
+            <div class="form-row profile-form-row">
+              <div class="form-group">
+                <label class="form-label" for="profileDob">Date of Birth</label>
+                <input type="date" id="profileDob" class="form-input">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="profileSchool">Institution / College (Optional)</label>
+                <input type="text" id="profileSchool" class="form-input" placeholder="Where did you train?">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="profileEmail">Email Address</label>
+              <input type="email" id="profileEmail" class="form-input" disabled style="background: var(--surface-hover); cursor: not-allowed;">
+              <span class="form-helper">Email cannot be changed. Contact support if needed.</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="profileBio">Bio (Optional)</label>
+              <textarea id="profileBio" class="form-input" rows="3" placeholder="A little about yourself..."></textarea>
+            </div>
+
+            <div style="display:flex; gap:var(--space-md); flex-wrap:wrap;">
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+              <button type="button" class="btn btn-ghost" onclick="document.getElementById('personalInfoWidget').style.display='none'; document.getElementById('showProfileFormBtn').style.display='inline-flex'; document.getElementById('showPasswordFormBtn').style.display='inline-flex';">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Change Password Form (hidden by default) -->
+      <div class="widget reveal delay-1" id="securityWidget" style="display:none;">
+        <div class="widget-header" style="display:flex; align-items:center; justify-content:space-between;">
+          <h3 class="widget-title">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px; vertical-align:middle;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Change Password
+          </h3>
+          <button type="button" class="btn btn-ghost" style="font-size:0.85rem;" onclick="document.getElementById('securityWidget').style.display='none'; document.getElementById('showPasswordFormBtn').style.display='inline-flex'; document.getElementById('showProfileFormBtn').style.display='inline-flex';">✕ Cancel</button>
+        </div>
+        <div class="widget-body">
+          <form id="passwordForm">
+            <div class="form-group">
+              <label class="form-label" for="currentPassword">Current Password</label>
+              <div class="input-group">
+                <span class="input-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                <input type="password" id="currentPassword" class="form-input" required placeholder="Enter current password">
+              </div>
+            </div>
+
+            <div class="form-row profile-form-row">
+              <div class="form-group">
+                <label class="form-label" for="newPassword">New Password</label>
+                <div class="input-group">
+                  <span class="input-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></span>
+                  <input type="password" id="newPassword" class="form-input" required minlength="6" placeholder="Min. 6 characters">
                 </div>
-                <div class="profile-stat">
-                  <div class="profile-stat-value" id="profileAvgScore" style="color: var(--primary);">0%</div>
-                  <div class="profile-stat-label">Avg Score</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="confirmNewPassword">Confirm New Password</label>
+                <div class="input-group">
+                  <span class="input-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></span>
+                  <input type="password" id="confirmNewPassword" class="form-input" required minlength="6" placeholder="Repeat new password">
                 </div>
               </div>
             </div>
-          </div>
 
-        </div>
-
-          <!-- Main Form Area -->
-        <div class="profile-content reveal delay-2">
-          <!-- Edit Profile Toggle Button -->
-          <div style="margin-bottom: var(--space-xl);">
-            <button type="button" class="btn btn-primary" id="showProfileFormBtn" onclick="document.getElementById('personalInfoWidget').style.display='block'; this.style.display='none';">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              Edit Profile
-            </button>
-          </div>
-
-          <div class="widget" id="personalInfoWidget" style="display:none; margin-bottom: var(--space-xl);">
-            <div class="widget-header" style="display:flex; align-items:center; justify-content:space-between;">
-              <h3 class="widget-title">Personal Information</h3>
-              <button type="button" class="btn btn-ghost" style="font-size:0.8rem; padding:4px 10px;" onclick="document.getElementById('personalInfoWidget').style.display='none'; document.getElementById('showProfileFormBtn').style.display='inline-flex';">Cancel</button>
+            <div style="display:flex; gap:var(--space-md); flex-wrap:wrap;">
+              <button type="submit" class="btn btn-secondary">Update Password</button>
+              <button type="button" class="btn btn-ghost" onclick="document.getElementById('securityWidget').style.display='none'; document.getElementById('showPasswordFormBtn').style.display='inline-flex'; document.getElementById('showProfileFormBtn').style.display='inline-flex';">Cancel</button>
             </div>
-            <div class="widget-body">
-              <form id="profileForm">
-                <div class="form-row profile-form-row">
-                  <div class="form-group">
-                    <label class="form-label" for="profileName">Full Name</label>
-                    <input type="text" id="profileName" class="form-input" required>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label" for="profilePhone">Phone Number</label>
-                    <input type="tel" id="profilePhone" class="form-input">
-                  </div>
-                </div>
-
-                <div class="form-row profile-form-row">
-                  <div class="form-group">
-                    <label class="form-label" for="profileDob">Date of Birth</label>
-                    <input type="date" id="profileDob" class="form-input">
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label" for="profileSchool">Institution / College (Optional)</label>
-                    <input type="text" id="profileSchool" class="form-input" placeholder="Where did you train?">
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label" for="profileEmail">Email Address</label>
-                  <input type="email" id="profileEmail" class="form-input" disabled
-                    style="background: var(--surface-hover); cursor: not-allowed;">
-                  <span class="form-helper">Email cannot be changed. Contact support if needed.</span>
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label" for="profileBio">Bio (Optional)</label>
-                  <textarea id="profileBio" class="form-input" rows="3"
-                    placeholder="A little about yourself..."></textarea>
-                </div>
-
-                <div style="display:flex; gap:var(--space-md); flex-wrap:wrap;">
-                  <button type="submit" class="btn btn-primary">Save Changes</button>
-                  <button type="button" class="btn btn-ghost" onclick="document.getElementById('personalInfoWidget').style.display='none'; document.getElementById('showProfileFormBtn').style.display='inline-flex';">Cancel</button>
-                </div>
-              </form>
-            </div>
-          </div>
-          <!-- Change Password Toggle Button -->
-          <div style="margin-bottom: var(--space-xl);">
-            <button type="button" class="btn btn-outline" id="showPasswordFormBtn" onclick="document.getElementById('securityWidget').style.display='block'; this.style.display='none';">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              Change Password
-            </button>
-          </div>
-
-          <div class="widget" id="securityWidget" style="display:none;">
-            <div class="widget-header" style="display:flex; align-items:center; justify-content:space-between;">
-              <h3 class="widget-title">Security Settings</h3>
-              <button type="button" class="btn btn-ghost" style="font-size:0.8rem; padding:4px 10px;" onclick="document.getElementById('securityWidget').style.display='none'; document.getElementById('showPasswordFormBtn').style.display='inline-flex';">Cancel</button>
-            </div>
-            <div class="widget-body">
-              <form id="passwordForm">
-                <div class="form-group">
-                  <label class="form-label" for="currentPassword">Current Password</label>
-                  <div class="input-group">
-                    <span class="input-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                    </span>
-                    <input type="password" id="currentPassword" class="form-input" required>
-                  </div>
-                </div>
-
-                <div class="form-row profile-form-row">
-                  <div class="form-group">
-                    <label class="form-label" for="newPassword">New Password</label>
-                    <div class="input-group">
-                      <span class="input-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-                      </span>
-                      <input type="password" id="newPassword" class="form-input" required minlength="6">
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label" for="confirmNewPassword">Confirm New Password</label>
-                    <div class="input-group">
-                      <span class="input-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-                      </span>
-                      <input type="password" id="confirmNewPassword" class="form-input" required minlength="6">
-                    </div>
-                  </div>
-                </div>
-
-                <div style="display:flex; gap:var(--space-md); flex-wrap:wrap;">
-                  <button type="submit" class="btn btn-secondary">Update Password</button>
-                  <button type="button" class="btn btn-ghost" onclick="document.getElementById('securityWidget').style.display='none'; document.getElementById('showPasswordFormBtn').style.display='inline-flex';">Cancel</button>
-                </div>
-              </form>
-            </div>
-          </div>
-
+          </form>
         </div>
       </div>
+
     </main>
   </div>
 
