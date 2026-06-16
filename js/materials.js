@@ -169,10 +169,51 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Bookmark button HTML
       const btnHtml = `<button class="mat-bookmark ${bookmarkClass}" data-id="${item.id}" onclick="event.stopPropagation(); toggleSave('${item.id}')">${bookmarkIcon}</button>`;
 
+      const likes = allLikes.filter(l => l.lesson_id === item.id);
+      const hasLiked = currentUserId && likes.some(l => l.user_id === currentUserId);
+      const commentsCount = allComments.filter(c => c.lesson_id === item.id).length;
+      
+      const actionsHtml = `
+              <div class="post-actions">
+                <button class="post-action-btn like-btn ${hasLiked ? 'liked' : ''}" onclick="event.stopPropagation(); window.togglePostLike('${item.id}')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${hasLiked ? '#22c55e' : 'none'}" stroke="${hasLiked ? '#22c55e' : '#718096'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                  <span id="like-count-${item.id}">${likes.length}</span>
+                </button>
+                <button class="post-action-btn comment-btn" onclick="event.stopPropagation(); window.toggleComments('${item.id}')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                  <span id="comment-count-${item.id}">${commentsCount}</span>
+                </button>
+                <button class="post-action-btn share-btn" onclick="event.stopPropagation(); window.sharePost('${item.id}')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                  <span class="share-label">Share</span>
+                </button>
+                ${item.media_url ? `
+                <button class="post-action-btn download-btn" onclick="event.stopPropagation(); window.downloadMedia('${item.media_url}', '${(item.title || 'download').replace(/'/g, "\\'")}')" title="Download">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                </button>
+                ` : ''}
+                ${isAdmin ? `
+                <button class="post-action-btn admin-btn edit-btn" onclick="event.stopPropagation(); window.editPost('${item.id}')" title="Edit">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#3182ce" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                </button>
+                <button class="post-action-btn admin-btn delete-btn" onclick="event.stopPropagation(); window.deletePost('${item.id}')" title="Delete">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#e53e3e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+                ` : ''}
+              </div>
+              
+              <div class="post-comments-section" id="comments-section-${item.id}" style="display:none;" onclick="event.stopPropagation()">
+                <div class="comments-list" id="comments-list-${item.id}"></div>
+                <div class="comment-input-wrapper">
+                  <input type="text" id="comment-input-${item.id}" class="comment-input" placeholder="Write a comment..." onkeypress="if(event.key==='Enter') window.submitComment('${item.id}')">
+                  <button class="comment-submit-btn" onclick="window.submitComment('${item.id}')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                  </button>
+                </div>
+              </div>
+      `;
+
       if (type === 'image') {
-        const likes = allLikes.filter(l => l.lesson_id === item.id);
-        const hasLiked = currentUserId && likes.some(l => l.user_id === currentUserId);
-        const commentsCount = allComments.filter(c => c.lesson_id === item.id).length;
         const caption = (item.content || item.description || '').trim();
         
         cardHtml = `
@@ -189,93 +230,59 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <button class="post-more-btn" id="readmore-${item.id}" onclick="event.stopPropagation(); window.toggleCaption('${item.id}')" style="display:none;">More</button>
               </div>
               ` : ''}
-              
-              <div class="post-actions">
-                <button class="post-action-btn like-btn ${hasLiked ? 'liked' : ''}" onclick="event.stopPropagation(); window.togglePostLike('${item.id}')">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${hasLiked ? '#22c55e' : 'none'}" stroke="${hasLiked ? '#22c55e' : '#718096'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                  <span id="like-count-${item.id}">${likes.length}</span>
-                </button>
-                <button class="post-action-btn comment-btn" onclick="event.stopPropagation(); window.toggleComments('${item.id}')">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                  <span id="comment-count-${item.id}">${commentsCount}</span>
-                </button>
-                <button class="post-action-btn share-btn" onclick="event.stopPropagation(); window.sharePost('${item.id}')">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-                  <span class="share-label">Share</span>
-                </button>
-                <button class="post-action-btn download-btn" onclick="event.stopPropagation(); window.downloadMedia('${item.media_url}', '${(item.title || 'download').replace(/'/g, "\\'")}')" title="Download">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                </button>
-                ${isAdmin ? `
-                <button class="post-action-btn admin-btn edit-btn" onclick="event.stopPropagation(); window.editPost('${item.id}')" title="Edit">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#3182ce" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                </button>
-                <button class="post-action-btn admin-btn delete-btn" onclick="event.stopPropagation(); window.deletePost('${item.id}')" title="Delete">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#e53e3e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                </button>
-                ` : ''}
-              </div>
-              
-              <div class="post-comments-section" id="comments-section-${item.id}" style="display:none;">
-                <div class="comments-list" id="comments-list-${item.id}"></div>
-                <div class="comment-input-wrapper">
-                  <input type="text" id="comment-input-${item.id}" class="comment-input" placeholder="Write a comment..." onkeypress="if(event.key==='Enter') window.submitComment('${item.id}')">
-                  <button class="comment-submit-btn" onclick="window.submitComment('${item.id}')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                  </button>
-                </div>
-              </div>
+              ${actionsHtml}
             </div>
           </div>
         `;
       }
- 
       else if (type === 'video') {
         const ytId = getYouTubeId(item.media_url);
-        const thumb = ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&q=80';
+        const thumb = ytId ? \`https://img.youtube.com/vi/\${ytId}/maxresdefault.jpg\` : 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&q=80';
         const caption = (item.content || item.description || '').trim();
         // Store URL safely in map — avoids apostrophe/special char issues in onclick
         window._videoUrlMap[item.id] = { url: item.media_url, title: item.title || item.subtopic || '' };
         
         cardHtml = `
-          <div class="mat-card feed-item" data-video-id="${item.id}" onclick="(function(el){var c=el.closest('[data-video-id]');var d=c&&window._videoUrlMap[c.dataset.videoId];if(d)openVideo(d.url,d.title);})(this)">
+          <div class="mat-card feed-item social-post" data-video-id="${item.id}" onclick="(function(el){var c=el.closest('[data-video-id]');var d=c&&window._videoUrlMap[c.dataset.videoId];if(d)openVideo(d.url,d.title);})(this)">
             ${btnHtml}
-            <div class="feed-media-wrap">
+            <div class="feed-media-wrap post-image-wrapper">
               <div class="mat-badge-top" style="position:absolute; top:12px; left:12px; z-index:10; background:rgba(0,0,0,0.6); padding:4px 8px; border-radius:4px; color:white; font-size:0.75rem; font-weight:600; display:flex; align-items:center; gap:4px; backdrop-filter:blur(4px);">
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Video
               </div>
               <div class="mat-play-btn" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:10; width:48px; height:48px; background:rgba(255,255,255,0.2); backdrop-filter:blur(4px); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" style="margin-left:4px;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
               </div>
-              <div style="position:absolute; inset:0; background-image: url('${thumb}'); background-size:cover; background-position:center; transition:transform 0.5s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"></div>
+              <div class="post-img" style="position:absolute; inset:0; background-image: url('${thumb}'); background-size:cover; background-position:center; transition:transform 0.5s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"></div>
               <div style="position:absolute; inset:0; background:rgba(0,0,0,0.2); z-index:5; pointer-events:none;"></div>
             </div>
-            <div class="feed-content-wrap">
-              <h3 class="feed-title" style="margin-bottom: 4px;">${item.title || item.subtopic}</h3>
+            <div class="feed-content-wrap post-content-wrapper">
+              <h3 class="feed-title post-title">${item.title || item.subtopic}</h3>
               <div class="mat-media-meta" style="color:var(--text-muted); font-size:0.8rem; font-weight:600; margin-bottom: 8px;">${item.subject || 'Resource'}</div>
               ${caption ? `
-              <div class="feed-caption-row" style="margin-bottom:0;">
-                <span class="feed-caption-text" id="caption-${item.id}">${caption}</span>
-                <button class="feed-more-btn" id="readmore-${item.id}" onclick="event.stopPropagation(); window.toggleCaption('${item.id}')" style="display:none;">More</button>
+              <div class="feed-caption-row post-caption-row" style="margin-bottom:0;">
+                <span class="feed-caption-text post-caption-text" id="caption-${item.id}">${caption}</span>
+                <button class="feed-more-btn post-more-btn" id="readmore-${item.id}" onclick="event.stopPropagation(); window.toggleCaption('${item.id}')" style="display:none;">More</button>
               </div>
               ` : ''}
+              ${actionsHtml}
             </div>
           </div>
         `;
       }
       else if (type === 'pdf' || type === 'document') {
         cardHtml = `
-          <div class="mat-card mat-pdf-card" onclick="openPdf('${item.media_url}', '${(item.title || item.subtopic).replace(/'/g, "\\'")}')">
+          <div class="mat-card mat-pdf-card social-post" onclick="openPdf('${item.media_url}', '${(item.title || item.subtopic).replace(/'/g, "\\'")}')">
             ${btnHtml}
             <div class="mat-pdf-preview" data-pdf="${item.media_url}">
               <canvas class="mat-pdf-canvas"></canvas>
             </div>
-            <div class="mat-pdf-info">
-              <h3 class="mat-pdf-title">${item.title || item.subtopic}</h3>
+            <div class="mat-pdf-info post-content-wrapper">
+              <h3 class="mat-pdf-title post-title">${item.title || item.subtopic}</h3>
               <div class="mat-meta-row">
                 <span class="mat-meta-item"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg> PDF</span>
                 <span class="mat-meta-item page-count-span">...</span>
               </div>
+              ${actionsHtml}
             </div>
           </div>
         `;
@@ -286,21 +293,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         const readTime = estimateReadTime(getWordCount(content));
         
         cardHtml = `
-          <div class="mat-card mat-text-card" onclick="openText('${item.id}')">
+          <div class="mat-card mat-text-card social-post" onclick="openText('${item.id}')">
             ${btnHtml}
-            <div class="mat-text-badge"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg> Article</div>
-            <h3 class="mat-text-title">${item.title || item.subtopic}</h3>
-            <p class="mat-text-snippet">${content.substring(0, 150)}${content.length > 150 ? '...' : ''}</p>
-            <div class="mat-text-footer">
-              <div class="mat-meta-row">
-                <span>${readTime}</span>
-                <span>•</span>
-                <span>${item.subject || 'General'}</span>
+            <div class="post-content-wrapper">
+              <div class="mat-text-badge"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg> Article</div>
+              <h3 class="mat-text-title post-title">${item.title || item.subtopic}</h3>
+              <p class="mat-text-snippet">${content}</p>
+              <div class="mat-text-footer">
+                <div class="mat-meta-row">
+                  <span>${readTime}</span>
+                  <span>•</span>
+                  <span>${item.subject || 'General'}</span>
+                </div>
               </div>
+              ${actionsHtml}
             </div>
           </div>
         `;
-      }
+      }   }
 
       return cardHtml;
     }).join('');
