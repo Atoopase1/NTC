@@ -334,8 +334,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const dropdownMenu = document.getElementById('userDropdownMenu');
 
   if (profileBtn && dropdownMenu) {
-    profileBtn.addEventListener('click', (e) => {
+    profileBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
+      if (window.innerWidth <= 1023) {
+        if (window.supaAuth) {
+          await window.supaAuth.signOut();
+        } else {
+          localStorage.removeItem('ntc_user');
+          window.location.href = 'login.html';
+        }
+        return;
+      }
       dropdownMenu.classList.toggle('open');
     });
 

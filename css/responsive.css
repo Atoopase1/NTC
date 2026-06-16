@@ -739,16 +739,18 @@
     display: none;
   }
 
-  .user-profile-btn .user-name .last-name {
-    display: none;
+  .user-name .last-name {
+    display: none !important;
   }
 
-  /* Only show logout in user dropdown on mobile */
-  .user-dropdown-menu .dropdown-item:not(.danger) {
-    display: none;
+  /* Remove the dropdown completely on mobile */
+  .user-dropdown-menu {
+    display: none !important;
   }
-  .user-dropdown-menu .dropdown-divider {
-    display: none;
+  
+  /* Hide the dropdown arrow on mobile */
+  .user-profile-btn > svg {
+    display: none !important;
   }
 }
 
