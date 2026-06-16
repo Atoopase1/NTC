@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         window._videoUrlMap[item.id] = { url: item.media_url, title: item.title || item.subtopic || '' };
         
         cardHtml = `
-          <div class="mat-card feed-item social-post" data-video-id="${item.id}" onclick="(function(el){var c=el.closest('[data-video-id]');var d=c&&window._videoUrlMap[c.dataset.videoId];if(d)openVideo(d.url,d.title);})(this)">
+          <div class="mat-card feed-item social-post" id="post-${item.id}" data-video-id="${item.id}" onclick="(function(el){var c=el.closest('[data-video-id]');var d=c&&window._videoUrlMap[c.dataset.videoId];if(d)openVideo(d.url,d.title);})(this)">
             ${btnHtml}
             <div class="feed-media-wrap post-image-wrapper">
               <div class="mat-badge-top" style="position:absolute; top:12px; left:12px; z-index:10; background:rgba(0,0,0,0.6); padding:4px 8px; border-radius:4px; color:white; font-size:0.75rem; font-weight:600; display:flex; align-items:center; gap:4px; backdrop-filter:blur(4px);">
@@ -271,7 +271,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       else if (type === 'pdf' || type === 'document') {
         cardHtml = `
-          <div class="mat-card mat-pdf-card social-post" onclick="openPdf('${item.media_url}', '${(item.title || item.subtopic).replace(/'/g, "\\'")}')">
+          <div class="mat-card mat-pdf-card social-post" id="post-${item.id}" onclick="openPdf('${item.media_url}', '${(item.title || item.subtopic).replace(/'/g, "\\'")}')">
             ${btnHtml}
             <div class="mat-pdf-preview" data-pdf="${item.media_url}">
               <canvas class="mat-pdf-canvas"></canvas>
@@ -293,7 +293,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const readTime = estimateReadTime(getWordCount(content));
         
         cardHtml = `
-          <div class="mat-card mat-text-card social-post" onclick="openText('${item.id}')">
+          <div class="mat-card mat-text-card social-post" id="post-${item.id}" onclick="openText('${item.id}')">
             ${btnHtml}
             <div class="post-content-wrapper">
               <div class="mat-text-badge"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg> Article</div>
