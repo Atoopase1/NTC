@@ -321,4 +321,20 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+
+  // ── Navbar Profile Dropdown Toggle ─────────────────────────────────
+  const profileBtn = document.getElementById('userProfileBtn');
+  const dropdownMenu = document.getElementById('userDropdownMenu');
+
+  if (profileBtn && dropdownMenu) {
+    profileBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdownMenu.classList.toggle('open');
+    });
+
+    // Close dropdown when clicking anywhere outside
+    document.addEventListener('click', () => {
+      dropdownMenu.classList.remove('open');
+    });
+  }
 });
