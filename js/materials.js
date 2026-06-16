@@ -237,7 +237,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       else if (type === 'video') {
         const ytId = getYouTubeId(item.media_url);
-        const thumb = ytId ? \`https://img.youtube.com/vi/\${ytId}/maxresdefault.jpg\` : 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&q=80';
+        const thumb = ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&q=80';
         const caption = (item.content || item.description || '').trim();
         // Store URL safely in map — avoids apostrophe/special char issues in onclick
         window._videoUrlMap[item.id] = { url: item.media_url, title: item.title || item.subtopic || '' };
