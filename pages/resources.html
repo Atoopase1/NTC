@@ -236,9 +236,9 @@
             // Force update on load
             reg.update();
             
-            // Check if we need to force reload for v6 cache bust
-            if (localStorage.getItem('ntc_cache_v6_cleared') !== 'true') {
-              localStorage.setItem('ntc_cache_v6_cleared', 'true');
+            // Check if we need to force reload for v8 cache bust
+            if (localStorage.getItem('ntc_cache_v8_cleared') !== 'true') {
+              localStorage.setItem('ntc_cache_v8_cleared', 'true');
               
               // Unregister all workers and reload
               navigator.serviceWorker.getRegistrations().then(function(registrations) {
