@@ -289,14 +289,20 @@ document.addEventListener('DOMContentLoaded', () => {
       if (avatarUrl) {
         // Change from initials to actual image
         el.textContent = '';
-        el.style.backgroundImage = `url(${avatarUrl})`;
-        el.style.backgroundSize = 'cover';
-        el.style.backgroundPosition = 'center';
+        if (el.tagName === 'IMG') {
+          el.src = avatarUrl;
+        } else {
+          el.style.backgroundImage = `url(${avatarUrl})`;
+          el.style.backgroundSize = 'cover';
+          el.style.backgroundPosition = 'center';
+        }
         // Remove initials classes if any, add general avatar class
         el.classList.remove('user-avatar-initials');
         if (!el.classList.contains('user-avatar')) el.classList.add('user-avatar');
       } else {
-        el.textContent = displayName.charAt(0).toUpperCase();
+        if (el.tagName !== 'IMG') {
+          el.textContent = displayName.charAt(0).toUpperCase();
+        }
       }
     });
   }
