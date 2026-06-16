@@ -1112,3 +1112,40 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* === Profile Form Row - responsive 2-col layout === */
+.profile-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+@media (max-width: 600px) {
+  .profile-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* Prevent the dashboard main from overflowing on profile page */
+  .dashboard-main {
+    overflow-x: hidden;
+  }
+
+  /* Ensure profile page content doesn't overflow */
+  .profile-grid {
+    min-width: 0;
+  }
+
+  .profile-content {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .widget {
+    min-width: 0;
+  }
+
+  .widget-body {
+    overflow-x: hidden;
+  }
+}
