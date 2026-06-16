@@ -744,8 +744,13 @@
   }
 
   /* Remove the dropdown completely on mobile */
-  .user-dropdown-menu {
+  .user-dropdown-menu,
+  .user-dropdown-menu.open,
+  .user-dropdown.active .user-dropdown-menu {
     display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
   }
   
   /* Hide the dropdown arrow on mobile */
