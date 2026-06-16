@@ -281,14 +281,29 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     
+    const isMobile = window.innerWidth <= 1023;
+    
     userNames.forEach(el => {
-      const parts = displayName.trim().split(' ');
-      const firstName = parts[0];
-      const lastName = parts.slice(1).join(' ');
-      if (lastName) {
-        el.innerHTML = `<span class="first-name">${firstName}</span><span class="last-name"> ${lastName}</span>`;
-      } else {
+      if (isMobile) {
+        // On mobile, show only first name
+        const firstName = displayName.trim().split(' ')[0];
         el.textContent = firstName;
+        
+        // Remove chevron arrow SVG from parent (user-profile-btn or user-dropdown-toggle)
+        const parent = el.closest('.user-profile-btn') || el.closest('.user-dropdown-toggle');
+        if (parent) {
+          const chevron = parent.querySelector(':scope > svg');
+          if (chevron) chevron.remove();
+        }
+        
+        // Hide the dropdown menu entirely via JS
+        const dropdownContainer = el.closest('.user-dropdown') || (parent && parent.parentElement);
+        if (dropdownContainer) {
+          const menu = dropdownContainer.querySelector('.user-dropdown-menu');
+          if (menu) menu.style.display = 'none';
+        }
+      } else {
+        el.textContent = displayName;
       }
     });
 
