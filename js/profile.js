@@ -67,7 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
       phone: '',
       dob: '',
       school: '',
-      bio: '',
       avatar_url: null
     };
     
@@ -87,7 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
           userData.phone = profile.phone || '';
           userData.dob = profile.dob || '';
           userData.school = profile.school || '';
-          userData.bio = profile.bio || '';
           userData.avatar_url = profile.avatar_url || userData.avatar_url;
         } else {
           userData.email = user.email;
@@ -106,7 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('profilePhone')) document.getElementById('profilePhone').value = userData.phone;
     if (document.getElementById('profileDob')) document.getElementById('profileDob').value = userData.dob;
     if (document.getElementById('profileSchool')) document.getElementById('profileSchool').value = userData.school;
-    if (document.getElementById('profileBio')) document.getElementById('profileBio').value = userData.bio;
     
     // Display names
     const displayName = userData.fullName || userData.email.split('@')[0];
@@ -141,7 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const phone = document.getElementById('profilePhone').value;
       const dob = document.getElementById('profileDob') ? document.getElementById('profileDob').value : '';
       const school = document.getElementById('profileSchool') ? document.getElementById('profileSchool').value : '';
-      const bio = document.getElementById('profileBio') ? document.getElementById('profileBio').value : '';
       
       try {
         if (window.supaAuth && window.supaDB) {
@@ -152,7 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
               phone,
               dob,
               school,
-              bio,
               updated_at: new Date().toISOString()
             });
             if (error) throw error;
