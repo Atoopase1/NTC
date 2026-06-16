@@ -749,7 +749,8 @@
   }
   
   /* Hide the dropdown arrow on mobile */
-  .user-profile-btn > svg {
+  .user-profile-btn > svg,
+  .user-dropdown-toggle > svg {
     display: none !important;
   }
 }
