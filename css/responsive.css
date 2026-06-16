@@ -738,6 +738,18 @@
   .user-dropdown-toggle .user-name {
     display: none;
   }
+
+  .user-profile-btn .user-name .last-name {
+    display: none;
+  }
+
+  /* Only show logout in user dropdown on mobile */
+  .user-dropdown-menu .dropdown-item:not(.danger) {
+    display: none;
+  }
+  .user-dropdown-menu .dropdown-divider {
+    display: none;
+  }
 }
 
 /* === Desktop Navigation (1024px+) === */

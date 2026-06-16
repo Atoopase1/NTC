@@ -282,7 +282,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     userNames.forEach(el => {
-      el.textContent = displayName;
+      const parts = displayName.trim().split(' ');
+      const firstName = parts[0];
+      const lastName = parts.slice(1).join(' ');
+      if (lastName) {
+        el.innerHTML = `<span class="first-name">${firstName}</span><span class="last-name"> ${lastName}</span>`;
+      } else {
+        el.textContent = firstName;
+      }
     });
 
     userAvatars.forEach(el => {
