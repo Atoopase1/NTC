@@ -213,7 +213,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.location.pathname.includes('exam') ||
     window.location.pathname.includes('results') ||
     window.location.pathname.includes('profile') ||
-    window.location.pathname.includes('leaderboard');
+    window.location.pathname.includes('leaderboard') ||
+    window.location.pathname.includes('resources') ||
+    window.location.pathname.includes('admin');
 
   if (isProtectedPage) {
     checkAuth();
