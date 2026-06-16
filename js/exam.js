@@ -104,10 +104,26 @@ document.addEventListener('DOMContentLoaded', () => {
               `;
             });
             
-            scheduledExamGrid.innerHTML = hasActiveOrUpcoming ? html : '<div style="grid-column: 1/-1; text-align: center; color: var(--text-light); padding: var(--space-md);">No live exams available right now.</div>';
+            const emptyStateHtml = `
+              <div style="grid-column: 1/-1; text-align: center; padding: var(--space-xl); background: var(--surface-2); border-radius: var(--radius-lg);">
+                <div style="font-size: 3rem; margin-bottom: var(--space-sm);">📚</div>
+                <h3 style="margin-bottom: var(--space-xs); color: var(--text);">No exams available right now</h3>
+                <p style="color: var(--text-light); margin-bottom: var(--space-lg);">There are no live exams scheduled for you to take at this time.</p>
+                <a href="resources.html" class="btn btn-primary">Continue Studying</a>
+              </div>
+            `;
+            scheduledExamGrid.innerHTML = hasActiveOrUpcoming ? html : emptyStateHtml;
             if (!hasActiveOrUpcoming && startBtn) startBtn.style.display = 'none';
           } else {
-            scheduledExamGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-light); padding: var(--space-md);">No scheduled exams at this time.</div>';
+            const emptyStateHtml = `
+              <div style="grid-column: 1/-1; text-align: center; padding: var(--space-xl); background: var(--surface-2); border-radius: var(--radius-lg);">
+                <div style="font-size: 3rem; margin-bottom: var(--space-sm);">📚</div>
+                <h3 style="margin-bottom: var(--space-xs); color: var(--text);">No exams available right now</h3>
+                <p style="color: var(--text-light); margin-bottom: var(--space-lg);">There are no live exams scheduled for you to take at this time.</p>
+                <a href="resources.html" class="btn btn-primary">Continue Studying</a>
+              </div>
+            `;
+            scheduledExamGrid.innerHTML = emptyStateHtml;
             if (startBtn) startBtn.style.display = 'none';
           }
         } catch(e) {
