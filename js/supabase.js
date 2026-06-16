@@ -259,6 +259,43 @@ async function updateProfile(userId, fields) {
 }
 
 /**
+ * Check if a student has already submitted a specific scheduled exam.
+ * Returns true if a duplicate submission exists.
+ */
+async function checkDuplicateSubmission(userId, scheduledExamId) {
+  try {
+    if (!supabaseClient) return false;
+    const { data, error } = await supabaseClient
+      .from('student_exam_submissions')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('scheduled_exam_id', scheduledExamId)
+      .maybeSingle();
+    if (error) throw error;
+    return !!data; // true = duplicate exists
+  } catch (error) {
+    console.warn('Could not check duplicate submission:', error);
+    return false; // fail open — allow exam to proceed
+  }
+}
+
+/**
+ * Record that a student has submitted a scheduled exam.
+ * Uses UPSERT with the unique constraint so it is idempotent.
+ */
+async function recordSubmission(userId, scheduledExamId) {
+  try {
+    if (!supabaseClient) return;
+    const { error } = await supabaseClient
+      .from('student_exam_submissions')
+      .upsert({ user_id: userId, scheduled_exam_id: scheduledExamId }, { onConflict: 'user_id,scheduled_exam_id' });
+    if (error) throw error;
+  } catch (error) {
+    console.warn('Could not record submission:', error);
+  }
+}
+
+/**
  * Save exam result
  */
 async function saveExamResult(userId, examData) {
@@ -267,12 +304,13 @@ async function saveExamResult(userId, examData) {
       .from('exam_results')
       .insert({
         user_id: userId,
-        scheduled_exam_id: examData.isScheduled ? examData.scheduledExamId : null,
+        scheduled_exam_id: examData.isScheduled ? (examData.scheduledExamId || examData.id) : null,
+        title: examData.title || examData.subject,
         subject: examData.subject,
         score: examData.score,
         total: examData.total,
         percentage: examData.percentage,
-        time_used: examData.timeUsed,
+        time_used: String(examData.timeUsed),
         created_at: new Date().toISOString()
       });
       
@@ -289,22 +327,38 @@ async function saveExamResult(userId, examData) {
 }
 
 /**
- * Get user's exam history
+ * Get user's exam history from Supabase.
+ * Falls back to localStorage if DB is unavailable.
  */
 async function getExamHistory(userId) {
   try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
     const { data, error } = await supabaseClient
       .from('exam_results')
-      .select('*')
+      .select('id, title, subject, score, total, percentage, time_used, scheduled_exam_id, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
       
     if (error) throw error;
-    return data;
+    // Normalize: map DB columns to the shape the UI expects
+    return (data || []).map(r => ({
+      id: r.id,
+      title: r.title || r.subject,
+      subject: r.subject,
+      score: r.score,
+      total: r.total,
+      percentage: r.percentage,
+      timeUsed: r.time_used,
+      scheduledExamId: r.scheduled_exam_id,
+      date: r.created_at
+    }));
   } catch (error) {
-    // Fallback local storage
+    console.warn('Falling back to localStorage for exam history:', error);
+    // Fallback: pull from localStorage and normalize
     const results = JSON.parse(localStorage.getItem('ntc_exam_results') || '[]');
-    return results.filter(r => r.userId === userId).sort((a, b) => new Date(b.date) - new Date(a.date));
+    return results
+      .filter(r => !userId || r.userId === userId)
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
   }
 }
 
@@ -886,6 +940,8 @@ window.supaDB = {
   updateProfile,
   saveExamResult,
   getExamHistory,
+  checkDuplicateSubmission,
+  recordSubmission,
   getSubjects,
   addSubject,
   updateSubject,

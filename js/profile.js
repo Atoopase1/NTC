@@ -13,53 +13,81 @@ document.addEventListener('DOMContentLoaded', () => {
   initProfile();
 
   async function initProfile() {
-    // Populate stats
+    // ── Load exam history from Supabase ────────────────────────────
     let history = [];
-    if (localStorage.getItem('ntc_exam_results')) {
-      history = JSON.parse(localStorage.getItem('ntc_exam_results'));
+    
+    if (window.supaAuth && window.supaDB) {
+      try {
+        const user = await window.supaAuth.getCurrentUser();
+        if (user) {
+          history = await window.supaDB.getExamHistory(user.id);
+        }
+      } catch(e) {
+        console.warn('Could not fetch exam history from Supabase:', e);
+      }
     }
     
+    // Fallback to localStorage if nothing came back
+    if (!history || history.length === 0) {
+      try {
+        const local = JSON.parse(localStorage.getItem('ntc_exam_results') || '[]');
+        if (local.length > 0) history = local;
+      } catch(e) {}
+    }
+    
+    // ── Stats ───────────────────────────────────────────────────────
     document.getElementById('profileExamsCount').textContent = history.length;
     
     if (history.length > 0) {
-      const totalPercentage = history.reduce((acc, curr) => acc + curr.percentage, 0);
-      const avgScore = Math.round(totalPercentage / history.length);
-      document.getElementById('profileAvgScore').textContent = `${avgScore}%`;
+      const avgScore = Math.round(
+        history.reduce((acc, r) => acc + (r.percentage || 0), 0) / history.length
+      );
+      const avgEl = document.getElementById('profileAvgScore');
+      if (avgEl) avgEl.textContent = `${avgScore}%`;
       
-      // Render Exam History
+      // ── Exam History Table ────────────────────────────────────────
       const historyContainer = document.getElementById('profileExamHistory');
       if (historyContainer) {
-        // Reverse so newest is first
-        const sortedHistory = [...history].reverse();
         let html = '';
-        
-        sortedHistory.forEach((exam, idx) => {
-          const date = new Date(exam.date).toLocaleDateString();
+        history.forEach((exam, idx) => {
+          const date = new Date(exam.date || exam.created_at).toLocaleDateString('en-GB', {
+            day: 'numeric', month: 'short', year: 'numeric'
+          });
           const passClass = exam.percentage >= 50 ? 'success' : 'danger';
+          const passLabel = exam.percentage >= 50 ? 'PASSED' : 'FAILED';
           
           html += `
-            <div class="admin-card" style="margin-bottom: var(--space-md); padding: var(--space-md); border-left: 4px solid var(--${passClass}); display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <h4 style="margin-bottom: 4px;">${exam.title || exam.subject}</h4>
-                <div style="font-size: var(--text-xs); color: var(--text-light); display: flex; gap: 12px;">
-                  <span style="display:flex;align-items:center;gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${date}</span>
-                  <span style="display:flex;align-items:center;gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> Score: ${exam.score}/${exam.total} (${exam.percentage}%)</span>
+            <div style="margin-bottom: var(--space-md); padding: var(--space-md) var(--space-lg); border-left: 4px solid var(--${passClass}); border-radius: 0 var(--radius-md) var(--radius-md) 0; background: var(--surface-hover); display: flex; justify-content: space-between; align-items: center; gap: var(--space-md); flex-wrap: wrap;">
+              <div style="flex:1; min-width: 200px;">
+                <div style="display:flex; align-items:center; gap: var(--space-sm); margin-bottom: 6px;">
+                  <span style="font-size: var(--text-xs); font-weight: 700; padding: 2px 10px; border-radius: 99px; background: var(--${passClass}); color: white;">${passLabel}</span>
+                  <h4 style="margin:0; font-size: var(--text-base);">${exam.title || exam.subject}</h4>
+                </div>
+                <div style="font-size: var(--text-xs); color: var(--text-light); display: flex; gap: 16px; flex-wrap: wrap;">
+                  <span>📚 ${exam.subject || '—'}</span>
+                  <span>📅 ${date}</span>
+                  <span>🏆 Score: <strong>${exam.score}/${exam.total}</strong> (${exam.percentage}%)</span>
                 </div>
               </div>
-              <button class="btn btn-outline btn-sm" onclick="window.openReviewModal(${history.length - 1 - idx})">
-                View Review
-              </button>
             </div>
           `;
         });
         historyContainer.innerHTML = html;
       }
     } else {
+      const avgEl = document.getElementById('profileAvgScore');
+      if (avgEl) avgEl.textContent = '—';
       const historyContainer = document.getElementById('profileExamHistory');
       if (historyContainer) {
-        historyContainer.innerHTML = '<p style="color: var(--text-light);">No exams taken yet. Your history will appear here.</p>';
+        historyContainer.innerHTML = `
+          <div style="text-align: center; padding: var(--space-xl); color: var(--text-light);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom: 12px; opacity: 0.4;"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/></svg>
+            <p style="margin: 0; font-size: var(--text-sm);">No exams taken yet. Your history will appear here.</p>
+          </div>
+        `;
       }
     }
+
     
     let userData = {
       fullName: '',

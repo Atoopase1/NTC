@@ -4,30 +4,26 @@
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Check if we are on the exam setup page or exam interface
   const examSetup = document.querySelector('.exam-setup');
   const examInterface = document.querySelector('.exam-interface');
   
-  // --- Exam Setup Logic ---
+  // ── Exam Setup Logic ──────────────────────────────────────────────
   if (examSetup) {
     const startBtn = document.getElementById('startExamBtn');
+    const scheduledExamGrid = document.getElementById('scheduledExamGrid');
     let selectedScheduledExam = null;
     
-    // Function to attach listeners to dynamic cards
     const attachCardListeners = () => {
       const subjectCards = document.querySelectorAll('.exam-subject-card');
       subjectCards.forEach(card => {
         card.addEventListener('click', () => {
-          // Remove selection from all
           subjectCards.forEach(c => c.classList.remove('selected'));
-          // Add to clicked
           card.classList.add('selected');
           
           if (card.hasAttribute('data-scheduled-id')) {
             selectedScheduledExam = JSON.parse(decodeURIComponent(card.getAttribute('data-scheduled-data')));
           }
           
-          // Enable start button
           if (startBtn) {
             startBtn.disabled = false;
             startBtn.classList.remove('disabled');
@@ -36,10 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     };
 
-    // Load Scheduled Exams
     const loadExamSubjects = async () => {
-
-      // Load Scheduled Exams
       if (scheduledExamGrid && window.supaDB && window.supaDB.getScheduledExams) {
         try {
           const exams = await window.supaDB.getScheduledExams();
@@ -47,6 +40,22 @@ document.addEventListener('DOMContentLoaded', () => {
             let html = '';
             const now = new Date();
             let hasActiveOrUpcoming = false;
+
+            // Check if user has already submitted any of these
+            let submittedIds = new Set();
+            if (window.supaAuth && window.supaDB.checkDuplicateSubmission) {
+              try {
+                const user = await window.supaAuth.getCurrentUser();
+                if (user) {
+                  for (const exam of exams) {
+                    const isDuplicate = await window.supaDB.checkDuplicateSubmission(user.id, exam.id);
+                    if (isDuplicate) submittedIds.add(exam.id);
+                  }
+                }
+              } catch(e) {
+                console.warn('Could not check submissions:', e);
+              }
+            }
 
             exams.forEach(exam => {
               const startTime = new Date(exam.start_time);
@@ -56,24 +65,46 @@ document.addEventListener('DOMContentLoaded', () => {
               hasActiveOrUpcoming = true;
 
               const isActive = now >= startTime && now <= endTime;
-              const encodedData = encodeURIComponent(JSON.stringify(exam));
+              const alreadySubmitted = submittedIds.has(exam.id);
+              const canStart = isActive && !alreadySubmitted;
+
+              // Strip answer key from data passed to the card (security)
+              const safeExamData = {
+                id: exam.id,
+                title: exam.title,
+                subject: exam.subject,
+                start_time: exam.start_time,
+                end_time: exam.end_time,
+                duration_minutes: exam.duration_minutes
+                // questions_data intentionally omitted here
+              };
+              const encodedData = encodeURIComponent(JSON.stringify(safeExamData));
+              
+              let statusLabel;
+              if (alreadySubmitted) {
+                statusLabel = `<p style="font-size: var(--text-xs); margin-top: 8px; color: var(--success); font-weight: 600;">✓ Already Submitted</p>`;
+              } else if (isActive) {
+                statusLabel = `<p style="font-size: var(--text-xs); margin-top: 8px; color: var(--success); font-weight: 500;">Active Now. Ends ${endTime.toLocaleTimeString()}</p>`;
+              } else {
+                statusLabel = `<p style="font-size: var(--text-xs); margin-top: 8px; color: var(--warning); font-weight: 500;">Starts ${startTime.toLocaleString()}</p>`;
+              }
               
               html += `
-                <div class="exam-subject-card ${isActive ? '' : 'disabled'}" ${isActive ? `data-scheduled-id="${exam.id}" data-scheduled-data="${encodedData}"` : ''} style="${!isActive ? 'opacity: 0.6; cursor: not-allowed;' : ''}">
+                <div class="exam-subject-card ${canStart ? '' : 'disabled'}" 
+                     ${canStart ? `data-scheduled-id="${exam.id}" data-scheduled-data="${encodedData}"` : ''}
+                     style="${!canStart ? 'opacity: 0.6; cursor: not-allowed;' : ''}">
                   <div class="subject-icon" style="width: 64px; height: 64px; font-size: 32px; background: var(--danger); color: white;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                   </div>
                   <h4>${exam.title}</h4>
                   <p>${exam.subject}</p>
-                  <p style="font-size: var(--text-xs); margin-top: 8px; color: ${isActive ? 'var(--success)' : 'var(--warning)'}; font-weight: 500;">
-                    ${isActive ? 'Active Now. Ends ' + endTime.toLocaleTimeString() : 'Starts ' + startTime.toLocaleString()}
-                  </p>
+                  ${statusLabel}
                   <p style="font-size: var(--text-xs); color: var(--text-light); margin-top: 4px;">Duration: ${exam.duration_minutes || 60} mins</p>
                 </div>
               `;
             });
             
-            scheduledExamGrid.innerHTML = hasActiveOrUpcoming ? html : '<div style="grid-column: 1/-1; text-align: center; color: var(--text-light); padding: var(--space-md);">No live exams available.</div>';
+            scheduledExamGrid.innerHTML = hasActiveOrUpcoming ? html : '<div style="grid-column: 1/-1; text-align: center; color: var(--text-light); padding: var(--space-md);">No live exams available right now.</div>';
           } else {
             scheduledExamGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-light); padding: var(--space-md);">No scheduled exams at this time.</div>';
           }
@@ -82,41 +113,58 @@ document.addEventListener('DOMContentLoaded', () => {
           scheduledExamGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--danger); padding: var(--space-md);">Failed to load scheduled exams.</div>';
         }
       }
-      
-      // Always attach listeners at the end
       attachCardListeners();
     };
     
-    // Slight delay to ensure supaDB is loaded
     setTimeout(loadExamSubjects, 500);
     
     if (startBtn) {
-      startBtn.addEventListener('click', () => {
+      startBtn.addEventListener('click', async () => {
         if (!selectedScheduledExam) return;
         
-        let config = {
-          isScheduled: true,
-          id: selectedScheduledExam.id,
-          title: selectedScheduledExam.title,
-          subject: selectedScheduledExam.subject,
-          startTime: selectedScheduledExam.start_time,
-          endTime: selectedScheduledExam.end_time,
-          durationMins: selectedScheduledExam.duration_minutes || 60,
-          questions: selectedScheduledExam.questions_data
-        };
+        startBtn.disabled = true;
+        startBtn.innerHTML = '<span class="spinner spinner-sm"></span> Loading...';
         
-        // Save config to session storage to use in exam interface
-        sessionStorage.setItem('ntc_exam_config', JSON.stringify(config));
-        
-        // Redirect to exam interface
-        window.location.href = 'exam.html';
+        try {
+          // Now fetch the full exam data including questions (only at start time, not before)
+          const exams = await window.supaDB.getScheduledExams();
+          const fullExam = exams.find(e => e.id === selectedScheduledExam.id);
+          if (!fullExam || !fullExam.questions_data || fullExam.questions_data.length === 0) {
+            window.showToast('This exam has no questions. Contact your admin.', 'error');
+            startBtn.disabled = false;
+            startBtn.innerHTML = 'Start Examination';
+            return;
+          }
+
+          // Strip answer keys for in-memory storage — they'll only be used at submission
+          // We keep the full questions_data in sessionStorage (required for grading client-side)
+          const config = {
+            isScheduled: true,
+            id: fullExam.id,
+            title: fullExam.title,
+            subject: fullExam.subject,
+            startTime: fullExam.start_time,
+            endTime: fullExam.end_time,
+            durationMins: fullExam.duration_minutes || 60,
+            questions: fullExam.questions_data
+          };
+          
+          // Clear any previous progress for this exam
+          sessionStorage.removeItem('ntc_exam_progress');
+          sessionStorage.setItem('ntc_exam_config', JSON.stringify(config));
+          window.location.href = 'exam.html';
+        } catch (e) {
+          console.error(e);
+          window.showToast('Failed to load exam. Please try again.', 'error');
+          startBtn.disabled = false;
+          startBtn.innerHTML = 'Start Examination';
+        }
       });
     }
   }
   
-  // --- Exam Interface Logic ---
+  // ── Exam Interface Logic ──────────────────────────────────────────
   if (examInterface) {
-    let allQuestions = [];
     let examQuestions = [];
     let currentQuestionIndex = 0;
     let answers = {};
@@ -128,20 +176,30 @@ document.addEventListener('DOMContentLoaded', () => {
     initExam();
     
     async function initExam() {
-      // Get config from setup page
       const configStr = sessionStorage.getItem('ntc_exam_config');
-      if (configStr) {
-        examConfig = JSON.parse(configStr);
-      } else {
-        // Fallback for direct navigation
-        examConfig = {
-          subject: 'Pedagogy',
-          count: 20,
-          timeMinutes: 30
-        };
+      if (!configStr) {
+        window.showToast('No exam session found. Returning to exam setup.', 'error');
+        setTimeout(() => { window.location.href = 'exam.html?setup=1'; }, 2000);
+        return;
       }
       
-      // Update UI with config
+      examConfig = JSON.parse(configStr);
+      
+      // Restore any saved progress
+      const savedProgress = sessionStorage.getItem('ntc_exam_progress');
+      if (savedProgress) {
+        try {
+          const progress = JSON.parse(savedProgress);
+          // Only restore if it belongs to the same exam
+          if (progress.examId === examConfig.id) {
+            answers = progress.answers || {};
+            flagged = progress.flagged || {};
+          }
+        } catch(e) {
+          console.warn('Could not restore progress:', e);
+        }
+      }
+      
       if (examConfig.isScheduled) {
         document.getElementById('examSubjectTitle').textContent = examConfig.title;
         
@@ -151,14 +209,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const durationSecs = (examConfig.durationMins || 60) * 60;
         
         if (now < startTime) {
-          alert('This exam has not started yet.');
-          window.location.href = 'exam.html';
+          window.showToast('This exam has not started yet.', 'error');
+          setTimeout(() => { window.location.href = 'exam.html?setup=1'; }, 2000);
           return;
         }
         
-        // Timer is the minimum between explicit duration and remaining window time
+        if (now > endTime) {
+          window.showToast('This exam has already ended.', 'error');
+          setTimeout(() => { window.location.href = 'exam.html?setup=1'; }, 2000);
+          return;
+        }
+        
         const maxSecsRemaining = Math.max(0, Math.floor((endTime - now) / 1000));
-        const activeTimer = Math.min(durationSecs, maxSecsRemaining);
+        
+        // Restore timer position from saved progress if available
+        let savedTimer = null;
+        if (savedProgress) {
+          try {
+            const progress = JSON.parse(savedProgress);
+            if (progress.examId === examConfig.id && progress.timeRemaining > 0) {
+              savedTimer = progress.timeRemaining;
+            }
+          } catch(e) {}
+        }
+        
+        const activeTimer = savedTimer || Math.min(durationSecs, maxSecsRemaining);
         
         await loadQuestions();
         buildNavigator();
@@ -169,19 +244,29 @@ document.addEventListener('DOMContentLoaded', () => {
         await loadQuestions();
         buildNavigator();
         showQuestion(0);
-        startTimer(examConfig.timeMinutes * 60);
+        startTimer((examConfig.timeMinutes || 60) * 60);
       }
       
-      // Event Listeners
       setupEventListeners();
-      
-      // Prevent accidental exit
       window.addEventListener('beforeunload', beforeUnloadHandler);
+      
+      // Auto-save progress every 30 seconds
+      setInterval(saveProgress, 30000);
+    }
+    
+    function saveProgress() {
+      if (!examConfig) return;
+      const progress = {
+        examId: examConfig.id || 'custom',
+        answers,
+        flagged,
+        timeRemaining
+      };
+      sessionStorage.setItem('ntc_exam_progress', JSON.stringify(progress));
     }
     
     async function loadQuestions() {
       try {
-        // Show loading state
         const qContainer = document.getElementById('questionContainer');
         qContainer.innerHTML = `
           <div class="empty-state">
@@ -190,41 +275,32 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         `;
         
-        // Check if scheduled
         if (examConfig.isScheduled) {
-          allQuestions = examConfig.questions;
-          examQuestions = [...allQuestions];
+          examQuestions = examConfig.questions || [];
           if (examQuestions.length === 0) {
-            throw new Error("This scheduled exam has no questions.");
+            throw new Error('This scheduled exam has no questions.');
           }
-          return; // Skip normal fetching
+          return;
         }
 
-        // Fetch questions from JSON
         const response = await fetch('../data/questions.json');
-        allQuestions = await response.json();
+        const allQuestions = await response.json();
         
-        // Filter by subject
         let subjectQuestions = allQuestions;
         if (examConfig.subject !== 'All Subjects') {
           subjectQuestions = allQuestions.filter(q => q.subject === examConfig.subject);
         }
         
-        // Shuffle and limit
         subjectQuestions = shuffleArray(subjectQuestions);
-        examQuestions = subjectQuestions.slice(0, Math.min(examConfig.count, subjectQuestions.length));
+        examQuestions = subjectQuestions.slice(0, Math.min(examConfig.count || 20, subjectQuestions.length));
         
-        // If not enough questions, handle it
         if (examQuestions.length === 0) {
-          throw new Error("No questions found for this subject.");
+          throw new Error('No questions found for this subject.');
         }
-        
       } catch (error) {
         console.error('Error loading questions:', error);
-        window.showToast('Failed to load questions. Returning to setup.', 'error');
-        setTimeout(() => {
-          window.location.href = 'dashboard.html';
-        }, 2000);
+        window.showToast(error.message || 'Failed to load questions.', 'error');
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 2500);
       }
     }
     
@@ -240,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
       let optionsHtml = '';
       const letters = ['A', 'B', 'C', 'D'];
       
-      question.options.forEach((opt, i) => {
+      (question.options || []).forEach((opt, i) => {
         const isSelected = answers[index] === i ? 'selected' : '';
         optionsHtml += `
           <div class="option-item ${isSelected}" data-index="${i}">
@@ -266,7 +342,6 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
       
-      // Update Navigation Buttons
       document.getElementById('prevBtn').disabled = index === 0;
       
       if (index === examQuestions.length - 1) {
@@ -277,30 +352,23 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('submitBtn').style.display = 'none';
       }
       
-      // Update Progress Bar
       const progressPercent = ((index + 1) / examQuestions.length) * 100;
       document.getElementById('progressBar').style.width = `${progressPercent}%`;
       document.getElementById('progressText').textContent = `Answered ${Object.keys(answers).length} of ${examQuestions.length}`;
       
-      // Re-attach Option Listeners
       const options = document.querySelectorAll('.option-item');
       options.forEach(opt => {
         opt.addEventListener('click', () => {
-          // Deselect others
           options.forEach(o => o.classList.remove('selected'));
-          // Select this
           opt.classList.add('selected');
-          // Save answer
           const selectedIndex = parseInt(opt.getAttribute('data-index'));
           answers[currentQuestionIndex] = selectedIndex;
-          
-          // Update Navigator
           updateNavigatorBtn(currentQuestionIndex);
           updateProgressStats();
+          saveProgress(); // auto-save on every answer
         });
       });
       
-      // Attach Flag Listener
       const flagBtn = document.getElementById('flagBtn');
       flagBtn.addEventListener('click', () => {
         if (flagged[currentQuestionIndex]) {
@@ -313,9 +381,9 @@ document.addEventListener('DOMContentLoaded', () => {
           flagBtn.querySelector('svg').setAttribute('fill', 'currentColor');
         }
         updateNavigatorBtn(currentQuestionIndex);
+        saveProgress();
       });
       
-      // Update Navigator active state
       document.querySelectorAll('.navigator-btn').forEach(btn => btn.classList.remove('current'));
       const navBtn = document.getElementById(`nav-btn-${index}`);
       if (navBtn) navBtn.classList.add('current');
@@ -324,28 +392,26 @@ document.addEventListener('DOMContentLoaded', () => {
     function buildNavigator() {
       const navGrid = document.getElementById('navigatorGrid');
       let html = '';
-      
       for (let i = 0; i < examQuestions.length; i++) {
         html += `<button class="navigator-btn" id="nav-btn-${i}" data-index="${i}">${i + 1}</button>`;
       }
-      
       navGrid.innerHTML = html;
       
-      // Add listeners
       document.querySelectorAll('.navigator-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          const index = parseInt(btn.getAttribute('data-index'));
-          showQuestion(index);
+          showQuestion(parseInt(btn.getAttribute('data-index')));
         });
       });
       
+      // Mark already-answered buttons (restored from progress)
+      Object.keys(answers).forEach(idx => updateNavigatorBtn(parseInt(idx)));
+      Object.keys(flagged).forEach(idx => updateNavigatorBtn(parseInt(idx)));
       updateProgressStats();
     }
     
     function updateNavigatorBtn(index) {
       const btn = document.getElementById(`nav-btn-${index}`);
       if (!btn) return;
-      
       btn.className = 'navigator-btn';
       if (index === currentQuestionIndex) btn.classList.add('current');
       if (answers[index] !== undefined) btn.classList.add('answered');
@@ -360,17 +426,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function setupEventListeners() {
-      document.getElementById('prevBtn').addEventListener('click', () => {
-        showQuestion(currentQuestionIndex - 1);
-      });
-      
-      document.getElementById('nextBtn').addEventListener('click', () => {
-        showQuestion(currentQuestionIndex + 1);
-      });
-      
-      // Show Submit Modal
-      const showSubmitBtn = document.getElementById('submitBtn');
-      const headerSubmitBtn = document.getElementById('headerSubmitBtn');
+      document.getElementById('prevBtn').addEventListener('click', () => showQuestion(currentQuestionIndex - 1));
+      document.getElementById('nextBtn').addEventListener('click', () => showQuestion(currentQuestionIndex + 1));
       
       const showModal = () => {
         const answeredCount = Object.keys(answers).length;
@@ -382,12 +439,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const warningEl = document.getElementById('submitWarning');
         if (unansweredCount > 0) {
-          warningEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                                 <p>Warning: You have <strong>${unansweredCount} unanswered</strong> questions. Are you sure you want to submit?</p>`;
+          warningEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                               <p>Warning: You have <strong>${unansweredCount} unanswered</strong> questions.</p>`;
           warningEl.style.display = 'flex';
         } else if (flaggedCount > 0) {
-          warningEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                                 <p>Note: You have <strong>${flaggedCount} flagged</strong> questions for review. Once submitted, you cannot change your answers.</p>`;
+          warningEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                               <p>Note: You have <strong>${flaggedCount} flagged</strong> questions for review.</p>`;
           warningEl.style.display = 'flex';
         } else {
           warningEl.style.display = 'none';
@@ -396,37 +453,28 @@ document.addEventListener('DOMContentLoaded', () => {
         window.openModal('submitModal');
       };
       
-      showSubmitBtn.addEventListener('click', showModal);
+      document.getElementById('submitBtn').addEventListener('click', showModal);
+      const headerSubmitBtn = document.getElementById('headerSubmitBtn');
       if (headerSubmitBtn) headerSubmitBtn.addEventListener('click', showModal);
       
-      // Final Submit
       document.getElementById('confirmSubmitBtn').addEventListener('click', submitExam);
       
-      // Sidebar Toggle for Mobile
       const sidebarToggle = document.getElementById('examSidebarToggle');
       if (sidebarToggle) {
         sidebarToggle.addEventListener('click', () => {
           document.querySelector('.exam-sidebar').classList.toggle('open');
-          
-          // Add/remove overlay
           let overlay = document.getElementById('examOverlay');
           if (!overlay) {
             overlay = document.createElement('div');
             overlay.id = 'examOverlay';
             overlay.className = 'sidebar-overlay';
             document.body.appendChild(overlay);
-            
             overlay.addEventListener('click', () => {
               document.querySelector('.exam-sidebar').classList.remove('open');
               overlay.classList.remove('active');
             });
           }
-          
-          if (document.querySelector('.exam-sidebar').classList.contains('open')) {
-            overlay.classList.add('active');
-          } else {
-            overlay.classList.remove('active');
-          }
+          overlay.classList.toggle('active', document.querySelector('.exam-sidebar').classList.contains('open'));
         });
       }
     }
@@ -434,11 +482,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function startTimer(seconds) {
       timeRemaining = seconds;
       updateTimerDisplay();
-      
       timerInterval = setInterval(() => {
         timeRemaining--;
         updateTimerDisplay();
-        
         if (timeRemaining <= 0) {
           clearInterval(timerInterval);
           autoSubmit();
@@ -449,15 +495,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateTimerDisplay() {
       const minutes = Math.floor(timeRemaining / 60);
       const seconds = timeRemaining % 60;
-      
-      const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      const display = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
       const timerEl = document.getElementById('examTimer');
-      timerEl.innerHTML = `<span class="timer-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> ${display}`;
-      
-      // Warnings
-      if (timeRemaining <= 300 && timeRemaining > 60) { // 5 mins
+      timerEl.innerHTML = `<span class="timer-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> ${display}`;
+      if (timeRemaining <= 300 && timeRemaining > 60) {
         timerEl.className = 'exam-timer warning';
-      } else if (timeRemaining <= 60) { // 1 min
+      } else if (timeRemaining <= 60) {
         timerEl.className = 'exam-timer danger';
       }
     }
@@ -465,28 +508,30 @@ document.addEventListener('DOMContentLoaded', () => {
     function autoSubmit() {
       window.removeEventListener('beforeunload', beforeUnloadHandler);
       window.closeModal('submitModal');
-      
       window.showToast('Time is up! Auto-submitting your exam...', 'warning');
-      
-      setTimeout(() => {
-        submitExam();
-      }, 2000);
+      setTimeout(() => submitExam(), 2000);
     }
     
-    function submitExam() {
+    // ── FIXED: submitExam is now properly async ──────────────────────
+    async function submitExam() {
       window.removeEventListener('beforeunload', beforeUnloadHandler);
       clearInterval(timerInterval);
       
-      // Calculate Score
+      const confirmBtn = document.getElementById('confirmSubmitBtn');
+      if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<span class="spinner spinner-sm" style="border-color: white; border-top-color: transparent;"></span> Grading...';
+      }
+      
+      // ── Grade the exam ──────────────────────────────────────────
       let score = 0;
       const reviewData = [];
       
       examQuestions.forEach((q, index) => {
         const userAnswer = answers[index];
-        const isCorrect = userAnswer === q.answer;
-        
+        // answer is the index (0-3) stored in questions_data by admin
+        const isCorrect = userAnswer !== undefined && userAnswer === q.answer;
         if (isCorrect) score++;
-        
         reviewData.push({
           question: q.question,
           options: q.options,
@@ -498,65 +543,76 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const percentage = Math.round((score / examQuestions.length) * 100);
       
-      let timeUsed = 0;
+      // Calculate time used
+      let timeUsedSecs = 0;
       if (examConfig.isScheduled) {
         const startTime = new Date(examConfig.startTime);
-        const now = new Date();
-        timeUsed = Math.floor((now - startTime) / 1000);
+        const durationSecs = (examConfig.durationMins || 60) * 60;
+        timeUsedSecs = durationSecs - timeRemaining;
       } else {
-        timeUsed = (examConfig.timeMinutes * 60) - timeRemaining;
+        timeUsedSecs = ((examConfig.timeMinutes || 60) * 60) - timeRemaining;
       }
+      const timeUsedMins = Math.floor(timeUsedSecs / 60);
+      const timeUsedSec  = timeUsedSecs % 60;
+      const timeUsedStr  = `${timeUsedMins}m ${timeUsedSec}s`;
       
-      // Create Result Object
       const resultData = {
         isScheduled: examConfig.isScheduled || false,
         scheduledExamId: examConfig.isScheduled ? examConfig.id : null,
+        id: examConfig.isScheduled ? examConfig.id : null,
         title: examConfig.isScheduled ? examConfig.title : examConfig.subject,
         subject: examConfig.subject,
         score: score,
         total: examQuestions.length,
         percentage: percentage,
-        timeUsed: timeUsed,
+        timeUsed: timeUsedStr,
         reviewData: reviewData,
         date: new Date().toISOString()
       };
       
-      // Save Result
+      // ── Save result to sessionStorage for results.html ──────────
       sessionStorage.setItem('ntc_current_result', JSON.stringify(resultData));
       
-      // Save to history (mock DB save)
-      let history = [];
-      if (localStorage.getItem('ntc_exam_results')) {
-        history = JSON.parse(localStorage.getItem('ntc_exam_results'));
-      }
-      history.push(resultData);
-      localStorage.setItem('ntc_exam_results', JSON.stringify(history));
-      
-      // Try to save to Supabase if configured
+      // ── Save to Supabase ─────────────────────────────────────────
       if (window.supaDB && window.supaAuth) {
         try {
           const user = await window.supaAuth.getCurrentUser();
-          const userId = user ? user.id : (JSON.parse(localStorage.getItem('ntc_user') || '{}').id || 'demo_user');
-          window.supaDB.saveExamResult(userId, resultData);
+          if (user) {
+            // Save result record
+            await window.supaDB.saveExamResult(user.id, resultData);
+            
+            // Record submission to prevent duplicates
+            if (examConfig.isScheduled && window.supaDB.recordSubmission) {
+              await window.supaDB.recordSubmission(user.id, examConfig.id);
+            }
+          }
         } catch(e) {
           console.warn('Could not save result to Supabase:', e);
         }
       }
       
-      // Show loading and redirect
-      document.getElementById('confirmSubmitBtn').innerHTML = '<span class="spinner spinner-sm" style="border-color: white; border-top-color: transparent;"></span> Processing...';
+      // ── Also save to localStorage as fallback ────────────────────
+      try {
+        const history = JSON.parse(localStorage.getItem('ntc_exam_results') || '[]');
+        history.push(resultData);
+        localStorage.setItem('ntc_exam_results', JSON.stringify(history));
+      } catch(e) {}
       
+      // ── Clear progress (exam done) ───────────────────────────────
+      sessionStorage.removeItem('ntc_exam_progress');
+      
+      // ── Redirect to results ──────────────────────────────────────
       setTimeout(() => {
         window.location.href = 'results.html';
       }, 1500);
     }
     
     function beforeUnloadHandler(e) {
+      saveProgress(); // Save progress before leaving
       e.preventDefault();
-      e.returnValue = ''; // Required for Chrome
+      e.returnValue = '';
     }
     
-    // Utility function
     function shuffleArray(array) {
       const newArray = [...array];
       for (let i = newArray.length - 1; i > 0; i--) {
