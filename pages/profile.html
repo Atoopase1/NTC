@@ -120,7 +120,7 @@
 
     <!-- Main Content -->
     <main class="dashboard-main">
-      <div style="max-width: 800px; margin: 0 auto; width: 100%;">
+      <div style="max-width: 800px;">
         <h1 style="margin-bottom: var(--space-xl);">Account Profile</h1>
 
         <!-- Profile Hero Card -->
@@ -129,10 +129,10 @@
         <div style="height: 100px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark, #3730a3) 100%); position: relative;"></div>
 
         <!-- Avatar + Info -->
-        <div style="padding: 0 var(--space-xl) var(--space-xl); position: relative;">
-          <div style="display: flex; align-items: flex-end; gap: var(--space-lg); flex-wrap: wrap; margin-top: -48px; margin-bottom: var(--space-lg);">
+        <div style="padding: var(--space-lg) var(--space-xl) var(--space-xl); position: relative;">
+          <div style="display: flex; align-items: center; gap: var(--space-lg); flex-wrap: wrap; margin-bottom: var(--space-lg);">
             <label class="profile-photo-upload" title="Change Profile Photo" style="flex-shrink:0;">
-              <div class="avatar avatar-2xl" style="border: 4px solid var(--surface); box-shadow: 0 4px 16px rgba(0,0,0,0.15);">
+              <div class="avatar avatar-2xl" style="border: 4px solid var(--surface); box-shadow: 0 4px 16px rgba(0,0,0,0.15); margin-top: -60px; background-color: var(--surface);">
                 <span id="profileAvatarInitials">U</span>
               </div>
               <div class="upload-badge" title="Change Photo">
@@ -141,8 +141,8 @@
               <input type="file" id="avatarUpload" accept="image/*">
             </label>
 
-            <div style="flex:1; min-width:0; padding-bottom: 4px;">
-              <h2 id="profileDisplayName" style="font-size: var(--text-2xl); font-weight: 800; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">User Name</h2>
+            <div style="flex:1; min-width:200px;">
+              <h2 id="profileDisplayName" style="font-size: var(--text-2xl); font-weight: 800; margin-bottom: 2px;">User Name</h2>
               <p id="profileDisplayEmail" style="color: var(--text-light); font-size: var(--text-sm); margin:0;">student@example.com</p>
             </div>
 
