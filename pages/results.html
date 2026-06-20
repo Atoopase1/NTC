@@ -115,15 +115,12 @@
 
   <style>
     @media print {
-      body * { visibility: hidden; }
-      #certificateContainer, #certificateContainer * { visibility: visible; }
+      body { background: white; margin: 0; padding: 0; }
+      body > *:not(style):not(script):not(#certificateContainer) { display: none !important; }
       #certificateContainer {
-        position: absolute;
-        left: 0;
-        top: 0;
+        display: flex !important;
         width: 100%;
         height: 100vh;
-        display: flex !important;
         align-items: center;
         justify-content: center;
         padding: 0;

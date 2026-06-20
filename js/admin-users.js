@@ -334,9 +334,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     let printHtml = `
       <style>
         @media print {
-          body * { visibility: hidden; }
-          #detailedPrintArea, #detailedPrintArea * { visibility: visible; }
-          #detailedPrintArea { position: absolute; left: 0; top: 0; width: 100%; display: block !important; padding: 0 !important; }
+          body { background: white; margin: 0; padding: 0; }
+          body > *:not(style):not(script):not(#detailedPrintArea) { display: none !important; }
+          #detailedPrintArea { display: block !important; }
           .print-doc-title { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 20px; color: black; }
           table.print-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 14px; }
           table.print-table th, table.print-table td { border: 1px solid #000; padding: 8px; color: black; text-align: left; }
