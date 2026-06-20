@@ -60,19 +60,41 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    const sortVal = document.getElementById('studentSort') ? document.getElementById('studentSort').value : 'name';
+
     const resultsByUser = {};
     results.forEach(r => {
       if (!resultsByUser[r.user_id]) resultsByUser[r.user_id] = [];
       resultsByUser[r.user_id].push(r);
     });
 
-    let html = '';
-    students.forEach(student => {
+    let displayStudents = [...students].map(student => {
       const userResults = resultsByUser[student.id] || [];
       const examCount = userResults.length;
-      const avgScore = examCount > 0
-        ? (userResults.reduce((s, r) => s + parseFloat(r.percentage), 0) / examCount).toFixed(1) + '%'
-        : '—';
+      const avgScoreRaw = examCount > 0
+        ? (userResults.reduce((s, r) => s + parseFloat(r.percentage), 0) / examCount)
+        : -1;
+      return { ...student, userResults, examCount, avgScoreRaw };
+    });
+
+    if (sortVal === 'name') {
+      displayStudents.sort((a, b) => (a.full_name || a.email || '').localeCompare(b.full_name || b.email || ''));
+    } else if (sortVal === 'score_desc') {
+      displayStudents.sort((a, b) => b.avgScoreRaw - a.avgScoreRaw);
+    } else if (sortVal === 'score_asc') {
+      displayStudents.sort((a, b) => {
+        if (a.avgScoreRaw === -1) return 1;
+        if (b.avgScoreRaw === -1) return -1;
+        return a.avgScoreRaw - b.avgScoreRaw;
+      });
+    } else if (sortVal === 'recent') {
+      displayStudents.sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
+    }
+
+    let html = '';
+    displayStudents.forEach(student => {
+      const examCount = student.examCount;
+      const avgScore = examCount > 0 ? student.avgScoreRaw.toFixed(1) + '%' : '—';
 
       const initials = (student.full_name || student.email || 'U').slice(0, 2).toUpperCase();
       const name = student.full_name || 'Unknown';
@@ -132,7 +154,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     tbody.innerHTML = html;
   };
 
-  // ─── Search ───────────────────────────────────────────────────────────────────
+  // ─── Search & Sort ────────────────────────────────────────────────────────────
+  if (document.getElementById('studentSort')) {
+    document.getElementById('studentSort').addEventListener('change', () => {
+      renderTable(allStudents, allResults);
+      // Re-trigger search filter if there's a search term
+      document.getElementById('studentSearch').dispatchEvent(new Event('input'));
+    });
+  }
+
   document.getElementById('studentSearch').addEventListener('input', (e) => {
     const q = e.target.value.toLowerCase().trim();
     document.querySelectorAll('#studentsTableBody tr[data-name]').forEach(row => {
