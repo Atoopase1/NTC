@@ -307,8 +307,61 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
+  // ─── Print Modal Logic ────────────────────────────────────────────────────────
+  window.openPrintModal = () => {
+    // Populate subject filter
+    const subjects = new Set();
+    allResults.forEach(r => {
+      if (r.subject) subjects.add(r.subject);
+    });
+    const subjectSelect = document.getElementById('printSubjectFilter');
+    if (subjectSelect) {
+      let subjectHtml = '<option value="all">All Subjects</option>';
+      [...subjects].sort().forEach(s => {
+        subjectHtml += `<option value="${s.replace(/"/g, '&quot;')}">${s}</option>`;
+      });
+      subjectSelect.innerHTML = subjectHtml;
+    }
+    
+    document.getElementById('printModal').classList.add('active');
+  };
+
+  document.getElementById('printReportType')?.addEventListener('change', (e) => {
+    const filterGroup = document.getElementById('printSubjectFilterGroup');
+    if (e.target.value === 'detailed') {
+      filterGroup.style.display = 'block';
+    } else {
+      filterGroup.style.display = 'none';
+    }
+  });
+
+  const closePrintModal = () => {
+    document.getElementById('printModal').classList.remove('active');
+  };
+
+  document.getElementById('closePrintModal')?.addEventListener('click', closePrintModal);
+  document.getElementById('cancelPrintBtn')?.addEventListener('click', closePrintModal);
+  document.getElementById('printModal')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) closePrintModal();
+  });
+
+  document.getElementById('confirmPrintBtn')?.addEventListener('click', () => {
+    const type = document.getElementById('printReportType').value;
+    const subjectFilter = document.getElementById('printSubjectFilter').value;
+    const printArea = document.getElementById('detailedPrintArea');
+    
+    closePrintModal();
+
+    if (type === 'summary') {
+      printArea.innerHTML = '';
+      setTimeout(() => window.print(), 100);
+    } else {
+      window.prepareDetailedPrint(subjectFilter);
+    }
+  });
+
   // ─── Prepare Detailed Print ───────────────────────────────────────────────────
-  window.prepareDetailedPrint = () => {
+  window.prepareDetailedPrint = (subjectFilter = 'all') => {
     const printArea = document.getElementById('detailedPrintArea');
     if (!printArea) return;
 
@@ -343,7 +396,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     filteredStudents.forEach(student => {
       const name = student.full_name || student.email || 'Unknown';
-      const results = student.userResults || [];
+      let results = student.userResults || [];
+      
+      if (subjectFilter !== 'all') {
+        results = results.filter(r => r.subject === subjectFilter);
+      }
+
+      // If filtering by subject and this student has no results for it, skip them
+      if (subjectFilter !== 'all' && results.length === 0) return;
 
       printHtml += `
         <div class="student-section">
