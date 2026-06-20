@@ -307,61 +307,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
-  // ─── Print Modal Logic ────────────────────────────────────────────────────────
-  window.openPrintModal = () => {
-    // Populate subject filter
-    const subjects = new Set();
-    allResults.forEach(r => {
-      if (r.subject) subjects.add(r.subject);
-    });
-    const subjectSelect = document.getElementById('printSubjectFilter');
-    if (subjectSelect) {
-      let subjectHtml = '<option value="all">All Subjects</option>';
-      [...subjects].sort().forEach(s => {
-        subjectHtml += `<option value="${s.replace(/"/g, '&quot;')}">${s}</option>`;
-      });
-      subjectSelect.innerHTML = subjectHtml;
-    }
-    
-    document.getElementById('printModal').classList.add('active');
-  };
-
-  document.getElementById('printReportType')?.addEventListener('change', (e) => {
-    const filterGroup = document.getElementById('printSubjectFilterGroup');
-    if (e.target.value === 'detailed') {
-      filterGroup.style.display = 'block';
-    } else {
-      filterGroup.style.display = 'none';
-    }
-  });
-
-  const closePrintModal = () => {
-    document.getElementById('printModal').classList.remove('active');
-  };
-
-  document.getElementById('closePrintModal')?.addEventListener('click', closePrintModal);
-  document.getElementById('cancelPrintBtn')?.addEventListener('click', closePrintModal);
-  document.getElementById('printModal')?.addEventListener('click', e => {
-    if (e.target === e.currentTarget) closePrintModal();
-  });
-
-  document.getElementById('confirmPrintBtn')?.addEventListener('click', () => {
-    const type = document.getElementById('printReportType').value;
-    const subjectFilter = document.getElementById('printSubjectFilter').value;
-    const printArea = document.getElementById('detailedPrintArea');
-    
-    closePrintModal();
-
-    if (type === 'summary') {
-      printArea.innerHTML = '';
-      setTimeout(() => window.print(), 100);
-    } else {
-      window.prepareDetailedPrint(subjectFilter);
-    }
+  // ─── Print Logic ────────────────────────────────────────────────────────
+  document.getElementById('printBtn')?.addEventListener('click', () => {
+    window.prepareDetailedPrint();
   });
 
   // ─── Prepare Detailed Print ───────────────────────────────────────────────────
-  window.prepareDetailedPrint = (subjectFilter = 'all') => {
+  window.prepareDetailedPrint = () => {
     const printArea = document.getElementById('detailedPrintArea');
     if (!printArea) return;
 
@@ -381,76 +333,61 @@ document.addEventListener('DOMContentLoaded', async () => {
           #detailedPrintArea { position: absolute; left: 0; top: 0; width: 100%; display: block !important; padding: 0 !important; }
           .print-doc-title { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 20px; color: black; }
           table.print-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 14px; }
-          table.print-table th, table.print-table td { border: 1px solid #000; padding: 8px; color: black; }
-          table.print-table th { background: #f3f4f6; text-align: left; font-weight: bold; }
-          .student-section { margin-bottom: 30px; page-break-inside: avoid; }
-          .student-heading { font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 5px; color: black; }
+          table.print-table th, table.print-table td { border: 1px solid #000; padding: 8px; color: black; text-align: left; }
+          table.print-table th { background: #f3f4f6; font-weight: bold; }
         }
       </style>
-      <div class="print-doc-title">Student Examination Results Report</div>
+      <div class="print-doc-title">Student Results Report</div>
     `;
 
     if (filteredStudents.length === 0) {
       printHtml += '<p>No students found.</p>';
-    }
-
-    filteredStudents.forEach(student => {
-      const name = student.full_name || student.email || 'Unknown';
-      let results = student.userResults || [];
-      
-      if (subjectFilter !== 'all') {
-        results = results.filter(r => r.subject === subjectFilter);
-      }
-
-      // If filtering by subject and this student has no results for it, skip them
-      if (subjectFilter !== 'all' && results.length === 0) return;
-
+    } else {
       printHtml += `
-        <div class="student-section">
-          <div class="student-heading">${name}</div>
+        <table class="print-table">
+          <thead>
+            <tr>
+              <th>Student Name</th>
+              <th>Score</th>
+              <th>Time Used</th>
+            </tr>
+          </thead>
+          <tbody>
       `;
-
-      if (results.length === 0) {
-        printHtml += `<p style="font-style: italic; color: #555;">No exams taken.</p>`;
-      } else {
-        printHtml += `
-          <table class="print-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Exam Subject</th>
-                <th>Score</th>
-                <th>Percentage</th>
-                <th>Time Used</th>
-              </tr>
-            </thead>
-            <tbody>
-        `;
+      
+      // We list every student's results
+      filteredStudents.forEach(student => {
+        const name = student.full_name || student.email || 'Unknown';
+        let results = student.userResults || [];
         
-        // Sort results by date descending
-        const sortedResults = [...results].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-        sortedResults.forEach(r => {
-          const date = new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        if (results.length === 0) {
           printHtml += `
+            <tr>
+              <td>${name}</td>
+              <td colspan="2" style="font-style: italic; color: #555;">No exams taken</td>
+            </tr>
+          `;
+        } else {
+          // Sort results by date descending so the latest is first
+          const sortedResults = [...results].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          
+          sortedResults.forEach(r => {
+            printHtml += `
               <tr>
-                <td>${date}</td>
-                <td>${r.subject || '—'}</td>
-                <td>${r.score} / ${r.total}</td>
-                <td>${parseFloat(r.percentage).toFixed(1)}%</td>
+                <td>${name}</td>
+                <td>${parseFloat(r.percentage).toFixed(1)}% (${r.score}/${r.total})</td>
                 <td>${r.time_used || 'N/A'}</td>
               </tr>
-          `;
-        });
+            `;
+          });
+        }
+      });
 
-        printHtml += `
-            </tbody>
-          </table>
-        `;
-      }
-      
-      printHtml += `</div>`;
-    });
+      printHtml += `
+          </tbody>
+        </table>
+      `;
+    }
 
     printArea.innerHTML = printHtml;
     setTimeout(() => {
