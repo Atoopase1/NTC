@@ -71,7 +71,7 @@ BEGIN
   INSERT INTO public.profiles (id, full_name, email, phone, avatar_url)
   VALUES (
     new.id, 
-    new.raw_user_meta_data->>'full_name',
+    COALESCE(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name'),
     new.email,
     new.raw_user_meta_data->>'phone',
     new.raw_user_meta_data->>'avatar_url'
