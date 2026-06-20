@@ -220,7 +220,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
 
       let result;
-      if (scheduleExamForm.dataset.editId) {
+      const saveAsNewCheckbox = document.getElementById('saveAsNewCheckbox');
+      if (scheduleExamForm.dataset.editId && (!saveAsNewCheckbox || !saveAsNewCheckbox.checked)) {
         submitBtn.innerHTML = '<span class="spinner spinner-sm"></span> Updating...';
         result = await window.supaDB.updateScheduledExam(scheduleExamForm.dataset.editId, payload);
       } else {
@@ -251,6 +252,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       delete scheduleExamForm.dataset.editId;
       const tabBtn = document.querySelector('[data-tab="create-exam"]');
       if (tabBtn) tabBtn.textContent = 'Schedule New Exam';
+      
+      const saveAsNewContainer = document.getElementById('saveAsNewContainer');
+      const saveAsNewCheckbox = document.getElementById('saveAsNewCheckbox');
+      if (saveAsNewContainer) saveAsNewContainer.style.display = 'none';
+      if (saveAsNewCheckbox) saveAsNewCheckbox.checked = false;
     });
   }
 
@@ -303,6 +309,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('examAnswerKey').value = keys.join(', ');
 
     scheduleExamForm.dataset.editId = id;
+    
+    const saveAsNewContainer = document.getElementById('saveAsNewContainer');
+    if (saveAsNewContainer) saveAsNewContainer.style.display = 'block';
     
     const createTabBtn = document.querySelector('[data-tab="create-exam"]');
     if (createTabBtn) {

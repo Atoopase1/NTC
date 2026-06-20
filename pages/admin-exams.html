@@ -191,6 +191,13 @@
               <p style="font-size: var(--text-xs); color: var(--text-light); margin-top: var(--space-xs);">Provide a comma-separated list of letters representing the correct answers in order.</p>
             </div>
 
+            <div id="saveAsNewContainer" style="display: none; margin-bottom: var(--space-md);">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text);">
+                <input type="checkbox" id="saveAsNewCheckbox" style="width: 16px; height: 16px; accent-color: var(--primary);">
+                <span style="font-size: var(--text-sm); font-weight: 500;">Post as a completely new exam (keep the original)</span>
+              </label>
+            </div>
+
             <div style="display: flex; justify-content: flex-end; gap: 12px;">
               <button type="button" class="btn btn-outline" onclick="document.getElementById('scheduleExamForm').reset()">Clear Form</button>
               <button type="submit" class="btn btn-primary">Schedule Exam</button>
