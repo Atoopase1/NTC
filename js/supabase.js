@@ -332,35 +332,52 @@ async function saveExamResult(userId, examData) {
  * Falls back to localStorage if DB is unavailable.
  */
 async function getExamHistory(userId) {
+  let dbResults = [];
   try {
-    if (!supabaseClient) throw new Error('Supabase not initialized');
-    const { data, error } = await supabaseClient
-      .from('exam_results')
-      .select('id, title, subject, score, total, percentage, time_used, scheduled_exam_id, created_at')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-      
-    if (error) throw error;
-    // Normalize: map DB columns to the shape the UI expects
-    return (data || []).map(r => ({
-      id: r.id,
-      title: r.title || r.subject,
-      subject: r.subject,
-      score: r.score,
-      total: r.total,
-      percentage: r.percentage,
-      timeUsed: r.time_used,
-      scheduledExamId: r.scheduled_exam_id,
-      date: r.created_at
-    }));
+    if (supabaseClient) {
+      const { data, error } = await supabaseClient
+        .from('exam_results')
+        .select('id, title, subject, score, total, percentage, time_used, scheduled_exam_id, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+        
+      if (!error) {
+        dbResults = (data || []).map(r => ({
+          id: r.id,
+          title: r.title || r.subject,
+          subject: r.subject,
+          score: r.score,
+          total: r.total,
+          percentage: r.percentage,
+          timeUsed: r.time_used,
+          scheduledExamId: r.scheduled_exam_id,
+          date: r.created_at
+        }));
+      }
+    }
   } catch (error) {
-    console.warn('Falling back to localStorage for exam history:', error);
-    // Fallback: pull from localStorage and normalize
-    const results = JSON.parse(localStorage.getItem('ntc_exam_results') || '[]');
-    return results
-      .filter(r => !userId || r.userId === userId)
-      .sort((a, b) => new Date(b.date) - new Date(a.date));
+    console.warn('DB fetch error for exam history:', error);
   }
+  
+  // Always check local storage as well for offline/unsynced exams
+  const localRaw = JSON.parse(localStorage.getItem('ntc_exam_results') || '[]');
+  const localResults = localRaw.filter(r => !userId || r.userId === userId);
+  
+  // Merge avoiding duplicates
+  const allResults = [...dbResults];
+  localResults.forEach(localItem => {
+    const exists = allResults.some(dbItem => {
+      // If they share an ID and it's not null, it's a match
+      if (dbItem.id && localItem.id && dbItem.id === localItem.id) return true;
+      // Or if their dates match exactly
+      return new Date(dbItem.date).getTime() === new Date(localItem.date).getTime();
+    });
+    if (!exists) {
+      allResults.push(localItem);
+    }
+  });
+  
+  return allResults.sort((a, b) => new Date(b.date) - new Date(a.date));
 }
 
 // --- Subject Functions --- //
