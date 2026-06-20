@@ -485,6 +485,8 @@ async function getAllStudents() {
     const { data, error } = await supabaseClient
       .from('profiles')
       .select('*')
+      .neq('email', 'atoopase@gmail.com')
+      .neq('role', 'admin')
       .order('updated_at', { ascending: false });
     if (error) throw error;
     return { data, error: null };
