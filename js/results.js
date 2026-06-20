@@ -43,9 +43,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('statScore').textContent = `${result.score} / ${result.total}`;
     
     // Format time
-    const mins = Math.floor(result.timeUsed / 60);
-    const secs = result.timeUsed % 60;
-    document.getElementById('statTime').textContent = `${mins}m ${secs}s`;
+    if (typeof result.timeUsed === 'number') {
+      const mins = Math.floor(result.timeUsed / 60);
+      const secs = result.timeUsed % 60;
+      document.getElementById('statTime').textContent = `${mins}m ${secs}s`;
+    } else {
+      document.getElementById('statTime').textContent = result.timeUsed;
+    }
     
     document.getElementById('statGrade').textContent = getGrade(result.percentage);
     document.getElementById('statSubject').textContent = result.subject;

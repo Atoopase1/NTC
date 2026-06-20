@@ -566,6 +566,7 @@
   margin: 0 auto var(--space-xl);
   width: 180px;
   height: 180px;
+  position: relative;
 }
 
 .score-ring svg {
