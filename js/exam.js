@@ -545,20 +545,12 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // ── Grade the exam ──────────────────────────────────────────
       let score = 0;
-      const reviewData = [];
       
       examQuestions.forEach((q, index) => {
         const userAnswer = answers[index];
         // answer is the index (0-3) stored in questions_data by admin
         const isCorrect = userAnswer !== undefined && userAnswer === q.answer;
         if (isCorrect) score++;
-        reviewData.push({
-          question: q.question,
-          options: q.options,
-          correctAnswer: q.answer,
-          userAnswer: userAnswer,
-          isCorrect: isCorrect
-        });
       });
       
       const percentage = Math.round((score / examQuestions.length) * 100);
@@ -586,7 +578,6 @@ document.addEventListener('DOMContentLoaded', () => {
         total: examQuestions.length,
         percentage: percentage,
         timeUsed: timeUsedStr,
-        reviewData: reviewData,
         date: new Date().toISOString()
       };
       
@@ -620,6 +611,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // ── Clear progress (exam done) ───────────────────────────────
       sessionStorage.removeItem('ntc_exam_progress');
+      sessionStorage.removeItem('ntc_exam_config');
       
       // ── Redirect to results ──────────────────────────────────────
       setTimeout(() => {
