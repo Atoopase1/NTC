@@ -592,6 +592,27 @@ async function createScheduledExam(examData) {
 }
 
 /**
+ * Update a scheduled exam
+ */
+async function updateScheduledExam(id, examData) {
+  try {
+    if (!supabaseClient) throw new Error('Supabase not initialized');
+    const { data, error } = await supabaseClient
+      .from('scheduled_exams')
+      .update(examData)
+      .eq('id', id)
+      .select()
+      .single();
+      
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Failed to update scheduled exam:', error);
+    return { data: null, error };
+  }
+}
+
+/**
  * Delete a scheduled exam
  */
 async function deleteScheduledExam(id) {
@@ -953,6 +974,7 @@ window.supaDB = {
   unblockStudent,
   getScheduledExams,
   createScheduledExam,
+  updateScheduledExam,
   deleteScheduledExam,
   getExamRankings,
   uploadLessonFile,

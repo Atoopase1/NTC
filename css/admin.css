@@ -178,6 +178,12 @@
   border-color: rgba(244, 63, 94, 0.2);
 }
 
+.btn-icon.edit:hover {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
 /* Tabs */
 .admin-tabs {
   display: flex;

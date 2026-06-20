@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const loadScheduledExams = async () => {
     try {
       const exams = await window.supaDB.getScheduledExams();
+      window.cachedExams = exams; // Cache for edit
       if (exams && exams.length > 0) {
         const now = new Date();
         let html = '';
@@ -78,6 +79,9 @@ document.addEventListener('DOMContentLoaded', async () => {
               <td>${statusHtml}</td>
               <td>
                 <div class="table-actions">
+                  <button class="btn-icon edit" aria-label="Edit" onclick="window.editExam('${exam.id}')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  </button>
                   <button class="btn-icon delete" aria-label="Delete" onclick="window.deleteExam('${exam.id}')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                   </button>
@@ -205,29 +209,48 @@ document.addEventListener('DOMContentLoaded', async () => {
       const submitBtn = scheduleExamForm.querySelector('button[type="submit"]');
       const originalText = submitBtn.textContent;
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span class="spinner spinner-sm"></span> Scheduling...';
 
-      const { error } = await window.supaDB.createScheduledExam({
+      const payload = {
         title,
         subject,
         start_time: startIso,
         end_time: endIso,
         duration_minutes: durationMins,
         questions_data: parsedQuestions
-      });
+      };
+
+      let result;
+      if (scheduleExamForm.dataset.editId) {
+        submitBtn.innerHTML = '<span class="spinner spinner-sm"></span> Updating...';
+        result = await window.supaDB.updateScheduledExam(scheduleExamForm.dataset.editId, payload);
+      } else {
+        submitBtn.innerHTML = '<span class="spinner spinner-sm"></span> Scheduling...';
+        result = await window.supaDB.createScheduledExam(payload);
+      }
+      
+      const { error } = result;
 
       submitBtn.disabled = false;
       submitBtn.textContent = originalText;
 
       if (error) {
         console.error(error);
-        window.showToast('Failed to schedule exam. See console for details.', 'error');
+        window.showToast('Failed to save exam. See console for details.', 'error');
       } else {
-        window.showToast(`Exam scheduled! (${parsedQuestions.length} questions parsed)`, 'success');
+        window.showToast(`Exam saved! (${parsedQuestions.length} questions parsed)`, 'success');
         scheduleExamForm.reset();
+        delete scheduleExamForm.dataset.editId;
+        document.querySelector('[data-tab="create-exam"]').textContent = 'Schedule New Exam';
         document.querySelector('[data-tab="manage-exams"]').click();
         loadScheduledExams();
       }
+    });
+    
+    // Clear form listener for resetting edit mode
+    scheduleExamForm.addEventListener('reset', () => {
+      delete scheduleExamForm.dataset.editId;
+      const tabBtn = document.querySelector('[data-tab="create-exam"]');
+      if (tabBtn) tabBtn.textContent = 'Schedule New Exam';
     });
   }
 
@@ -242,6 +265,51 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadScheduledExams();
       }
     }
+  };
+
+  // ─── Global edit ─────────────────────────────────────────────────────────────
+  window.editExam = (id) => {
+    const exam = window.cachedExams?.find(e => e.id === id);
+    if (!exam) return;
+
+    const formatDateTime = (isoString) => {
+      const d = new Date(isoString);
+      return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    };
+
+    document.getElementById('examTitle').value = exam.title;
+    document.getElementById('examSubject').value = exam.subject;
+    document.getElementById('examStartTime').value = formatDateTime(exam.start_time);
+    document.getElementById('examEndTime').value = formatDateTime(exam.end_time);
+    document.getElementById('examDuration').value = exam.duration_minutes || 60;
+
+    const qData = exam.questions_data || [];
+    const indexToLetter = {0:'A', 1:'B', 2:'C', 3:'D'};
+    let qText = '';
+    let keys = [];
+    
+    qData.forEach((q, i) => {
+      qText += `${i+1}. ${q.question}\n`;
+      if (q.options && q.options.length >= 4) {
+        qText += `A. ${q.options[0]}\n`;
+        qText += `B. ${q.options[1]}\n`;
+        qText += `C. ${q.options[2]}\n`;
+        qText += `D. ${q.options[3]}\n\n`;
+      }
+      keys.push(indexToLetter[q.answer]);
+    });
+
+    document.getElementById('examQuestionsText').value = qText.trim();
+    document.getElementById('examAnswerKey').value = keys.join(', ');
+
+    scheduleExamForm.dataset.editId = id;
+    
+    const createTabBtn = document.querySelector('[data-tab="create-exam"]');
+    if (createTabBtn) {
+      createTabBtn.textContent = 'Edit Exam';
+      createTabBtn.click();
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // ─── Init ────────────────────────────────────────────────────────────────────
