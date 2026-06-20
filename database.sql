@@ -208,6 +208,10 @@ CREATE POLICY "Admin can delete scheduled exams"
   ON public.scheduled_exams FOR DELETE
   USING ( (auth.jwt() ->> 'email') = 'atoopase@gmail.com' );
 
+CREATE POLICY "Admin can update scheduled exams"
+  ON public.scheduled_exams FOR UPDATE
+  USING ( (auth.jwt() ->> 'email') = 'atoopase@gmail.com' );
+
 -- Modify exam_results to add scheduled_exam_id
 ALTER TABLE public.exam_results 
 ADD COLUMN IF NOT EXISTS scheduled_exam_id uuid references public.scheduled_exams on delete cascade;
