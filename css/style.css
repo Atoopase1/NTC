@@ -1481,19 +1481,20 @@ p {
   justify-content: center;
 }
 
-.hero-robot-img {
+.hero-laptop-img {
   position: absolute;
-  width: 180%;
-  max-width: 900px;
-  right: -100px;
   top: 50%;
-  transform: translateY(-50%);
-  z-index: 1;
-  filter: drop-shadow(0 25px 40px rgba(0,0,0,0.5)) drop-shadow(0 0 60px rgba(17, 150, 232, 0.4));
+  left: 50%;
+  transform: translate(-25%, -50%) scale(1.6);
+  width: 100%;
+  height: auto;
+  z-index: 0;
   pointer-events: none;
 }
 
 .hero-card {
+  position: relative;
+  z-index: 1;
   background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8)), url('../assets/images/education_card_bg_black.png') center/cover;
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -1501,8 +1502,6 @@ p {
   padding: var(--space-xl);
   animation: float 4s ease-in-out infinite;
   box-shadow: var(--shadow-xl);
-  position: relative;
-  z-index: 2;
 }
 
 .hero-card-header {
