@@ -100,6 +100,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       const avgScore = examCount > 0 ? student.avgScoreRaw.toFixed(1) + '%' : '—';
 
       const initials = (student.full_name || student.email || 'U').slice(0, 2).toUpperCase();
+      const avatarUrl = student.avatar_url;
+      const avatarHtml = avatarUrl 
+        ? `<img src="${avatarUrl}" alt="Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
+        : initials;
+
       const name = student.full_name || 'Unknown';
       const email = student.email || '';
       const phone = student.phone || '—';
@@ -121,12 +126,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       const blockedUntilStr = isBlocked
         ? new Date(student.blocked_until).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
         : null;
+        
+      let avatarStyle = isBlocked ? (avatarUrl ? 'border:2px solid #f43f5e;' : 'background:rgba(244,63,94,0.12);color:#f43f5e;') : '';
 
       html += `
         <tr data-name="${name.toLowerCase()}" data-email="${email.toLowerCase()}">
           <td>
             <div class="student-info">
-              <div class="student-avatar" style="${isBlocked ? 'background:rgba(244,63,94,0.12);color:#f43f5e;' : ''}">${initials}</div>
+              <div class="student-avatar" style="${avatarStyle}">${avatarHtml}</div>
               <div>
                 <div class="student-name">${name} ${isBlocked ? `<span class="badge-blocked"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>Blocked until ${blockedUntilStr}</span>` : ''}</div>
               </div>
