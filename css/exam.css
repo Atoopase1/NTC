@@ -199,12 +199,12 @@
   background: var(--surface);
   border-left: 1px solid var(--border);
   padding: var(--space-lg);
-  position: fixed;
-  right: 0;
+  position: sticky;
   top: 64px;
-  bottom: 0;
+  height: calc(100vh - 64px);
   overflow-y: auto;
   scrollbar-width: thin;
+  flex-shrink: 0;
 }
 
 /* Question Display */

@@ -633,7 +633,7 @@
   }
 
   .exam-content {
-    margin-right: 240px;
+    /* No margin needed anymore since sidebar is sticky */
   }
 }
 
