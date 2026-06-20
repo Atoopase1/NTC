@@ -465,7 +465,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (panzoomInstance) panzoomInstance.destroy();
     if (window.Panzoom) {
-      panzoomInstance = Panzoom(img, { maxScale: 5, contain: 'outside' });
+      panzoomInstance = Panzoom(img, { maxScale: 5, contain: 'inside' });
       img.parentElement.addEventListener('wheel', panzoomInstance.zoomWithWheel);
     }
   }
