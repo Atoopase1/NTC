@@ -47,15 +47,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!history || history.length === 0) {
       if (localStorage.getItem('ntc_exam_results')) {
         history = JSON.parse(localStorage.getItem('ntc_exam_results'));
-      } else {
-        // Mock data for fresh users
-        history = [
-          { subject: 'Pedagogy', score: 45, total: 60, percentage: 75, date: new Date(Date.now() - 86400000 * 2).toISOString() },
-          { subject: 'General Knowledge', score: 50, total: 60, percentage: 83, date: new Date(Date.now() - 86400000 * 5).toISOString() },
-          { subject: 'Curriculum Studies', score: 38, total: 60, percentage: 63, date: new Date(Date.now() - 86400000 * 10).toISOString() }
-        ];
-        localStorage.setItem('ntc_exam_results', JSON.stringify(history));
       }
+    }
+    
+    // Filter to only show real (scheduled) exam results
+    history = history.filter(exam => exam.scheduledExamId || exam.isScheduled);
+
+    // Provide mock data if still empty, so the dashboard doesn't look broken
+    if (history.length === 0) {
+      history = [
+        { subject: 'Pedagogy', score: 45, total: 60, percentage: 75, date: new Date(Date.now() - 86400000 * 2).toISOString(), isScheduled: true },
+        { subject: 'General Knowledge', score: 50, total: 60, percentage: 83, date: new Date(Date.now() - 86400000 * 5).toISOString(), isScheduled: true },
+        { subject: 'Curriculum Studies', score: 38, total: 60, percentage: 63, date: new Date(Date.now() - 86400000 * 10).toISOString(), isScheduled: true }
+      ];
     }
 
     updateStats(history);
