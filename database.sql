@@ -54,6 +54,11 @@ CREATE POLICY "Users can view their own exam results."
   ON public.exam_results FOR SELECT
   USING ( auth.uid() = user_id );
 
+DROP POLICY IF EXISTS "Admin can view all exam results" ON public.exam_results;
+CREATE POLICY "Admin can view all exam results"
+  ON public.exam_results FOR SELECT
+  USING ( (auth.jwt() ->> 'email') = 'atoopase@gmail.com' );
+
 DROP POLICY IF EXISTS "Users can insert their own exam results." ON public.exam_results;
 CREATE POLICY "Users can insert their own exam results."
   ON public.exam_results FOR INSERT
