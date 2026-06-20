@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let allStudents = [];
   let allResults = [];
+  let currentDisplayStudents = [];
 
   // ─── Load Stats & Students ────────────────────────────────────────────────────
   const loadStudents = async () => {
@@ -90,6 +91,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (sortVal === 'recent') {
       displayStudents.sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
     }
+
+    currentDisplayStudents = displayStudents;
 
     let html = '';
     displayStudents.forEach(student => {
@@ -302,6 +305,97 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.showToast(`"${name}" has been deleted successfully.`, 'success');
       loadStudents();
     }
+  };
+
+  // ─── Prepare Detailed Print ───────────────────────────────────────────────────
+  window.prepareDetailedPrint = () => {
+    const printArea = document.getElementById('detailedPrintArea');
+    if (!printArea) return;
+
+    // We filter students that are currently visible
+    const q = (document.getElementById('studentSearch')?.value || '').toLowerCase().trim();
+    const filteredStudents = currentDisplayStudents.filter(student => {
+      const n = (student.full_name || 'Unknown').toLowerCase();
+      const e = (student.email || '').toLowerCase();
+      return (!q || n.includes(q) || e.includes(q));
+    });
+
+    let printHtml = `
+      <style>
+        @media print {
+          body * { visibility: hidden; }
+          #detailedPrintArea, #detailedPrintArea * { visibility: visible; }
+          #detailedPrintArea { position: absolute; left: 0; top: 0; width: 100%; display: block !important; padding: 0 !important; }
+          .print-doc-title { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 20px; color: black; }
+          table.print-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 14px; }
+          table.print-table th, table.print-table td { border: 1px solid #000; padding: 8px; color: black; }
+          table.print-table th { background: #f3f4f6; text-align: left; font-weight: bold; }
+          .student-section { margin-bottom: 30px; page-break-inside: avoid; }
+          .student-heading { font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 5px; color: black; }
+        }
+      </style>
+      <div class="print-doc-title">Student Examination Results Report</div>
+    `;
+
+    if (filteredStudents.length === 0) {
+      printHtml += '<p>No students found.</p>';
+    }
+
+    filteredStudents.forEach(student => {
+      const name = student.full_name || student.email || 'Unknown';
+      const results = student.userResults || [];
+
+      printHtml += `
+        <div class="student-section">
+          <div class="student-heading">${name}</div>
+      `;
+
+      if (results.length === 0) {
+        printHtml += `<p style="font-style: italic; color: #555;">No exams taken.</p>`;
+      } else {
+        printHtml += `
+          <table class="print-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Exam Subject</th>
+                <th>Score</th>
+                <th>Percentage</th>
+                <th>Time Used</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        
+        // Sort results by date descending
+        const sortedResults = [...results].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        sortedResults.forEach(r => {
+          const date = new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+          printHtml += `
+              <tr>
+                <td>${date}</td>
+                <td>${r.subject || '—'}</td>
+                <td>${r.score} / ${r.total}</td>
+                <td>${parseFloat(r.percentage).toFixed(1)}%</td>
+                <td>${r.time_used || 'N/A'}</td>
+              </tr>
+          `;
+        });
+
+        printHtml += `
+            </tbody>
+          </table>
+        `;
+      }
+      
+      printHtml += `</div>`;
+    });
+
+    printArea.innerHTML = printHtml;
+    setTimeout(() => {
+      window.print();
+    }, 100);
   };
 
   // Init
