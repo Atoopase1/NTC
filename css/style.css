@@ -1476,6 +1476,21 @@ p {
   width: 100%;
   max-width: 500px;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-robot-img {
+  position: absolute;
+  width: 180%;
+  max-width: 900px;
+  right: -100px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  filter: drop-shadow(0 25px 40px rgba(0,0,0,0.5)) drop-shadow(0 0 60px rgba(17, 150, 232, 0.4));
+  pointer-events: none;
 }
 
 .hero-card {
@@ -1486,6 +1501,8 @@ p {
   padding: var(--space-xl);
   animation: float 4s ease-in-out infinite;
   box-shadow: var(--shadow-xl);
+  position: relative;
+  z-index: 2;
 }
 
 .hero-card-header {
