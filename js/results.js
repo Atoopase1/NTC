@@ -183,35 +183,140 @@ document.addEventListener('DOMContentLoaded', () => {
       printBtn.disabled = false;
 
       const resultStr = sessionStorage.getItem('ntc_current_result');
-      if (!resultStr) {
-        window.print();
-        return;
-      }
+      if (!resultStr) return;
       
       const result = JSON.parse(resultStr);
-      const certContainer = document.getElementById('certificateContainer');
       const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-      
-      if (certContainer) {
-        certContainer.innerHTML = `
+      const isPass = result.percentage >= 50;
+      const grade = getGrade(result.percentage);
+
+      const printWindow = window.open('', '_blank', 'width=1000,height=700');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Certificate - ${fullName}</title>
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body {
+              font-family: 'Inter', Arial, sans-serif;
+              background: white;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              min-height: 100vh;
+              padding: 20px;
+            }
+            .cert-card {
+              width: 100%;
+              max-width: 900px;
+              border: 14px solid #4f46e5;
+              padding: 18px;
+              background: #fdfdfd;
+            }
+            .cert-inner {
+              border: 3px solid #f43f5e;
+              padding: 50px 60px;
+              background: radial-gradient(ellipse at center, #ffffff 0%, #fdf2f8 100%);
+              text-align: center;
+              position: relative;
+            }
+            .cert-title {
+              font-size: 42px;
+              font-weight: 800;
+              color: #1e1b4b;
+              text-transform: uppercase;
+              letter-spacing: 4px;
+              margin-bottom: 8px;
+            }
+            .cert-subtitle {
+              font-size: 17px;
+              color: #4f46e5;
+              font-style: italic;
+              margin-bottom: 36px;
+            }
+            .cert-text { font-size: 17px; color: #4b5563; margin-bottom: 10px; }
+            .cert-name {
+              font-size: 52px;
+              font-weight: 700;
+              color: #f43f5e;
+              font-family: Georgia, serif;
+              border-bottom: 2px solid #e5e7eb;
+              padding-bottom: 10px;
+              margin-bottom: 26px;
+              display: inline-block;
+              min-width: 55%;
+            }
+            .cert-details {
+              display: flex;
+              justify-content: center;
+              gap: 60px;
+              margin: 30px 0;
+            }
+            .cert-detail-box { text-align: center; }
+            .cert-detail-value { font-size: 28px; font-weight: 800; color: #1e1b4b; }
+            .cert-detail-label { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+            .cert-footer {
+              display: flex;
+              justify-content: space-between;
+              margin-top: 50px;
+              padding: 0 40px;
+            }
+            .cert-signature { text-align: center; }
+            .cert-line {
+              width: 220px;
+              height: 44px;
+              border-bottom: 1px solid #1e1b4b;
+              display: flex;
+              align-items: flex-end;
+              justify-content: center;
+              margin-bottom: 5px;
+            }
+            .cert-badge {
+              position: absolute;
+              bottom: -20px;
+              left: 50%;
+              transform: translateX(-50%);
+              width: 90px;
+              height: 90px;
+              background: ${isPass ? '#f43f5e' : '#6b7280'};
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: white;
+              font-weight: 800;
+              font-size: 11px;
+              text-align: center;
+              line-height: 1.3;
+              border: 4px dashed white;
+              box-shadow: 0 0 0 4px ${isPass ? '#f43f5e' : '#6b7280'};
+            }
+            @media print {
+              body { padding: 0; min-height: unset; }
+              .cert-card { border-width: 14px; }
+              @page { size: A4 landscape; margin: 0.5cm; }
+            }
+          </style>
+        </head>
+        <body>
           <div class="cert-card">
             <div class="cert-inner">
               <div class="cert-title">Certificate of Achievement</div>
               <div class="cert-subtitle">NTC Exam Preparation Platform</div>
-              
               <div class="cert-text">This is to certify that</div>
               <div class="cert-name">${fullName}</div>
-              
               <div class="cert-text">has successfully completed the examination for</div>
-              <div style="font-size: 24px; font-weight: 700; color: #1e1b4b; margin-bottom: 20px;">${result.subject || 'NTC Prep Mock Exam'}</div>
-              
+              <div style="font-size:22px;font-weight:700;color:#1e1b4b;margin:12px 0 20px;">${result.subject || 'NTC Prep Mock Exam'}</div>
               <div class="cert-details">
                 <div class="cert-detail-box">
                   <div class="cert-detail-value">${result.percentage}%</div>
                   <div class="cert-detail-label">Score</div>
                 </div>
                 <div class="cert-detail-box">
-                  <div class="cert-detail-value">${getGrade(result.percentage)}</div>
+                  <div class="cert-detail-value">${grade}</div>
                   <div class="cert-detail-label">Grade</div>
                 </div>
                 <div class="cert-detail-box">
@@ -219,27 +324,28 @@ document.addEventListener('DOMContentLoaded', () => {
                   <div class="cert-detail-label">Correct</div>
                 </div>
               </div>
-              
               <div class="cert-footer">
                 <div class="cert-signature">
-                  <div class="cert-line" style="display:flex;align-items:flex-end;justify-content:center;font-family:'Georgia',serif;font-style:italic;font-size:22px;">Atoopase</div>
+                  <div class="cert-line" style="font-family:Georgia,serif;font-style:italic;font-size:22px;">Atoopase</div>
                   <div class="cert-detail-label">Lead Instructor</div>
                 </div>
                 <div class="cert-signature">
-                  <div class="cert-line" style="display:flex;align-items:flex-end;justify-content:center;font-size:18px;">${date}</div>
+                  <div class="cert-line" style="font-size:16px;">${date}</div>
                   <div class="cert-detail-label">Date Issued</div>
                 </div>
               </div>
-              
-              <div class="cert-badge">${result.percentage >= 50 ? 'EXCELLENCE<br>AWARD' : 'PARTICIPATION<br>AWARD'}</div>
+              <div class="cert-badge">${isPass ? 'EXCELLENCE<br>AWARD' : 'PARTICIPATION<br>AWARD'}</div>
             </div>
           </div>
-        `;
-      }
-      
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
       setTimeout(() => {
-        window.print();
-      }, 150);
+        printWindow.print();
+        printWindow.close();
+      }, 500);
     });
   }
 });

@@ -320,9 +320,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ─── Prepare Detailed Print ───────────────────────────────────────────────────
   window.prepareDetailedPrint = () => {
-    const printArea = document.getElementById('detailedPrintArea');
-    if (!printArea) return;
-
     // We filter students that are currently visible
     const q = (document.getElementById('studentSearch')?.value || '').toLowerCase().trim();
     const filteredStudents = currentDisplayStudents.filter(student => {
@@ -331,26 +328,57 @@ document.addEventListener('DOMContentLoaded', async () => {
       return (!q || n.includes(q) || e.includes(q));
     });
 
-    let printHtml = `
-      <style>
-        @media print {
-          body { background: white; margin: 0; padding: 0; }
-          body > *:not(style):not(script):not(#detailedPrintArea) { display: none !important; }
-          #detailedPrintArea { display: block !important; }
-          .print-doc-title { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 20px; color: black; }
-          table.print-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 14px; }
-          table.print-table th, table.print-table td { border: 1px solid #000; padding: 8px; color: black; text-align: left; }
-          table.print-table th { background: #f3f4f6; font-weight: bold; }
-        }
-      </style>
-      <div class="print-doc-title">Student Results Report</div>
-    `;
+    let tableRows = '';
 
     if (filteredStudents.length === 0) {
-      printHtml += '<p>No students found.</p>';
+      tableRows = '<tr><td colspan="3" style="text-align:center;font-style:italic;">No students found.</td></tr>';
     } else {
-      printHtml += `
-        <table class="print-table">
+      filteredStudents.forEach(student => {
+        const name = student.full_name || student.email || 'Unknown';
+        const results = student.userResults || [];
+
+        if (results.length === 0) {
+          tableRows += `
+            <tr>
+              <td>${name}</td>
+              <td colspan="2" style="font-style:italic;color:#555;">No exams taken</td>
+            </tr>`;
+        } else {
+          const sortedResults = [...results].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          sortedResults.forEach(r => {
+            tableRows += `
+              <tr>
+                <td>${name}</td>
+                <td>${parseFloat(r.percentage).toFixed(1)}% (${r.score}/${r.total})</td>
+                <td>${r.time_used || 'N/A'}</td>
+              </tr>`;
+          });
+        }
+      });
+    }
+
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Student Results Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 30px; background: white; color: black; }
+          h1 { text-align: center; font-size: 22px; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; font-size: 14px; }
+          th, td { border: 1px solid #000; padding: 8px 12px; text-align: left; }
+          th { background: #f0f0f0; font-weight: bold; }
+          tr:nth-child(even) { background: #fafafa; }
+          @media print {
+            body { margin: 15px; }
+          }
+        </style>
+      </head>
+      <body>
+        <h1>Student Results Report</h1>
+        <table>
           <thead>
             <tr>
               <th>Student Name</th>
@@ -359,46 +387,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             </tr>
           </thead>
           <tbody>
-      `;
-      
-      // We list every student's results
-      filteredStudents.forEach(student => {
-        const name = student.full_name || student.email || 'Unknown';
-        let results = student.userResults || [];
-        
-        if (results.length === 0) {
-          printHtml += `
-            <tr>
-              <td>${name}</td>
-              <td colspan="2" style="font-style: italic; color: #555;">No exams taken</td>
-            </tr>
-          `;
-        } else {
-          // Sort results by date descending so the latest is first
-          const sortedResults = [...results].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-          
-          sortedResults.forEach(r => {
-            printHtml += `
-              <tr>
-                <td>${name}</td>
-                <td>${parseFloat(r.percentage).toFixed(1)}% (${r.score}/${r.total})</td>
-                <td>${r.time_used || 'N/A'}</td>
-              </tr>
-            `;
-          });
-        }
-      });
-
-      printHtml += `
+            ${tableRows}
           </tbody>
         </table>
-      `;
-    }
-
-    printArea.innerHTML = printHtml;
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
     setTimeout(() => {
-      window.print();
-    }, 100);
+      printWindow.print();
+      printWindow.close();
+    }, 300);
   };
 
   // Init
