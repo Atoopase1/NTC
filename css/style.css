@@ -1482,13 +1482,10 @@ p {
 }
 
 .hero-laptop-img {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-25%, -50%) scale(1.6);
   width: 100%;
+  max-width: 600px;
   height: auto;
-  z-index: 0;
+  object-fit: contain;
   pointer-events: none;
 }
 
