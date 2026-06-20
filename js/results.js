@@ -145,8 +145,86 @@ document.addEventListener('DOMContentLoaded', () => {
   // Print functionality
   const printBtn = document.getElementById('printResultBtn');
   if (printBtn) {
-    printBtn.addEventListener('click', () => {
-      window.print();
+    printBtn.addEventListener('click', async () => {
+      // Get student name
+      let fullName = 'Student';
+      try {
+        if (window.supaAuth && window.supaAuth.getCurrentUser) {
+          const user = await window.supaAuth.getCurrentUser();
+          if (user) {
+            if (user.user_metadata?.full_name) fullName = user.user_metadata.full_name;
+            else if (user.user_metadata?.name) fullName = user.user_metadata.name;
+            else if (user.email) fullName = user.email.split('@')[0];
+            
+            // Try to fetch from profiles table just in case
+            if (window.supaDB && window.supaDB.getProfile) {
+              const profile = await window.supaDB.getProfile(user.id);
+              if (profile && profile.full_name) fullName = profile.full_name;
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch user name for certificate:', e);
+      }
+
+      const resultStr = sessionStorage.getItem('ntc_current_result');
+      if (!resultStr) {
+        window.print();
+        return;
+      }
+      
+      const result = JSON.parse(resultStr);
+      const certContainer = document.getElementById('certificateContainer');
+      const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+      
+      if (certContainer) {
+        certContainer.innerHTML = `
+          <div class="cert-card">
+            <div class="cert-inner">
+              <div class="cert-title">Certificate of Achievement</div>
+              <div class="cert-subtitle">NTC Exam Preparation Platform</div>
+              
+              <div class="cert-text">This is to certify that</div>
+              <div class="cert-name">${fullName}</div>
+              
+              <div class="cert-text">has successfully completed the examination for</div>
+              <div style="font-size: 24px; font-weight: 700; color: #1e1b4b; margin-bottom: 20px;">${result.subject || 'NTC Prep Mock Exam'}</div>
+              
+              <div class="cert-details">
+                <div class="cert-detail-box">
+                  <div class="cert-detail-value">${result.percentage}%</div>
+                  <div class="cert-detail-label">Score</div>
+                </div>
+                <div class="cert-detail-box">
+                  <div class="cert-detail-value">${getGrade(result.percentage)}</div>
+                  <div class="cert-detail-label">Grade</div>
+                </div>
+                <div class="cert-detail-box">
+                  <div class="cert-detail-value">${result.score} / ${result.total}</div>
+                  <div class="cert-detail-label">Correct</div>
+                </div>
+              </div>
+              
+              <div class="cert-footer">
+                <div class="cert-signature">
+                  <div class="cert-line" style="display:flex;align-items:flex-end;justify-content:center;font-family:'Georgia',serif;font-style:italic;font-size:22px;">Atoopase</div>
+                  <div class="cert-detail-label">Lead Instructor</div>
+                </div>
+                <div class="cert-signature">
+                  <div class="cert-line" style="display:flex;align-items:flex-end;justify-content:center;font-size:18px;">${date}</div>
+                  <div class="cert-detail-label">Date Issued</div>
+                </div>
+              </div>
+              
+              <div class="cert-badge">${result.percentage >= 50 ? 'EXCELLENCE<br>AWARD' : 'PARTICIPATION<br>AWARD'}</div>
+            </div>
+          </div>
+        `;
+      }
+      
+      setTimeout(() => {
+        window.print();
+      }, 150);
     });
   }
 });

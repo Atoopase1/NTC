@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -110,6 +110,155 @@
       </div>
     </div>
   </div>
+
+  <div id="certificateContainer" style="display:none;"></div>
+
+  <style>
+    @media print {
+      body * { visibility: hidden; }
+      #certificateContainer, #certificateContainer * { visibility: visible; }
+      #certificateContainer {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100vh;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        margin: 0;
+      }
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+      
+      .cert-card {
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+        border: 15px solid #4f46e5;
+        padding: 20px;
+        background: #fdfdfd;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        position: relative;
+      }
+      
+      .cert-inner {
+        width: 100%;
+        height: 100%;
+        border: 3px solid #f43f5e;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at center, #ffffff 0%, #fff0f2 100%);
+        padding: 40px;
+        box-sizing: border-box;
+      }
+
+      .cert-title {
+        font-size: 48px;
+        font-weight: 800;
+        color: #1e1b4b;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 4px;
+      }
+      
+      .cert-subtitle {
+        font-size: 20px;
+        color: #4f46e5;
+        font-style: italic;
+        margin-bottom: 40px;
+      }
+      
+      .cert-text {
+        font-size: 18px;
+        color: #4b5563;
+        margin-bottom: 15px;
+      }
+      
+      .cert-name {
+        font-size: 56px;
+        font-weight: 700;
+        color: #f43f5e;
+        margin-bottom: 30px;
+        font-family: 'Georgia', serif;
+        border-bottom: 2px solid #e5e7eb;
+        padding-bottom: 10px;
+        min-width: 50%;
+      }
+      
+      .cert-details {
+        display: flex;
+        gap: 50px;
+        margin-top: 40px;
+        margin-bottom: 40px;
+      }
+      
+      .cert-detail-box {
+        text-align: center;
+      }
+      
+      .cert-detail-value {
+        font-size: 28px;
+        font-weight: 800;
+        color: #1e1b4b;
+      }
+      
+      .cert-detail-label {
+        font-size: 14px;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      
+      .cert-footer {
+        display: flex;
+        justify-content: space-between;
+        width: 80%;
+        margin-top: auto;
+        padding-top: 20px;
+      }
+      
+      .cert-signature {
+        text-align: center;
+      }
+      
+      .cert-line {
+        width: 200px;
+        border-bottom: 1px solid #1e1b4b;
+        margin-bottom: 5px;
+        height: 40px;
+      }
+      
+      .cert-badge {
+        position: absolute;
+        bottom: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 100px;
+        background: #f43f5e;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+        text-align: center;
+        border: 4px dashed white;
+        box-shadow: 0 0 0 4px #f43f5e;
+      }
+    }
+  </style>
 
   <script src="../js/supabase.js"></script>
   <script src="../js/app.js?v=5"></script>
