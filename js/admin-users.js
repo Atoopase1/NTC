@@ -129,7 +129,6 @@ document.addEventListener('DOMContentLoaded', async () => {
               <div class="student-avatar" style="${isBlocked ? 'background:rgba(244,63,94,0.12);color:#f43f5e;' : ''}">${initials}</div>
               <div>
                 <div class="student-name">${name} ${isBlocked ? `<span class="badge-blocked"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>Blocked until ${blockedUntilStr}</span>` : ''}</div>
-                <div class="student-email">${email}</div>
               </div>
             </div>
           </td>
