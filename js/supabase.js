@@ -229,9 +229,10 @@ async function getProfile(userId) {
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
       
     if (error) throw error;
+    if (!data) throw new Error('Profile not found');
     return data;
   } catch (error) {
     console.log('Using local profile data fallback');
