@@ -146,26 +146,41 @@ document.addEventListener('DOMContentLoaded', () => {
   const printBtn = document.getElementById('printResultBtn');
   if (printBtn) {
     printBtn.addEventListener('click', async () => {
+      const originalText = printBtn.innerHTML;
+      printBtn.innerHTML = '<span class="spinner spinner-sm" style="display:inline-block;width:16px;height:16px;border:2px solid currentColor;border-bottom-color:transparent;border-radius:50%;margin-right:8px;animation:spin 1s linear infinite;"></span> Preparing...';
+      printBtn.disabled = true;
+
       // Get student name
       let fullName = 'Student';
       try {
-        if (window.supaAuth && window.supaAuth.getCurrentUser) {
-          const user = await window.supaAuth.getCurrentUser();
-          if (user) {
-            if (user.user_metadata?.full_name) fullName = user.user_metadata.full_name;
-            else if (user.user_metadata?.name) fullName = user.user_metadata.name;
-            else if (user.email) fullName = user.email.split('@')[0];
-            
-            // Try to fetch from profiles table just in case
-            if (window.supaDB && window.supaDB.getProfile) {
-              const profile = await window.supaDB.getProfile(user.id);
-              if (profile && profile.full_name) fullName = profile.full_name;
+        const fetchUser = async () => {
+          if (window.supaAuth && window.supaAuth.getCurrentUser) {
+            const user = await window.supaAuth.getCurrentUser();
+            if (user) {
+              if (user.user_metadata?.full_name) fullName = user.user_metadata.full_name;
+              else if (user.user_metadata?.name) fullName = user.user_metadata.name;
+              else if (user.email) fullName = user.email.split('@')[0];
+              
+              // Try to fetch from profiles table just in case
+              if (window.supaDB && window.supaDB.getProfile) {
+                const profile = await window.supaDB.getProfile(user.id);
+                if (profile && profile.full_name) fullName = profile.full_name;
+              }
             }
           }
-        }
+        };
+
+        // Race condition: wait max 2 seconds for user fetch
+        await Promise.race([
+          fetchUser(),
+          new Promise(resolve => setTimeout(resolve, 2000))
+        ]);
       } catch (e) {
         console.error('Failed to fetch user name for certificate:', e);
       }
+
+      printBtn.innerHTML = originalText;
+      printBtn.disabled = false;
 
       const resultStr = sessionStorage.getItem('ntc_current_result');
       if (!resultStr) {
