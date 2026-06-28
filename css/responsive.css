@@ -1342,7 +1342,9 @@
 
   /* ── Hero: compact vertical space ── */
   .hero {
-    min-height: auto;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
     padding-top: 24px;
     padding-bottom: 32px;
     overflow: visible;
@@ -1387,14 +1389,14 @@
     position: relative !important;
     top: auto !important;
     right: auto !important;
-    width: 90% !important;
-    max-width: 320px !important;
+    width: 95% !important;
+    max-width: 340px !important;
     height: auto !important;
     display: flex !important;
     order: 2;
     justify-content: center;
     align-items: center;
-    margin: 12px auto 12px !important;
+    margin: 0px auto 8px !important;
   }
 
   .hero-illustration {
@@ -1411,8 +1413,17 @@
 
   .hero-visual lottie-player {
     width: 100% !important;
-    height: 240px !important;
-    display: block;
+    height: 210px !important;
+    display: block !important;
+    /* Hide lottie internal toolbar/controls */
+    --lottie-player-toolbar-display: none;
+  }
+
+  /* Aggressive shadow DOM control hiding for lottie-player */
+  .hero-visual lottie-player::shadow .toolbar,
+  .hero-visual lottie-player::shadow .progress,
+  .hero-visual lottie-player::shadow .controls {
+    display: none !important;
   }
 
   /* ── Hero title: 3D, mobile-scaled ── */

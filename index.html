@@ -155,7 +155,7 @@
       <div class="hero-visual reveal-right delay-2">
         <div class="hero-illustration">
           <lottie-player src="assets/images/learning.json" background="transparent" speed="1" class="hero-laptop-img"
-            loop autoplay>
+            loop autoplay style="--lottie-player-toolbar-display: none;">
           </lottie-player>
         </div>
       </div>
@@ -587,6 +587,41 @@
           .catch(err => console.warn('[NTC] SW registration failed:', err));
       });
     }
+  </script>
+
+  <!-- Hide lottie-player internal controls via shadow DOM -->
+  <script>
+    function hideLottieControls() {
+      document.querySelectorAll('lottie-player').forEach(player => {
+        try {
+          const shadow = player.shadowRoot;
+          if (shadow) {
+            const style = document.createElement('style');
+            style.textContent = `
+              :host .toolbar, :host .controls, :host .progress,
+              :host [class*="toolbar"], :host [class*="controls"],
+              :host [class*="seeker"], :host [class*="progress"],
+              .toolbar, .controls, .progress, .seeker,
+              div[class*="toolbar"], div[class*="controls"],
+              div[class*="progress"], div[class*="seeker"] {
+                display: none !important;
+                height: 0 !important;
+                overflow: hidden !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+              }
+            `;
+            shadow.appendChild(style);
+          }
+        } catch(e) {}
+      });
+    }
+    // Run immediately and after load
+    document.addEventListener('DOMContentLoaded', hideLottieControls);
+    window.addEventListener('load', hideLottieControls);
+    // Also run after a short delay in case lottie loads async
+    setTimeout(hideLottieControls, 500);
+    setTimeout(hideLottieControls, 1500);
   </script>
 </body>
 
