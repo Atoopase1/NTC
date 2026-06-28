@@ -1449,6 +1449,16 @@
       0px 8px 16px rgba(0,0,0,0.8) !important;
   }
 
+  body[data-theme="dark"] .hero-title .highlight {
+    text-shadow:
+      1px 1px 0px rgba(255,255,255,0.8),
+      0px 1px 0px #cbd5e1,
+      0px 2px 0px #94a3b8,
+      0px 3px 0px #64748b,
+      0px 4px 6px rgba(0,0,0,0.8),
+      0px 8px 16px rgba(0,0,0,0.8) !important;
+  }
+
   /* Badge: centered */
   .hero-badge {
     margin: 0 auto 16px auto;
