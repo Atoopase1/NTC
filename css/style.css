@@ -33,10 +33,10 @@
   --info-ghost: rgba(59, 130, 246, 0.1);
 
   /* Surfaces - Softened for eye comfort (no pure white) */
-  --background: #F1F5F9;
-  --surface: #F8FAFC;
-  --surface-hover: #E2E8F0;
-  --surface-elevated: #F8FAFC;
+  --background: #F2FBF5;
+  --surface: #F8FCF9;
+  --surface-hover: #E7F6EC;
+  --surface-elevated: #F8FCF9;
 
   /* Text */
   --text: #1E293B;
@@ -61,7 +61,7 @@
 
   /* Gradients */
   --gradient-primary: linear-gradient(135deg, #1196E8 0%, #0B6FB5 100%);
-  --gradient-hero: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 50%, #F8FAFC 100%);
+  --gradient-hero: linear-gradient(135deg, #F8FCF9 0%, #E7F6EC 50%, #F8FCF9 100%);
   --gradient-accent: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
   --gradient-card: linear-gradient(135deg, rgba(17, 150, 232, 0.05) 0%, rgba(34, 197, 94, 0.05) 100%);
   --gradient-dark: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
@@ -1553,6 +1553,26 @@ p {
   pointer-events: none;
   transform: scale(1.15);
   transform-origin: top center;
+}
+
+/* Improve Lottie visibility in light mode */
+html:not([data-theme="dark"]) .hero-illustration::before {
+  content: '';
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 80%;
+  background: radial-gradient(circle, rgba(15, 23, 42, 0.05) 0%, rgba(17, 150, 232, 0.08) 40%, transparent 70%);
+  z-index: -1;
+  border-radius: 50%;
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+html:not([data-theme="dark"]) .hero-laptop-img {
+  filter: drop-shadow(0 15px 35px rgba(15, 23, 42, 0.15)) drop-shadow(0 5px 15px rgba(15, 23, 42, 0.08));
 }
 
 .hero-card {
