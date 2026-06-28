@@ -1474,7 +1474,7 @@ p {
 
 .hero-illustration {
   width: 100%;
-  max-width: 500px;
+  max-width: 680px;
   position: relative;
   display: flex;
   align-items: center;
@@ -1483,7 +1483,7 @@ p {
 
 .hero-laptop-img {
   width: 100%;
-  max-width: 600px;
+  max-width: 100%;
   height: auto;
   object-fit: contain;
   pointer-events: none;
