@@ -16,7 +16,7 @@
     padding: 0 var(--space-md);
   }
 
-  /* Mobile hero: heading → Lottie → description/actions/stats */
+  /* Mobile hero: title → description → CTAs → carousel → Lottie */
   .hero .container {
     display: flex;
     flex-direction: column;
@@ -24,50 +24,69 @@
     gap: 0;
   }
 
-  /* hero-content wraps top+bottom; on mobile we also flex-column it */
   .hero-content {
-    display: contents; /* Let hero-content-top & bottom be flex children of container */
+    display: contents;
+    order: 1;
+    width: 100%;
   }
 
+  /* hero-content-top: badge + title — comes first */
   .hero-content-top {
     order: 1;
     text-align: center;
     width: 100%;
     min-width: 0;
     max-width: 100%;
-    padding-bottom: var(--space-md);
+    padding-bottom: 0;
   }
 
-  .hero-visual {
-    display: flex !important;
-    order: 2;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-  }
-
-  /* Lottie size on XS — full viewport width */
-  .hero-visual .hero-illustration {
-    max-width: 100%;
-    width: 100%;
-  }
-  .hero-visual lottie-player {
-    width: 100% !important;
-    height: 320px !important;
-  }
-
+  /* hero-content-bottom: description + CTAs + carousel — second */
   .hero-content-bottom {
-    order: 3;
+    order: 2;
     text-align: center;
     width: 100%;
     min-width: 0;
     max-width: 100%;
-    padding-top: var(--space-md);
+    padding-top: var(--space-sm);
+  }
+
+  /* Lottie comes AFTER the carousel */
+  .hero-visual {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    display: flex !important;
+    order: 3;
+    justify-content: center;
+    align-items: center;
+    width: 90%;
+    max-width: 320px;
+    margin: 1rem auto 0;
+    height: auto !important;
+  }
+
+  .hero-visual .hero-illustration {
+    width: 100% !important;
+    max-width: 320px !important;
+    margin: 0 auto;
+    background: none !important;
+    padding: 0 !important;
+  }
+
+  .hero-visual .hero-illustration::before {
+    display: none !important;
+  }
+
+  .hero-visual lottie-player {
+    width: 100% !important;
+    height: 260px !important;
+    display: block;
   }
 
   .hero-actions {
     flex-direction: column;
     align-items: center;
+    margin-bottom: var(--space-sm);
   }
 
   .hero-actions .btn {
@@ -371,7 +390,7 @@
     --text-4xl: 1.75rem;
   }
 
-  /* Mobile hero: heading → Lottie → description/actions/stats */
+  /* Mobile hero: title → description → CTAs → carousel → Lottie */
   .hero .container {
     display: flex;
     flex-direction: column;
@@ -387,34 +406,49 @@
     order: 1;
     text-align: center;
     width: 100%;
-    padding-bottom: var(--space-md);
-  }
-
-  .hero-visual {
-    display: flex !important;
-    order: 2;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-  }
-
-  /* Lottie size on SM — full width */
-  .hero-visual .hero-illustration {
-    max-width: 100%;
-    width: 100%;
-  }
-  .hero-visual lottie-player {
-    width: 100% !important;
-    height: 380px !important;
+    padding-bottom: 0;
   }
 
   .hero-content-bottom {
-    order: 3;
+    order: 2;
     text-align: center;
     width: 100%;
     min-width: 0;
     max-width: 100%;
-    padding-top: var(--space-md);
+    padding-top: var(--space-sm);
+  }
+
+  /* Lottie comes AFTER the carousel */
+  .hero-visual {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    display: flex !important;
+    order: 3;
+    justify-content: center;
+    align-items: center;
+    width: 90%;
+    max-width: 320px;
+    margin: 1rem auto 0;
+    height: auto !important;
+  }
+
+  .hero-visual .hero-illustration {
+    width: 100% !important;
+    max-width: 320px !important;
+    margin: 0 auto;
+    background: none !important;
+    padding: 0 !important;
+  }
+
+  .hero-visual .hero-illustration::before {
+    display: none !important;
+  }
+
+  .hero-visual lottie-player {
+    width: 100% !important;
+    height: 280px !important;
+    display: block;
   }
 
   .features-grid {
@@ -1297,5 +1331,214 @@
 
   .widget-body {
     overflow-x: hidden;
+  }
+}
+
+/* ============================================
+   MOBILE-ONLY HERO FIXES — max-width: 768px
+   Desktop is 100% untouched above this.
+   ============================================ */
+@media (max-width: 768px) {
+
+  /* ── Hero: compact vertical space ── */
+  .hero {
+    min-height: auto;
+    padding-top: 24px;
+    padding-bottom: 32px;
+    overflow: visible;
+  }
+
+  /* ── Stack container: title → desc → CTAs → carousel → Lottie ── */
+  .hero .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    position: static;
+  }
+
+  .hero-content {
+    display: contents;
+  }
+
+  /* ORDER 1 — badge + title */
+  .hero-content-top {
+    order: 1;
+    text-align: center;
+    width: 100%;
+    max-width: 100%;
+    padding-bottom: 12px;
+  }
+
+  /* ORDER 2 — description + CTAs + carousel */
+  .hero-content-bottom {
+    order: 2;
+    text-align: center;
+    width: 100%;
+    max-width: 100%;
+    padding-top: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ORDER 3 — Lottie illustration */
+  .hero-visual {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    width: 90% !important;
+    max-width: 320px !important;
+    height: auto !important;
+    display: flex !important;
+    order: 3;
+    justify-content: center;
+    align-items: center;
+    margin: 16px auto 0 !important;
+  }
+
+  .hero-illustration {
+    width: 100% !important;
+    max-width: 320px !important;
+    background: none !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+  }
+
+  .hero-illustration::before {
+    display: none !important;
+  }
+
+  .hero-visual lottie-player {
+    width: 100% !important;
+    height: 240px !important;
+    display: block;
+  }
+
+  /* ── Hero title: 3D, mobile-scaled ── */
+  .hero-title {
+    font-size: clamp(2.2rem, 9vw, 3.5rem) !important;
+    line-height: 1.05 !important;
+    text-align: center !important;
+    text-shadow:
+      1px 1px 0px rgba(255,255,255,0.7),
+      0px 1px 0px #cbd5e1,
+      0px 2px 0px #94a3b8,
+      0px 3px 6px rgba(0,0,0,0.2),
+      0px 6px 12px rgba(0,0,0,0.12) !important;
+  }
+
+  body[data-theme="dark"] .hero-title {
+    text-shadow:
+      0px 1px 0px #1e293b,
+      0px 2px 0px #0f172a,
+      0px 3px 8px rgba(0,0,0,0.8),
+      0px 6px 16px rgba(0,0,0,0.5) !important;
+  }
+
+  /* Badge: centered */
+  .hero-badge {
+    margin: 0 auto 16px auto;
+    display: inline-flex;
+    justify-content: center;
+  }
+
+  /* ── Description: centered, 90% width ── */
+  .hero-description {
+    max-width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  /* ── CTA buttons: stacked, full-width, proper spacing ── */
+  .hero-actions {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 16px !important;
+    width: 100% !important;
+    max-width: 320px !important;
+    margin: 0 auto 24px auto !important;
+  }
+
+  .hero-actions .btn {
+    width: 100% !important;
+    max-width: 320px !important;
+    justify-content: center !important;
+    display: flex !important;
+    box-sizing: border-box !important;
+  }
+
+  /* ── Trust carousel: compact single-row, BELOW buttons ── */
+  .trust-carousel {
+    width: 100% !important;
+    margin-top: 24px !important;
+    margin-bottom: 24px !important;
+    padding: 4px 0 !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+  }
+
+  .trust-track {
+    flex-wrap: nowrap !important;
+  }
+
+  .trust-card {
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+    min-width: 150px !important;
+    border-radius: 999px !important;
+    font-size: 14px !important;
+    padding: 0 18px !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+  }
+
+  .trust-text {
+    font-size: 13px !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+  }
+
+  .trust-icon svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  /* ── Remove lottie controls on mobile ── */
+  lottie-player::part(controls),
+  lottie-player .controls,
+  lottie-player .toolbar,
+  lottie-player [class*="control"],
+  lottie-player [class*="toolbar"],
+  lottie-player [class*="progress"],
+  lottie-player [class*="seeker"],
+  lottie-player [class*="timestamp"],
+  lottie-player [class*="btn"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+
+  /* ── Clean transition into next section ── */
+  .hero + section,
+  .hero + div,
+  section:first-of-type + section {
+    margin-top: 0 !important;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Hide scroll-to-top button on mobile ── */
+  .scroll-top {
+    display: none !important;
+    visibility: hidden !important;
   }
 }
