@@ -32,11 +32,11 @@
   --info: #3B82F6;
   --info-ghost: rgba(59, 130, 246, 0.1);
 
-  /* Surfaces - Softened for eye comfort (no pure white) */
-  --background: #F2FBF5;
-  --surface: #F8FCF9;
-  --surface-hover: #E7F6EC;
-  --surface-elevated: #F8FCF9;
+  /* Surfaces - Cool blue-white for a crisp, modern feel */
+  --background: #F4F8FD;
+  --surface: #F9FBFE;
+  --surface-hover: #E8F0FA;
+  --surface-elevated: #F9FBFE;
 
   /* Text */
   --text: #1E293B;
@@ -61,7 +61,7 @@
 
   /* Gradients */
   --gradient-primary: linear-gradient(135deg, #1196E8 0%, #0B6FB5 100%);
-  --gradient-hero: linear-gradient(135deg, #F8FCF9 0%, #E7F6EC 50%, #F8FCF9 100%);
+  --gradient-hero: linear-gradient(135deg, #F9FBFE 0%, #E8F0FA 50%, #F4F8FD 100%);
   --gradient-accent: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
   --gradient-card: linear-gradient(135deg, rgba(17, 150, 232, 0.05) 0%, rgba(34, 197, 94, 0.05) 100%);
   --gradient-dark: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
