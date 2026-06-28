@@ -1370,9 +1370,9 @@
     padding-bottom: 12px;
   }
 
-  /* ORDER 2 — description + CTAs + carousel */
+  /* ORDER 3 — description + CTAs + carousel */
   .hero-content-bottom {
-    order: 2;
+    order: 3;
     text-align: center;
     width: 100%;
     max-width: 100%;
@@ -1382,7 +1382,7 @@
     align-items: center;
   }
 
-  /* ORDER 3 — Lottie illustration */
+  /* ORDER 2 — Lottie illustration (between heading and subheading) */
   .hero-visual {
     position: relative !important;
     top: auto !important;
@@ -1391,10 +1391,10 @@
     max-width: 320px !important;
     height: auto !important;
     display: flex !important;
-    order: 3;
+    order: 2;
     justify-content: center;
     align-items: center;
-    margin: 16px auto 0 !important;
+    margin: 12px auto 12px !important;
   }
 
   .hero-illustration {
