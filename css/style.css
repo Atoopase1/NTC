@@ -1907,6 +1907,7 @@ body[data-theme="dark"] .trust-text {
   position: relative;
   display: block;
   margin-right: 0;
+  padding: 20px;
 }
 
 @media (min-width: 1024px) {
@@ -1931,7 +1932,6 @@ body[data-theme="dark"] .trust-text {
 body:not([data-theme="dark"]) .hero-illustration {
   background: radial-gradient(ellipse at 50% 40%, rgba(17, 150, 232, 0.12) 0%, rgba(79, 181, 240, 0.08) 40%, transparent 70%);
   border-radius: 50%;
-  padding: 20px;
 }
 
 body:not([data-theme="dark"]) .hero-illustration::before {
