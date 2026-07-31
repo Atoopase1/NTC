@@ -3,6 +3,8 @@
    Complete Design System & Components
    ============================================ */
 
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@700;800;900&display=swap');
+
 /* === CSS Custom Properties (Design Tokens) === */
 :root {
   /* Primary Colors */
@@ -668,17 +670,26 @@ p {
 .navbar-brand .brand-icon {
   width: 40px;
   height: 40px;
-  background: var(--gradient-primary);
-  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-weight: 800;
-  font-size: var(--text-lg);
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.navbar-brand .brand-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  clip-path: inset(5% round 15%);
 }
 
 .navbar-brand span {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.5px;
   background: var(--gradient-primary);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -2434,14 +2445,26 @@ body:not([data-theme="dark"]) .hero-laptop-img {
 .footer-brand .brand-icon {
   width: 36px;
   height: 36px;
-  background: var(--gradient-primary);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: var(--text-sm);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.footer-brand .brand-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  clip-path: inset(5% round 15%);
+}
+
+.footer-brand span {
+  font-family: 'Outfit', sans-serif;
   font-weight: 800;
+  letter-spacing: -0.5px;
 }
 
 .footer-about p {

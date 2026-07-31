@@ -125,16 +125,26 @@
 .auth-brand .brand-icon {
   width: 40px;
   height: 40px;
-  background: var(--gradient-primary);
-  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-weight: 800;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.auth-brand .brand-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  clip-path: inset(5% round 15%);
 }
 
 .auth-brand span {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.5px;
   background: var(--gradient-primary);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
