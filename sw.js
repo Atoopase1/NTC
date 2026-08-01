@@ -3,7 +3,7 @@
 // Caches assets for offline use
 // ============================================
 
-const CACHE_NAME = 'ntcprep-v35';
+const CACHE_NAME = 'ntcprep-v36';
 
 // Core assets to cache on install
 const PRECACHE_ASSETS = [

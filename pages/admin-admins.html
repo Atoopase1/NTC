@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manage Students | Admin | NTC Exam Prep</title>
+  <title>Manage Admins - Prep Admin Portal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -151,7 +151,7 @@
       <div class="sidebar-nav">
         <div class="sidebar-section">
           <div class="sidebar-section-title">Admin Controls</div>
-          <a href="admin-users.html" class="sidebar-link active">
+          <a href="admin-users.html" class="sidebar-link">
             <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
             Manage Students
           </a>
@@ -163,7 +163,7 @@
             <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span>
             Scheduled Exams
           </a>
-          <a href="admin-admins.html" class="sidebar-link" id="superAdminLink" style="display:none;">
+          <a href="admin-admins.html" class="sidebar-link active" id="superAdminLink">
             <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
             Manage Admins
           </a>
@@ -172,17 +172,10 @@
     </aside>
 
     <script>
-      // Enforce Admin Permissions
-      if (localStorage.getItem('ntc_admin_email') === 'atoopase@gmail.com') {
-        document.getElementById('superAdminLink').style.display = 'flex';
-      } else {
-        try {
-          const perms = JSON.parse(localStorage.getItem('ntc_admin_permissions') || '[]');
-          if (!perms.includes('manage_users')) {
-            alert('You do not have permission to manage users.');
-            window.location.href = 'dashboard.html';
-          }
-        } catch(e) {}
+      // Enforce Super Admin Only
+      if (localStorage.getItem('ntc_admin_email') !== 'atoopase@gmail.com') {
+        alert('Only the Super Admin can manage other admins.');
+        window.location.href = 'dashboard.html';
       }
     </script>
 
@@ -190,131 +183,113 @@
     <main class="dashboard-main">
       <div class="admin-header">
         <div class="admin-header-title">
-          <h1>Manage Students</h1>
-          <p>View all registered students, their exam results, and manage accounts.</p>
+          <h1>Manage Admins</h1>
+          <p>Super Admin control panel. Add or remove admins, and set granular access permissions.</p>
         </div>
-        <div style="display:flex;gap:var(--space-sm);align-items:center;flex-wrap:wrap;">
-          <select id="studentSort" class="admin-input" style="height:40px;width:auto;cursor:pointer;">
-            <option value="name">Sort by Name (A-Z)</option>
-            <option value="score_desc">Sort by Score (Highest First)</option>
-            <option value="score_asc">Sort by Score (Lowest First)</option>
-            <option value="recent">Sort by Joined Date (Recent First)</option>
-          </select>
-          <button id="printBtn" class="btn btn-outline" style="height:40px;display:flex;align-items:center;gap:6px;" onclick="window.prepareDetailedPrint()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-            Print
-          </button>
-          <div style="position:relative;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-light);pointer-events:none;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input type="text" id="studentSearch" class="admin-input" placeholder="Search students..." style="padding-left:38px;height:40px;width:100%;max-width:200px;">
+      </div>
+
+      <!-- Controls -->
+      <div class="admin-header-actions reveal delay-1" style="margin-top:var(--space-md);">
+        <div style="display:flex; gap:10px; width:100%; align-items:center;">
+          <div style="position:relative; flex:1; max-width:300px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; left:12px; top:12px; color:var(--text-light);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="adminSearch" class="admin-input" placeholder="Search admins or students to add..." style="padding-left:38px;height:40px;width:100%;">
           </div>
+          <button class="btn btn-primary" id="searchNewAdminBtn" style="height:40px;">Find User to Add</button>
         </div>
       </div>
 
-      <!-- Stats Row -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:var(--space-md);margin-bottom:var(--space-xl);" class="reveal delay-1">
+      <!-- Stats -->
+      <div class="admin-stats-grid reveal delay-1" style="grid-template-columns: repeat(1, 1fr); margin-bottom:var(--space-lg); margin-top:var(--space-lg);">
         <div class="admin-card" style="padding:var(--space-lg);text-align:center;">
-          <div style="font-size:2rem;font-weight:800;color:var(--primary);" id="statTotal">—</div>
-          <div style="font-size:var(--text-sm);color:var(--text-light);margin-top:4px;">Total Students</div>
-        </div>
-        <div class="admin-card" style="padding:var(--space-lg);text-align:center;">
-          <div style="font-size:2rem;font-weight:800;color:var(--accent);" id="statExams">—</div>
-          <div style="font-size:var(--text-sm);color:var(--text-light);margin-top:4px;">Exams Taken</div>
-        </div>
-        <div class="admin-card" style="padding:var(--space-lg);text-align:center;">
-          <div style="font-size:2rem;font-weight:800;color:var(--success);" id="statAvg">—</div>
-          <div style="font-size:var(--text-sm);color:var(--text-light);margin-top:4px;">Avg Score</div>
+          <div style="font-size:36px;font-weight:800;color:var(--primary);margin-bottom:5px;" id="statTotalAdmins">-</div>
+          <div style="color:var(--text-light);font-size:var(--text-sm);text-transform:uppercase;letter-spacing:1px;font-weight:600;">Total Admins</div>
         </div>
       </div>
 
-      <!-- Students Table -->
+      <!-- Admins Table -->
       <div class="admin-card reveal delay-2">
         <div class="admin-table-container">
           <table class="admin-table">
             <thead>
               <tr>
-                <th>Student</th>
-                <th>Phone</th>
-                <th>School</th>
-                <th>Joined</th>
-                <th>Exams</th>
-                <th>Avg Score</th>
+                <th>Admin Name</th>
+                <th>Email</th>
+                <th>Permissions</th>
+                <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody id="studentsTableBody">
-              <tr><td colspan="7" style="text-align:center;color:var(--text-light);">Loading students...</td></tr>
+            <tbody id="adminsTableBody">
+              <!-- Rendered by JS -->
             </tbody>
           </table>
+          
+          <div class="loading-spinner" id="tableLoading"></div>
+          <div class="empty-state" id="tableEmpty" style="display:none;padding:var(--space-xl) 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--border-dark);margin-bottom:var(--space-md);"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <h3 style="color:var(--text);margin-bottom:var(--space-xs);">No admins found</h3>
+            <p style="color:var(--text-light);font-size:var(--text-sm);">Try adjusting your search criteria.</p>
+          </div>
         </div>
       </div>
     </main>
-  </div>
 
-  <!-- Results Modal -->
-  <div class="results-modal-overlay" id="resultsModal">
-    <div class="results-modal">
-      <div class="results-modal-header">
-        <div>
-          <div class="results-modal-title" id="modalStudentName">Student Results</div>
-          <div style="font-size:var(--text-sm);color:var(--text-light);" id="modalStudentEmail"></div>
+    <!-- Manage Permissions Modal -->
+    <div class="modal-overlay" id="permissionsModal">
+      <div class="modal-content" style="max-width:500px;">
+        <div class="modal-header">
+          <h2 class="modal-title">Manage Admin Access</h2>
+          <button class="modal-close" id="closePermissionsModal">×</button>
         </div>
-        <button class="modal-close-btn" id="closeResultsModal" aria-label="Close">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
-      <div class="stat-pills" id="modalStatPills"></div>
-      <div id="modalResultsList"></div>
-    </div>
-  </div>
-
-  <!-- Block Student Modal -->
-  <div class="results-modal-overlay" id="blockModal">
-    <div class="results-modal" style="max-width:420px;">
-      <div class="results-modal-header">
-        <div>
-          <div class="results-modal-title" style="color:#f43f5e;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
-            Block Student
+        <div class="modal-body">
+          <div style="margin-bottom:var(--space-md);">
+            <strong id="modalAdminName" style="color:var(--primary);font-size:18px;"></strong>
+            <div id="modalAdminEmail" style="color:var(--text-light);font-size:14px;"></div>
           </div>
-          <div style="font-size:var(--text-sm);color:var(--text-light);" id="blockModalStudentName"></div>
+          
+          <div class="admin-form-row">
+            <label class="admin-label">Assign Granular Permissions</label>
+            <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="checkbox" id="permManageUsers" value="manage_users" style="width:18px;height:18px;">
+                <span>Manage Users (Students)</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="checkbox" id="permManageLessons" value="manage_lessons" style="width:18px;height:18px;">
+                <span>Manage Lessons & Materials</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="checkbox" id="permManageExams" value="manage_exams" style="width:18px;height:18px;">
+                <span>Manage Scheduled Exams</span>
+              </label>
+            </div>
+          </div>
+
+          <div style="margin-top:20px; padding:10px; border-radius:8px; border:1px solid rgba(239,68,68,0.2);">
+            <button class="btn btn-outline" id="blockAdminBtn" style="border-color:var(--danger); color:var(--danger); width:100%; margin-bottom:10px;">Block Admin Account</button>
+            <button class="btn btn-outline" id="unblockAdminBtn" style="border-color:var(--success); color:var(--success); width:100%; margin-bottom:10px; display:none;">Unblock Admin Account</button>
+            <div style="color:var(--danger); font-weight:600; margin-bottom:5px; margin-top:15px;">Danger Zone</div>
+            <button class="btn btn-outline" id="revokeAdminBtn" style="border-color:var(--danger); color:var(--danger); width:100%;">Revoke Admin Rights (Demote to Student)</button>
+          </div>
         </div>
-        <button class="modal-close-btn" id="closeBlockModal" aria-label="Close">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
-      <p style="font-size:var(--text-sm);color:var(--text-light);margin-bottom:var(--space-md);">Select how long to block this student's access to the platform.</p>
-      <div class="block-duration-grid" id="durationBtns">
-        <button class="duration-btn" data-days="1">1 Day</button>
-        <button class="duration-btn" data-days="3">3 Days</button>
-        <button class="duration-btn" data-days="7">1 Week</button>
-        <button class="duration-btn" data-days="14">2 Weeks</button>
-        <button class="duration-btn" data-days="30">1 Month</button>
-        <button class="duration-btn" data-days="0">Custom Date</button>
-      </div>
-      <div id="customDateSection" style="display:none;margin-bottom:var(--space-md);">
-        <label class="admin-label" for="blockUntilDate">Block until:</label>
-        <input type="date" id="blockUntilDate" class="admin-input">
-      </div>
-      <div style="display:flex;gap:var(--space-sm);justify-content:flex-end;">
-        <button class="btn btn-outline" id="cancelBlockBtn">Cancel</button>
-        <button class="btn" id="confirmBlockBtn" style="background:#f43f5e;color:white;border:none;padding:10px 20px;border-radius:var(--radius-md);font-weight:600;cursor:pointer;">Block Student</button>
+        <div class="modal-footer">
+          <button class="btn btn-primary" id="savePermissionsBtn" style="width:100%;">Save Permissions</button>
+        </div>
       </div>
     </div>
   </div>
-
-  <div id="detailedPrintArea" style="display:none; padding: 20px; background: white;"></div>
-
+  
   <script src="../js/supabase.js"></script>
   <script src="../js/app.js?v=5"></script>
   <script src="../js/dashboard.js"></script>
-  <script src="../js/admin-users.js"></script>
+  <script src="../js/admin-admins.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('[NTC] SW registered:', reg.scope))
-          .catch(err => console.warn('[NTC] SW registration failed:', err));
+        navigator.serviceWorker.register('../sw.js').catch(err => {
+          console.warn('SW registration failed:', err);
+        });
       });
     }
   </script>

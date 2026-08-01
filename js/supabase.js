@@ -146,11 +146,12 @@ async function checkAdminAndRedirect(userEmail) {
           if (user) {
             const { data: profile, error: profileError } = await supabaseClient
               .from('profiles')
-              .select('role')
+              .select('role, admin_permissions')
               .eq('id', user.id)
               .single();
             if (profileError) console.warn('Profile role fetch error (non-fatal):', profileError.message);
             if (profile && profile.role === 'admin') {
+              localStorage.setItem('ntc_admin_permissions', JSON.stringify(profile.admin_permissions || []));
               resolve(true);
               return;
             }
@@ -172,6 +173,7 @@ async function checkAdminAndRedirect(userEmail) {
 
   if (isAdmin) {
     localStorage.setItem('ntc_is_admin', 'true');
+    localStorage.setItem('ntc_admin_email', userEmail);
     const viewMode = localStorage.getItem('ntc_view_mode') || 'admin';
     if (viewMode === 'admin') {
       window.location.href = '/pages/admin-lessons.html';
@@ -179,6 +181,8 @@ async function checkAdminAndRedirect(userEmail) {
     }
   } else {
     localStorage.removeItem('ntc_is_admin');
+    localStorage.removeItem('ntc_admin_email');
+    localStorage.removeItem('ntc_admin_permissions');
   }
 
   window.location.href = '/pages/dashboard.html';
@@ -1008,4 +1012,20 @@ window.supaDB = {
   getLessonComments,
   getAllLessonLikes,
   getAllLessonComments
+};
+
+/**
+ * Check if the current admin has a specific granular permission.
+ * Super admin (atoopase@gmail.com) always returns true.
+ */
+window.hasAdminPermission = function(feature) {
+  const adminEmail = localStorage.getItem('ntc_admin_email');
+  if (adminEmail === 'atoopase@gmail.com') return true;
+  
+  try {
+    const perms = JSON.parse(localStorage.getItem('ntc_admin_permissions') || '[]');
+    return perms.includes(feature);
+  } catch (e) {
+    return false;
+  }
 };
