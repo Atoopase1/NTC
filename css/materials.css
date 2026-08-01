@@ -521,35 +521,220 @@
   background: rgba(0,0,0,0.8);
 }
 
-/* Image Viewer */
-.image-viewer-body {
+/* ============================================
+   Image Viewer - Two Panel Layout
+   Panel 1: Image (fills screen top, shrinks on scroll)
+   Panel 2: Details (bottom sheet, slides up)
+   ============================================ */
+
+.image-viewer {
+  flex-direction: column;
+  background: #050505;
+  overflow: hidden;
+}
+
+/* IMAGE PANEL: fills the viewer, shrinks to 33% on scroll */
+.iv-image-panel {
+  position: relative;
+  width: 100%;
+  /* Use flex:1 so it fills the modal naturally, then we override with vh */
   flex: 1;
   background: #050505;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
+  transition: flex 0s, max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  max-height: 100vh;
   overflow: hidden;
+}
+
+.iv-image-panel.shrunk {
+  max-height: 33vh;
+  flex: none;
+}
+
+/* DETAILS PANEL: fixed bottom sheet, slides up */
+.iv-details-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 75vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: #111111;
+  border-radius: 18px 18px 0 0;
+  z-index: 10001;
+  /* slide below screen, leave only 32px drag handle visible */
+  transform: translateY(calc(75vh - 32px));
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+  /* only show when image viewer is active */
+  visibility: hidden;
+}
+
+.viewer-modal.active .iv-details-panel {
+  visibility: visible;
+}
+
+.iv-details-panel.expanded {
+  transform: translateY(0);
+}
+
+/* Panel header row: drag handle + font settings button */
+.iv-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px 4px;
   position: relative;
-  padding-bottom: 0;
+}
+
+/* Pull-up drag handle (centred inside header) */
+.iv-drag-handle {
+  width: 44px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 3px;
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+/* Font-settings gear icon — top-right of panel header */
+.iv-font-settings-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.iv-font-settings-btn:hover,
+.iv-font-settings-btn.active {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+.iv-font-settings-btn.active svg {
+  transform: rotate(60deg);
+  transition: transform 0.35s ease;
+}
+
+/* Font size control bar */
+.iv-font-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 10px 20px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  animation: iv-fade-in 0.2s ease;
+}
+
+@keyframes iv-fade-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.iv-font-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  color: #fff;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1;
+  transition: background 0.2s;
+  user-select: none;
+}
+.iv-font-btn:hover { background: rgba(255, 255, 255, 0.2); }
+.iv-font-btn-large { font-size: 1.2rem; }
+
+.iv-font-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  min-width: 40px;
+  text-align: center;
+}
+
+/* ── Zoom button (bottom-right of image panel) ─────── */
+.iv-zoom-btn {
+  position: absolute;
+  bottom: 18px;
+  right: 18px;
+  z-index: 20;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.88;
+  transition: background 0.2s, opacity 0.3s, transform 0.2s;
+}
+.iv-zoom-btn:hover { background: rgba(0,0,0,0.8); opacity: 1; transform: scale(1.08); }
+
+/* Hide zoom btn when image is in mini/shrunk state */
+.iv-image-panel.shrunk .iv-zoom-btn {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+/* ── Reset-zoom button (bottom-left, shown while zoomed) ─── */
+.iv-zoom-reset-btn {
+  position: absolute;
+  bottom: 18px;
+  left: 18px;
+  z-index: 20;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(79, 70, 229, 0.85);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+.iv-zoom-reset-btn:hover { background: rgba(79, 70, 229, 1); transform: scale(1.08); }
+
+.iv-image-panel.shrunk .iv-zoom-reset-btn {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .image-viewer-img {
-  flex: 1;
   width: 100%;
-  min-height: 0;
+  height: 100%;
   object-fit: contain;
-  transition: transform 0.2s ease-out;
 }
 
 .image-viewer-details {
-  width: 100%;
-  padding: var(--space-lg) var(--space-xl);
-  background: linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.8));
+  padding: 4px 24px 40px;
   color: white;
   text-align: center;
-  border-top: 1px solid rgba(255,255,255,0.1);
-  flex-shrink: 0;
 }
 
 .image-viewer-title {

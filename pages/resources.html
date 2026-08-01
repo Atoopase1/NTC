@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="../css/style.css?v=3">
   <link rel="stylesheet" href="../css/dashboard.css">
   <link rel="stylesheet" href="../css/responsive.css">
-  <link rel="stylesheet" href="../css/materials.css?v=3">
+  <link rel="stylesheet" href="../css/materials.css?v=5">
   
   <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -127,22 +127,47 @@
   
   <!-- Image Viewer Modal -->
   <div class="viewer-modal image-viewer" id="modalImage">
-    <button class="viewer-btn image-viewer-download" id="imageDownloadBtn" title="Download Image" onclick="if(this.dataset.url) window.downloadMedia(this.dataset.url, document.getElementById('imageViewerTitle').textContent)"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></button>
-    <button class="viewer-btn close-modal image-viewer-close" title="Close"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-    <div class="image-viewer-content" id="imageViewerBody">
+    <!-- Image Panel: fixed at top, shrinks on scroll -->
+    <div class="iv-image-panel" id="ivImagePanel">
+      <button class="viewer-btn image-viewer-download" id="imageDownloadBtn" title="Download Image" onclick="if(this.dataset.url) window.downloadMedia(this.dataset.url, document.getElementById('imageViewerTitle').textContent)"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></button>
+      <button class="viewer-btn close-modal image-viewer-close" title="Close"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
       <div class="image-count-badge" id="imageCountBadge" style="display:none;">1 / 1</div>
       <button class="image-nav-btn image-nav-prev" id="imageNavPrev" style="display:none;">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
       </button>
       <img id="viewerImg" class="image-viewer-img" src="" alt="Fullscreen image">
+      <!-- Zoom button: only visible in full-screen view -->
+      <button class="iv-zoom-btn" id="ivZoomBtn" title="Zoom image" aria-label="Zoom image">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+      </button>
+      <!-- Reset zoom: appears when zoomed in -->
+      <button class="iv-zoom-reset-btn" id="ivZoomResetBtn" title="Reset zoom" aria-label="Reset zoom" style="display:none;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+      </button>
+      <button class="image-nav-btn image-nav-next" id="imageNavNext" style="display:none;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+    </div>
+    <!-- Details Panel: scrollable below the image -->
+    <div class="iv-details-panel" id="imageViewerScroll">
+      <div class="iv-panel-header">
+        <div class="iv-drag-handle" id="ivDragHandle"></div>
+        <!-- Font settings button -->
+        <button class="iv-font-settings-btn" id="ivFontSettingsBtn" title="Font size" aria-label="Adjust font size">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path><path d="M4.93 4.93a10 10 0 0 0 0 14.14"></path></svg>
+        </button>
+      </div>
+      <!-- Font controls: shown when settings is tapped -->
+      <div class="iv-font-controls" id="ivFontControls" style="display:none;">
+        <button class="iv-font-btn" id="ivFontDecrease" aria-label="Decrease font size">A<span>-</span></button>
+        <span class="iv-font-label" id="ivFontLabel">16px</span>
+        <button class="iv-font-btn iv-font-btn-large" id="ivFontIncrease" aria-label="Increase font size">A<span>+</span></button>
+      </div>
       <div class="image-viewer-details" id="imageViewerDetails">
         <h3 id="imageViewerTitle" class="image-viewer-title"></h3>
         <p id="imageViewerDesc" class="image-viewer-desc"></p>
         <button id="imageViewerReadMore" class="image-read-more-btn" style="display:none;">Read More</button>
       </div>
-      <button class="image-nav-btn image-nav-next" id="imageNavNext" style="display:none;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-      </button>
     </div>
   </div>
 
@@ -225,7 +250,7 @@
   <script src="../js/supabase.js?v=3"></script>
   <script src="../js/app.js?v=5"></script>
   <script src="../js/auth.js?v=10"></script>
-  <script src="../js/materials.js?v=3"></script>
+  <script src="../js/materials.js?v=5"></script>
   
   <script>
     if ('serviceWorker' in navigator) {

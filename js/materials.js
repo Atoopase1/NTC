@@ -30,8 +30,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Close buttons
   document.querySelectorAll('.close-modal').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.target.closest('.viewer-modal').classList.remove('active');
+    btn.addEventListener('click', () => {
+      const modal = btn.closest('.viewer-modal');
+      if (modal) modal.classList.remove('active');
+      // Reset image panels when closing image viewer
+      if (window._resetImagePanels) window._resetImagePanels();
       // Stop video if playing
       const video = document.getElementById('videoPlayer');
       if (video) {
@@ -387,6 +390,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (currentImageIndex === -1) return;
     
+    if (window._resetImagePanels) window._resetImagePanels();
     renderImageModal();
     modals.image.classList.add('active');
   };
@@ -465,8 +469,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (panzoomInstance) panzoomInstance.destroy();
     if (window.Panzoom) {
-      panzoomInstance = Panzoom(img, { maxScale: 5 });
-      img.parentElement.addEventListener('wheel', panzoomInstance.zoomWithWheel);
+      panzoomInstance = Panzoom(img, { maxScale: 5, disableZoom: false });
     }
   }
 
@@ -491,18 +494,191 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (btnPrev) btnPrev.addEventListener('click', (e) => { e.stopPropagation(); window.prevImageGallery(); });
   if (btnNext) btnNext.addEventListener('click', (e) => { e.stopPropagation(); window.nextImageGallery(); });
 
-  // Swipe detection
+  // ---- New Two-Panel Image Viewer Interactions ----
+  const ivImagePanel = document.getElementById('ivImagePanel');
+  const ivDetailsPanel = document.getElementById('imageViewerScroll');
+  const ivDragHandle = ivDetailsPanel ? ivDetailsPanel.querySelector('.iv-drag-handle') : null;
+
+  // Toggle details panel open/closed
+  function toggleDetailsPanel(forceOpen) {
+    if (!ivDetailsPanel || !ivImagePanel) return;
+    const isOpen = ivDetailsPanel.classList.contains('expanded');
+    if (forceOpen === undefined) forceOpen = !isOpen;
+    if (forceOpen) {
+      ivDetailsPanel.classList.add('expanded');
+      ivImagePanel.classList.add('shrunk');
+    } else {
+      ivDetailsPanel.classList.remove('expanded');
+      ivImagePanel.classList.remove('shrunk');
+    }
+  }
+
+  // Reset panel state when modal opens
+  window._resetImagePanels = function() {
+    if (ivDetailsPanel) ivDetailsPanel.classList.remove('expanded');
+    if (ivImagePanel) ivImagePanel.classList.remove('shrunk');
+    if (ivDetailsPanel) ivDetailsPanel.scrollTop = 0;
+  };
+
+  // Click drag handle to toggle
+  if (ivDragHandle) {
+    ivDragHandle.addEventListener('click', () => toggleDetailsPanel());
+  }
+
+  // ── Zoom Button ───────────────────────────────────────────
+  const ivZoomBtn      = document.getElementById('ivZoomBtn');
+  const ivZoomResetBtn = document.getElementById('ivZoomResetBtn');
+  let ivZoomed = false;
+
+  function setZoomState(zoomed) {
+    ivZoomed = zoomed;
+    if (ivZoomBtn)      ivZoomBtn.style.display      = zoomed ? 'none' : 'flex';
+    if (ivZoomResetBtn) ivZoomResetBtn.style.display  = zoomed ? 'flex' : 'none';
+  }
+
+  if (ivZoomBtn) {
+    ivZoomBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (panzoomInstance) {
+        panzoomInstance.zoom(2.5, { animate: true });
+        setZoomState(true);
+      }
+    });
+  }
+
+  if (ivZoomResetBtn) {
+    ivZoomResetBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (panzoomInstance) {
+        panzoomInstance.reset({ animate: true });
+        setZoomState(false);
+      }
+    });
+  }
+
+  // Reset zoom state whenever a new image is opened
+  const _origReset = window._resetImagePanels;
+  window._resetImagePanels = function() {
+    if (_origReset) _origReset();
+    if (panzoomInstance) panzoomInstance.reset({ animate: false });
+    setZoomState(false);
+  };
+
+  // ── Font Size Settings ────────────────────────────────────
+  const IV_FONT_KEY    = 'ntc_iv_font_size';
+  const IV_FONT_MIN    = 12;
+  const IV_FONT_MAX    = 24;
+  const IV_FONT_STEP   = 2;
+
+  let ivFontSize = parseInt(localStorage.getItem(IV_FONT_KEY)) || 15;
+
+  const ivFontSettingsBtn = document.getElementById('ivFontSettingsBtn');
+  const ivFontControls    = document.getElementById('ivFontControls');
+  const ivFontDecrease    = document.getElementById('ivFontDecrease');
+  const ivFontIncrease    = document.getElementById('ivFontIncrease');
+  const ivFontLabel       = document.getElementById('ivFontLabel');
+  const ivDescEl          = document.getElementById('imageViewerDesc');
+
+  function applyIvFontSize() {
+    if (ivDescEl) ivDescEl.style.fontSize = ivFontSize + 'px';
+    if (ivFontLabel) ivFontLabel.textContent = ivFontSize + 'px';
+    if (ivFontDecrease) ivFontDecrease.disabled = ivFontSize <= IV_FONT_MIN;
+    if (ivFontIncrease) ivFontIncrease.disabled = ivFontSize >= IV_FONT_MAX;
+    localStorage.setItem(IV_FONT_KEY, ivFontSize);
+  }
+
+  // Apply saved size on load
+  applyIvFontSize();
+
+  if (ivFontSettingsBtn) {
+    ivFontSettingsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = ivFontControls && ivFontControls.style.display !== 'none';
+      if (ivFontControls) ivFontControls.style.display = open ? 'none' : 'flex';
+      ivFontSettingsBtn.classList.toggle('active', !open);
+    });
+  }
+
+  if (ivFontDecrease) {
+    ivFontDecrease.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (ivFontSize > IV_FONT_MIN) { ivFontSize -= IV_FONT_STEP; applyIvFontSize(); }
+    });
+  }
+
+  if (ivFontIncrease) {
+    ivFontIncrease.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (ivFontSize < IV_FONT_MAX) { ivFontSize += IV_FONT_STEP; applyIvFontSize(); }
+    });
+  }
+
+  // Touch swipe on details panel: swipe up = expand, swipe down = collapse
+  let detailsTouchStartY = 0;
+  let detailsTouchStartScrollTop = 0;
+  if (ivDetailsPanel) {
+    ivDetailsPanel.addEventListener('touchstart', e => {
+      detailsTouchStartY = e.changedTouches[0].clientY;
+      detailsTouchStartScrollTop = ivDetailsPanel.scrollTop;
+    }, { passive: true });
+
+    ivDetailsPanel.addEventListener('touchend', e => {
+      const dy = detailsTouchStartY - e.changedTouches[0].clientY;
+      // Only detect as swipe if panel hasn't scrolled internally
+      if (Math.abs(dy) > 40 && detailsTouchStartScrollTop === 0) {
+        if (dy > 0) {
+          toggleDetailsPanel(true); // swipe up = expand
+        } else {
+          toggleDetailsPanel(false); // swipe down = collapse
+        }
+      }
+    }, { passive: true });
+
+    // Collapse when scrolled back to top AND user swipes down
+    ivDetailsPanel.addEventListener('scroll', () => {
+      // nothing needed here - swipe handles collapse
+    }, { passive: true });
+  }
+
+  // Mouse scroll on the image panel: down = expand details, up = collapse
+  if (ivImagePanel) {
+    ivImagePanel.addEventListener('wheel', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        // Ctrl+scroll = zoom
+        if (panzoomInstance) {
+          e.preventDefault();
+          panzoomInstance.zoomWithWheel(e);
+        }
+        return;
+      }
+      e.preventDefault();
+      if (e.deltaY > 0) {
+        toggleDetailsPanel(true);   // scroll down → open details
+      } else {
+        toggleDetailsPanel(false);  // scroll up  → close details
+      }
+    }, { passive: false });
+  }
+
+  // Swipe detection on image panel for gallery navigation
   let touchStartX = 0;
   let touchEndX = 0;
-  const imageViewerBody = document.getElementById('imageViewerBody');
-  
-  if (imageViewerBody) {
-    imageViewerBody.addEventListener('touchstart', e => {
+  let touchStartY2 = 0;
+  if (ivImagePanel) {
+    ivImagePanel.addEventListener('touchstart', e => {
       touchStartX = e.changedTouches[0].screenX;
+      touchStartY2 = e.changedTouches[0].screenY;
     }, { passive: true });
     
-    imageViewerBody.addEventListener('touchend', e => {
+    ivImagePanel.addEventListener('touchend', e => {
       touchEndX = e.changedTouches[0].screenX;
+      const dy = touchStartY2 - e.changedTouches[0].screenY;
+      const dx = touchStartX - touchEndX;
+      // Vertical swipe up on image = open details
+      if (dy > 60 && Math.abs(dy) > Math.abs(dx)) {
+        toggleDetailsPanel(true);
+        return;
+      }
       handleSwipe();
     }, { passive: true });
   }
