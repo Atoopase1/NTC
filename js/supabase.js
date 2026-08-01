@@ -238,10 +238,14 @@ async function getProfile(userId) {
     if (error) throw error;
     if (!data) throw new Error('Profile not found');
     
-    // Merge local fallback data. Ensure null db values don't overwrite local values.
+    // We know dob, school, and phone are failing to persist properly on the backend.
+    // So we explicitly override the backend's response with our local cache for these specific fields if they exist locally.
     const localData = JSON.parse(localStorage.getItem(`user_${userId}_profile`) || '{}');
-    const cleanData = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== null));
-    return { ...localData, ...cleanData };
+    if (localData.dob) data.dob = localData.dob;
+    if (localData.school) data.school = localData.school;
+    if (localData.phone) data.phone = localData.phone;
+    
+    return data;
   } catch (error) {
     console.log('Using local profile data fallback');
     // Fallback if DB not setup
