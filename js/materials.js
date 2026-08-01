@@ -220,9 +220,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const caption = (item.content || item.description || '').trim();
         
         cardHtml = `
-          <div class="mat-card feed-item social-post" id="post-${item.id}">
+          <div class="mat-card feed-item social-post" id="post-${item.id}" onclick="openImage('${item.id}')">
             ${btnHtml}
-            <div class="post-image-wrapper" onclick="openImage('${item.id}')">
+            <div class="post-image-wrapper">
               <img class="post-img" src="${item.media_url}" alt="${item.title || item.subtopic}" loading="lazy">
             </div>
             <div class="post-content-wrapper">
@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               ${caption ? `
               <div class="post-caption-row">
                 <span class="post-caption-text" id="caption-${item.id}">${caption}</span>
-                <button class="post-more-btn" id="readmore-${item.id}" onclick="event.stopPropagation(); window.toggleCaption('${item.id}')" style="display:none;">More</button>
+                <button class="post-more-btn" id="readmore-${item.id}" onclick="event.stopPropagation(); window.openImage('${item.id}')" style="display:none;">More</button>
               </div>
               ` : ''}
               ${actionsHtml}
@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               ${caption ? `
               <div class="feed-caption-row post-caption-row" style="margin-bottom:0;">
                 <span class="feed-caption-text post-caption-text" id="caption-${item.id}">${caption}</span>
-                <button class="feed-more-btn post-more-btn" id="readmore-${item.id}" onclick="event.stopPropagation(); window.toggleCaption('${item.id}')" style="display:none;">More</button>
+                <button class="feed-more-btn post-more-btn" id="readmore-${item.id}" onclick="event.stopPropagation(); const d=window._videoUrlMap['${item.id}']; if(d) window.openVideo(d.url,d.title)" style="display:none;">More</button>
               </div>
               ` : ''}
               ${actionsHtml}
@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               <div class="mat-text-badge"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg> Article</div>
               <h3 class="mat-text-title post-title">${item.title || item.subtopic}</h3>
               <p class="mat-text-snippet" id="snippet-${item.id}">${content}</p>
-              <button class="post-more-btn" id="readmore-${item.id}" onclick="event.stopPropagation(); window.toggleCaption('${item.id}')" style="display:none; margin-bottom:var(--space-md);">More</button>
+              <button class="post-more-btn" id="readmore-${item.id}" onclick="event.stopPropagation(); window.openText('${item.id}')" style="display:none; margin-bottom:var(--space-md);">More</button>
               <div class="mat-text-footer">
                 <div class="mat-meta-row">
                   <span>${readTime}</span>
@@ -395,6 +395,89 @@ document.addEventListener('DOMContentLoaded', async () => {
     modals.image.classList.add('active');
   };
 
+  function setupChunkedText(content, textEl, btnContainer) {
+    if (!textEl) return;
+    
+    // Disable any CSS line clamping since we handle chunking manually
+    textEl.classList.add('expanded');
+    
+    const words = (content || '').trim().split(/\s+/).filter(w => w.length > 0);
+    const CHUNK_SIZE = 50;
+    
+    if (words.length <= CHUNK_SIZE) {
+      textEl.textContent = content;
+      if (btnContainer) btnContainer.style.display = 'none';
+      return;
+    }
+    
+    let currentWords = CHUNK_SIZE;
+    textEl.textContent = words.slice(0, currentWords).join(' ') + '...';
+    
+    if (btnContainer) {
+      btnContainer.style.display = 'flex';
+      btnContainer.style.justifyContent = 'space-between';
+      btnContainer.style.gap = '10px';
+      btnContainer.style.margin = '15px auto';
+      btnContainer.style.width = '100%';
+      btnContainer.style.maxWidth = '300px';
+
+      btnContainer.innerHTML = '';
+      
+      const lessBtn = document.createElement('button');
+      lessBtn.className = 'image-read-more-btn';
+      lessBtn.textContent = 'Less (50 words)';
+      lessBtn.style.flex = '1';
+      
+      const moreBtn = document.createElement('button');
+      moreBtn.className = 'image-read-more-btn';
+      moreBtn.textContent = 'More (50 words)';
+      moreBtn.style.flex = '1';
+      
+      btnContainer.appendChild(lessBtn);
+      btnContainer.appendChild(moreBtn);
+      
+      function updateButtons() {
+        if (currentWords <= CHUNK_SIZE) {
+          lessBtn.style.visibility = 'hidden';
+          lessBtn.style.pointerEvents = 'none';
+        } else {
+          lessBtn.style.visibility = 'visible';
+          lessBtn.style.pointerEvents = 'auto';
+        }
+        
+        if (currentWords >= words.length) {
+          moreBtn.style.visibility = 'hidden';
+          moreBtn.style.pointerEvents = 'none';
+        } else {
+          moreBtn.style.visibility = 'visible';
+          moreBtn.style.pointerEvents = 'auto';
+        }
+      }
+      
+      updateButtons();
+      
+      moreBtn.onclick = (e) => {
+        if (e) e.stopPropagation();
+        if (currentWords >= words.length) return;
+        currentWords += CHUNK_SIZE;
+        if (currentWords >= words.length) {
+          textEl.textContent = content;
+        } else {
+          textEl.textContent = words.slice(0, currentWords).join(' ') + '...';
+        }
+        updateButtons();
+      };
+      
+      lessBtn.onclick = (e) => {
+        if (e) e.stopPropagation();
+        if (currentWords <= CHUNK_SIZE) return;
+        currentWords -= CHUNK_SIZE;
+        textEl.textContent = words.slice(0, currentWords).join(' ') + '...';
+        updateButtons();
+      };
+    }
+  }
+
   function renderImageModal() {
     if (currentImageIndex < 0 || currentImageIndex >= currentImageGallery.length) return;
     const item = currentImageGallery[currentImageIndex];
@@ -415,33 +498,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (titleEl && descEl && detailsContainer) {
       titleEl.textContent = item.title || item.subtopic || 'Image';
-      descEl.textContent = item.description || item.content || '';
-      
       detailsContainer.style.display = 'block';
       
-      // Handle Read More Toggle
-      descEl.classList.remove('expanded');
       const readMoreBtn = document.getElementById('imageViewerReadMore');
-      if (readMoreBtn) {
-        readMoreBtn.style.display = 'none';
-        readMoreBtn.textContent = 'Read More';
-        
-        // Use timeout to let DOM render and calculate heights
-        setTimeout(() => {
-          if (descEl.scrollHeight > descEl.clientHeight) {
-            readMoreBtn.style.display = 'inline-block';
-            readMoreBtn.onclick = () => {
-              if (descEl.classList.contains('expanded')) {
-                descEl.classList.remove('expanded');
-                readMoreBtn.textContent = 'Read More';
-              } else {
-                descEl.classList.add('expanded');
-                readMoreBtn.textContent = 'Show Less';
-              }
-            };
-          }
-        }, 50);
-      }
+      setupChunkedText(item.description || item.content || '', descEl, readMoreBtn);
     }
     
     // Update Badge & Navigation
@@ -578,12 +638,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   const ivFontIncrease    = document.getElementById('ivFontIncrease');
   const ivFontLabel       = document.getElementById('ivFontLabel');
   const ivDescEl          = document.getElementById('imageViewerDesc');
+  
+  const trFontSettingsBtn = document.getElementById('trFontSettingsBtn');
+  const trFontControls    = document.getElementById('trFontControls');
+  const trFontDecrease    = document.getElementById('trFontDecrease');
+  const trFontIncrease    = document.getElementById('trFontIncrease');
+  const trFontLabel       = document.getElementById('trFontLabel');
+  const trDescEl          = document.getElementById('trBody');
 
   function applyIvFontSize() {
     if (ivDescEl) ivDescEl.style.fontSize = ivFontSize + 'px';
+    if (trDescEl) trDescEl.style.fontSize = ivFontSize + 'px';
+    
     if (ivFontLabel) ivFontLabel.textContent = ivFontSize + 'px';
     if (ivFontDecrease) ivFontDecrease.disabled = ivFontSize <= IV_FONT_MIN;
     if (ivFontIncrease) ivFontIncrease.disabled = ivFontSize >= IV_FONT_MAX;
+    
+    if (trFontLabel) trFontLabel.textContent = ivFontSize + 'px';
+    if (trFontDecrease) trFontDecrease.disabled = ivFontSize <= IV_FONT_MIN;
+    if (trFontIncrease) trFontIncrease.disabled = ivFontSize >= IV_FONT_MAX;
+    
     localStorage.setItem(IV_FONT_KEY, ivFontSize);
   }
 
@@ -599,19 +673,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  if (ivFontDecrease) {
-    ivFontDecrease.addEventListener('click', (e) => {
+  if (trFontSettingsBtn) {
+    trFontSettingsBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (ivFontSize > IV_FONT_MIN) { ivFontSize -= IV_FONT_STEP; applyIvFontSize(); }
+      const open = trFontControls && trFontControls.style.display !== 'none';
+      if (trFontControls) trFontControls.style.display = open ? 'none' : 'flex';
+      trFontSettingsBtn.classList.toggle('active', !open);
     });
   }
 
-  if (ivFontIncrease) {
-    ivFontIncrease.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (ivFontSize < IV_FONT_MAX) { ivFontSize += IV_FONT_STEP; applyIvFontSize(); }
-    });
-  }
+  const handleFontDecrease = (e) => {
+    e.stopPropagation();
+    if (ivFontSize > IV_FONT_MIN) { ivFontSize -= IV_FONT_STEP; applyIvFontSize(); }
+  };
+
+  const handleFontIncrease = (e) => {
+    e.stopPropagation();
+    if (ivFontSize < IV_FONT_MAX) { ivFontSize += IV_FONT_STEP; applyIvFontSize(); }
+  };
+
+  if (ivFontDecrease) ivFontDecrease.addEventListener('click', handleFontDecrease);
+  if (trFontDecrease) trFontDecrease.addEventListener('click', handleFontDecrease);
+  if (ivFontIncrease) ivFontIncrease.addEventListener('click', handleFontIncrease);
+  if (trFontIncrease) trFontIncrease.addEventListener('click', handleFontIncrease);
 
   // Touch swipe on details panel: swipe up = expand, swipe down = collapse
   let detailsTouchStartY = 0;
@@ -765,7 +849,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     const content = item.content || item.description || '';
     document.getElementById('trTime').textContent = estimateReadTime(getWordCount(content));
-    document.getElementById('trBody').textContent = content;
+    setupChunkedText(content, document.getElementById('trBody'), document.getElementById('trReadMoreBtn'));
     
     modals.text.classList.add('active');
   };
@@ -822,23 +906,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     applyFilters(); // Re-render to update bookmark icons
   };
   // --- Social Interactions --- //
-
-  window.toggleCaption = (postId) => {
-    console.log('Toggling caption for', postId);
-    const el = document.getElementById(`caption-${postId}`) || document.getElementById(`snippet-${postId}`);
-    const btn = document.getElementById(`readmore-${postId}`);
-    if (!el || !btn) {
-      console.log('Element or button not found for', postId);
-      return;
-    }
-    if (el.classList.contains('expanded')) {
-      el.classList.remove('expanded');
-      btn.textContent = 'More';
-    } else {
-      el.classList.add('expanded');
-      btn.textContent = 'Less';
-    }
-  };
 
   // Re-check caption overflow after render
   function checkCaptions() {

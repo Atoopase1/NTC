@@ -166,7 +166,7 @@
       <div class="image-viewer-details" id="imageViewerDetails">
         <h3 id="imageViewerTitle" class="image-viewer-title"></h3>
         <p id="imageViewerDesc" class="image-viewer-desc"></p>
-        <button id="imageViewerReadMore" class="image-read-more-btn" style="display:none;">Read More</button>
+        <div id="imageViewerReadMore" style="display:none;"></div>
       </div>
     </div>
   </div>
@@ -192,10 +192,20 @@
     <div class="viewer-header">
       <div class="viewer-title" id="modalTextTitle">Article</div>
       <div class="viewer-actions">
+        <!-- Font settings button -->
+        <button class="viewer-btn" id="trFontSettingsBtn" title="Font size" aria-label="Adjust font size">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path><path d="M4.93 4.93a10 10 0 0 0 0 14.14"></path></svg>
+        </button>
         <button class="viewer-btn close-modal"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
       </div>
     </div>
     <div class="text-reader-body">
+      <!-- Font controls: shown when settings is tapped -->
+      <div class="iv-font-controls" id="trFontControls" style="display:none; justify-content:center; background:var(--bg-card); padding:10px; border-bottom:1px solid var(--border-color);">
+        <button class="iv-font-btn" id="trFontDecrease" aria-label="Decrease font size">A<span>-</span></button>
+        <span class="iv-font-label" id="trFontLabel">16px</span>
+        <button class="iv-font-btn iv-font-btn-large" id="trFontIncrease" aria-label="Increase font size">A<span>+</span></button>
+      </div>
       <div class="text-reader-content">
         <h1 id="trTitle">Title</h1>
         <div class="meta">
@@ -203,6 +213,7 @@
           <span id="trTime">0 min read</span>
         </div>
         <div class="body-text" id="trBody"></div>
+        <div id="trReadMoreBtn" style="display:none;"></div>
       </div>
     </div>
   </div>
@@ -250,7 +261,7 @@
   <script src="../js/supabase.js?v=3"></script>
   <script src="../js/app.js?v=5"></script>
   <script src="../js/auth.js?v=10"></script>
-  <script src="../js/materials.js?v=5"></script>
+  <script src="../js/materials.js?v=11"></script>
   
   <script>
     if ('serviceWorker' in navigator) {
