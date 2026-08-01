@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/style.css?v=5">
+  <link rel="stylesheet" href="../css/style.css?v=6">
   <link rel="stylesheet" href="../css/auth.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -264,7 +264,7 @@
   </div>
 
   <script src="../js/supabase.js"></script>
-  <script src="../js/app.js?v=5"></script>
+  <script src="../js/app.js?v=6"></script>
   <script>
     document.getElementById('googleLoginBtn').addEventListener('click', async () => {
       const msg = document.getElementById('statusMsg');
@@ -286,7 +286,7 @@
     if (blockedUntil) {
       const msg = document.getElementById('statusMsg');
       msg.className = 'status-msg error';
-      msg.innerHTML = `ÃƒÂ°Ã…Â¸Ã…Â¡Ã‚Â« <strong>Your account has been blocked</strong> until ${blockedUntil}. Please contact the administrator.`;
+      msg.innerHTML = `ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â« <strong>Your account has been blocked</strong> until ${blockedUntil}. Please contact the administrator.`;
       localStorage.removeItem('ntc_blocked_until');
       document.getElementById('googleLoginBtn').disabled = true;
     }

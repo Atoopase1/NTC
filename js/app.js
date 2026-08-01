@@ -152,14 +152,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const userDropdown = document.querySelector('.user-dropdown');
   if (userDropdown) {
     const toggle = userDropdown.querySelector('.user-dropdown-toggle');
-    toggle.addEventListener('click', async (e) => {
+    toggle.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (window.supaAuth) {
-        await window.supaAuth.signOut();
-      } else {
-        localStorage.removeItem('ntc_user');
-        window.location.href = 'login.html';
-      }
+      window.location.href = 'profile.html';
     });
     
     document.addEventListener('click', () => {

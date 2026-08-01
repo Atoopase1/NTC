@@ -408,17 +408,20 @@
 
 .recent-score-subject {
   flex: 1;
+  text-align: left;
 }
 
 .recent-score-subject h5 {
   font-size: var(--text-sm);
   font-weight: 600;
   margin-bottom: 2px;
+  text-align: left;
 }
 
 .recent-score-subject p {
   font-size: var(--text-xs);
   color: var(--text-lighter);
+  text-align: left;
 }
 
 .recent-score-value {
@@ -443,10 +446,11 @@
 
 .quick-action-btn {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-lg);
+  justify-content: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
   background: var(--background);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -456,6 +460,7 @@
   transition: all var(--transition-fast);
   text-decoration: none;
   cursor: pointer;
+  text-align: left;
 }
 
 .quick-action-btn:hover {
@@ -466,7 +471,8 @@
 }
 
 .quick-action-icon {
-  font-size: 28px;
+  font-size: 22px;
+  flex-shrink: 0;
 }
 
 /* Study Streak */
@@ -862,4 +868,121 @@
 .achievement-desc {
   font-size: 10px;
   color: var(--text-lighter);
+}
+
+/* ============================================
+   Laptop Layout (1024px+) - Professional Left-Aligned
+   ============================================ */
+@media (min-width: 1024px) {
+  /* Keep dashboard main left-aligned, no centering */
+  .dashboard-main {
+    max-width: 1200px;
+    text-align: left;
+  }
+
+  /* Stat cards: 4-column on laptops - left aligned, clean spacing */
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-lg);
+  }
+
+  /* Stat card: left-align content */
+  .stat-card {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  /* One-column grid on laptop to prevent right-edge crowding */
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-xl);
+    align-items: flex-start;
+  }
+
+  .dashboard-col {
+    display: grid;
+    gap: var(--space-xl);
+  }
+
+  /* Widget headers left-aligned */
+  .widget-header {
+    text-align: left;
+  }
+
+  /* Widget title: slightly larger on desktop */
+  .widget-title {
+    font-size: var(--text-lg);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  /* Welcome card layout */
+  .welcome-card {
+    padding: var(--space-2xl) var(--space-xl);
+    text-align: left;
+  }
+
+  .welcome-content {
+    max-width: 65%;
+    text-align: left;
+  }
+
+  .welcome-content h2 {
+    font-size: var(--text-3xl);
+  }
+
+  /* Quick actions: horizontal row on laptop */
+  .quick-actions {
+    display: flex;
+    flex-direction: row;
+    gap: var(--space-sm);
+  }
+
+  .quick-action-btn {
+    flex: 1;
+    justify-content: flex-start;
+    text-align: left;
+  }
+}
+
+/* ============================================
+   Profile Page - Left Aligned Layout
+   ============================================ */
+@media (min-width: 1024px) {
+  /* Profile main wrapper: left-aligned, not centered */
+  .dashboard-main > div[style*="max-width: 800px"],
+  .dashboard-main > div[style*="max-width:800px"] {
+    margin-left: 0;
+    margin-right: auto;
+    text-align: left;
+  }
+
+  /* Profile hero card: left-aligned */
+  .profile-photo-upload {
+    display: block;
+  }
+
+  /* Profile stats row: left-align text */
+  .dashboard-main [style*="text-align: center"] {
+    text-align: left !important;
+  }
+
+  /* All widget content in profile: left-aligned */
+  .dashboard-main .widget {
+    text-align: left;
+  }
+
+  .dashboard-main .widget-header {
+    text-align: left;
+  }
+
+  .dashboard-main .widget-body {
+    text-align: left;
+  }
+}
+
+  /* Subject overview grid full width on laptop */
+  .subject-overview-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }

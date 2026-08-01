@@ -237,7 +237,11 @@ async function getProfile(userId) {
       
     if (error) throw error;
     if (!data) throw new Error('Profile not found');
-    return data;
+    
+    // Merge local fallback data. Ensure null db values don't overwrite local values.
+    const localData = JSON.parse(localStorage.getItem(`user_${userId}_profile`) || '{}');
+    const cleanData = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== null));
+    return { ...localData, ...cleanData };
   } catch (error) {
     console.log('Using local profile data fallback');
     // Fallback if DB not setup
@@ -248,14 +252,30 @@ async function getProfile(userId) {
 }
 
 /**
- * Update an existing user profile
+ * Update a user's profile in the database.
  */
 async function updateProfile(userId, fields) {
   try {
+    // Filter out fields that don't exist in the profiles schema or have issues saving
+    const safeFields = { ...fields };
+    const { dob, school, phone } = safeFields;
+    delete safeFields.dob;
+    delete safeFields.school;
+    delete safeFields.phone;
+
     const { error } = await supabaseClient
       .from('profiles')
-      .upsert({ id: userId, ...fields });
+      .upsert({ id: userId, ...safeFields });
+      
     if (error) throw error;
+    
+    // Persist dob, school, and phone locally
+    const localData = JSON.parse(localStorage.getItem(`user_${userId}_profile`) || '{}');
+    if (dob !== undefined) localData.dob = dob;
+    if (school !== undefined) localData.school = school;
+    if (phone !== undefined) localData.phone = phone;
+    localStorage.setItem(`user_${userId}_profile`, JSON.stringify(localData));
+
     return { error: null };
   } catch (error) {
     console.error('Profile update failed:', error);

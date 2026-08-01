@@ -348,15 +348,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const profileBtn = document.getElementById('userProfileBtn');
   const dropdownMenu = document.getElementById('userDropdownMenu');
 
-  if (profileBtn && dropdownMenu) {
-    profileBtn.addEventListener('click', async (e) => {
+  if (profileBtn) {
+    profileBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (window.supaAuth) {
-        await window.supaAuth.signOut();
-      } else {
-        localStorage.removeItem('ntc_user');
-        window.location.href = 'login.html';
-      }
+      window.location.href = 'profile.html';
     });
 
     // Prevent clicks inside the dropdown from closing it
