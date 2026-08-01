@@ -8,21 +8,21 @@
 /* === CSS Custom Properties (Design Tokens) === */
 :root {
   /* Primary Colors */
-  --primary: #1196E8;
-  --primary-dark: #0B6FB5;
+  --primary: #003BF7;
+  --primary-dark: #002BD1;
   --primary-light: #4DB5F0;
-  --primary-ghost: rgba(17, 150, 232, 0.08);
-  --primary-glow: rgba(17, 150, 232, 0.25);
+  --primary-ghost: rgba(0, 59, 247, 0.08);
+  --primary-glow: rgba(0, 59, 247, 0.25);
 
   /* Secondary & Neutrals */
   --secondary: #0F172A;
   --secondary-light: #1E293B;
 
-  /* Accent Colors */
-  --accent: #22C55E;
-  --accent-dark: #16A34A;
-  --accent-light: #4ADE80;
-  --accent-ghost: rgba(34, 197, 94, 0.1);
+  /* Accent Colors (Deep Yellow to blend with Blue) */
+  --accent: #FFB300;
+  --accent-dark: #F57F17;
+  --accent-light: #FFCA28;
+  --accent-ghost: rgba(255, 179, 0, 0.1);
 
   /* Semantic Colors */
   --warning: #F59E0B;
@@ -58,14 +58,14 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
   --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-  --shadow-primary: 0 4px 14px rgba(17, 150, 232, 0.3);
-  --shadow-accent: 0 4px 14px rgba(34, 197, 94, 0.3);
+  --shadow-primary: 0 4px 14px rgba(0, 59, 247, 0.3);
+  --shadow-accent: 0 4px 14px rgba(255, 179, 0, 0.3);
 
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #1196E8 0%, #0B6FB5 100%);
+  --gradient-primary: linear-gradient(135deg, #003BF7 0%, #002BD1 100%);
   --gradient-hero: linear-gradient(135deg, #F9FBFE 0%, #E8F0FA 50%, #F4F8FD 100%);
-  --gradient-accent: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
-  --gradient-card: linear-gradient(135deg, rgba(17, 150, 232, 0.05) 0%, rgba(34, 197, 94, 0.05) 100%);
+  --gradient-accent: linear-gradient(135deg, #FFB300 0%, #F57F17 100%);
+  --gradient-card: linear-gradient(135deg, rgba(0, 59, 247, 0.05) 0%, rgba(255, 179, 0, 0.05) 100%);
   --gradient-dark: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
 
   /* Border Radius */
@@ -2055,7 +2055,7 @@ body:not([data-theme="dark"]) .hero-laptop-img {
 }
 
 .hero-option.correct .hero-option-radio::after {
-  content: '✓';
+  content: 'âœ“';
   position: absolute;
   top: 50%;
   left: 50%;
@@ -3067,7 +3067,7 @@ body:not([data-theme="dark"]) .hero-laptop-img {
 
 /* ---- Right Visual Panel ---- */
 .ntc-promo-right {
-  background: linear-gradient(145deg, var(--primary) 0%, #0B6FB5 100%);
+  background: linear-gradient(145deg, var(--primary) 0%, #002BD1 100%);
   position: relative;
   overflow: hidden;
   display: flex;
@@ -3255,7 +3255,7 @@ body:not([data-theme="dark"]) .hero-laptop-img {
    NTC Banner + Glassmorphism Panel
    ============================================ */
 
-/* Outer section — no padding, flush edges */
+/* Outer section â€” no padding, flush edges */
 .ntc-banner-section {
   width: 100%;
   background: #020d1f;
@@ -3291,8 +3291,8 @@ body:not([data-theme="dark"]) .hero-laptop-img {
   of the banner image (beneath the NTC logo circle).
 
   The banner image aspect ratio is approx 2:1.
-  Logo occupies roughly top-left 42% width × top 55% height.
-  The empty space is the bottom-left: left 0–42%, top 52%–90%.
+  Logo occupies roughly top-left 42% width Ã— top 55% height.
+  The empty space is the bottom-left: left 0â€“42%, top 52%â€“90%.
   We use % units so it scales with the image perfectly.
 */
 .ntc-glass-panel {

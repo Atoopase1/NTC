@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/style.css?v=3">
+  <link rel="stylesheet" href="../css/style.css?v=5">
   <link rel="stylesheet" href="../css/auth.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -198,7 +198,7 @@
   </style>
   <!-- PWA -->
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#4f46e5">
+  <meta name="theme-color" content="#003BF7">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -286,7 +286,7 @@
     if (blockedUntil) {
       const msg = document.getElementById('statusMsg');
       msg.className = 'status-msg error';
-      msg.innerHTML = `🚫 <strong>Your account has been blocked</strong> until ${blockedUntil}. Please contact the administrator.`;
+      msg.innerHTML = `ÃƒÂ°Ã…Â¸Ã…Â¡Ã‚Â« <strong>Your account has been blocked</strong> until ${blockedUntil}. Please contact the administrator.`;
       localStorage.removeItem('ntc_blocked_until');
       document.getElementById('googleLoginBtn').disabled = true;
     }

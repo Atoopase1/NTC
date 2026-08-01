@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .cert-card {
               width: 100%;
               max-width: 900px;
-              border: 14px solid #4f46e5;
+              border: 14px solid #003BF7;
               padding: 18px;
               background: #fdfdfd;
             }
@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             .cert-subtitle {
               font-size: 17px;
-              color: #4f46e5;
+              color: #003BF7;
               font-style: italic;
               margin-bottom: 36px;
             }

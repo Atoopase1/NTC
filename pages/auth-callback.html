@@ -26,7 +26,7 @@
       width: 52px;
       height: 52px;
       border: 3px solid rgba(17, 150, 232, 0.2);
-      border-top-color: #1196e8;
+      border-top-color: #003BF7;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
       margin: 0 auto 24px;
@@ -47,7 +47,7 @@
   </style>
   <!-- PWA -->
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#4f46e5">
+  <meta name="theme-color" content="#003BF7">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -58,7 +58,7 @@
     <div class="spinner"></div>
     <h2>Signing you in...</h2>
     <p>Please wait while we verify your account.</p>
-    <div class="error-msg" id="errorMsg">Sign-in failed. <a href="login.html" style="color:#1196e8;">Try again</a></div>
+    <div class="error-msg" id="errorMsg">Sign-in failed. <a href="login.html" style="color:#003BF7;">Try again</a></div>
   </div>
 
   <script src="../js/supabase.js"></script>
@@ -80,7 +80,7 @@
         
         if (error) {
           console.error('OAuth Error:', error, errorDesc);
-          document.getElementById('errorMsg').innerHTML = `Sign-in failed: <strong>${errorDesc ? errorDesc.replace(/\+/g, ' ') : error}</strong> <br><a href="login.html" style="color:#1196e8;">Try again</a>`;
+          document.getElementById('errorMsg').innerHTML = `Sign-in failed: <strong>${errorDesc ? errorDesc.replace(/\+/g, ' ') : error}</strong> <br><a href="login.html" style="color:#003BF7;">Try again</a>`;
           document.getElementById('errorMsg').style.display = 'block';
           // Hide spinner
           document.querySelector('.spinner').style.display = 'none';
@@ -113,7 +113,7 @@
           }
         }
 
-        // ── Strategy 1: Listen for Supabase auth state changes ──
+        // â”€â”€ Strategy 1: Listen for Supabase auth state changes â”€â”€
         // Supabase v2 processes the URL hash (#access_token=...) internally
         // and fires onAuthStateChange with 'SIGNED_IN' when done.
         let handled = false;
@@ -130,7 +130,7 @@
           }
         );
 
-        // ── Strategy 2: Fallback timeout ──
+        // â”€â”€ Strategy 2: Fallback timeout â”€â”€
         // If the auth event hasn't fired within 8 seconds, try getSession()
         // as a last resort, then show error if still no session.
         setTimeout(async () => {
