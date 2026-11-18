@@ -54,13 +54,59 @@
         return;
       }
       allSessions = sessions || [];
-      if (allSessions.length === 0) {
-        container.innerHTML = `<div class="attendance-card" style="text-align:center; padding:40px 20px;"><h3>No Attendance Sessions</h3><p style="color:var(--text-light); margin:0;">There are currently no active or scheduled attendance sessions for you.</p></div>`;
+
+      // ── Filter to student's selected courses ──────────────────────────
+      let filteredSessions = allSessions;
+      try {
+        const client = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : window.supabaseClient;
+        if (client) {
+          const { data: prefs, error: prefErr } = await client
+            .from('student_course_preferences')
+            .select('subject_id')
+            .eq('user_id', currentUser.id);
+          if (!prefErr && prefs && prefs.length > 0) {
+            // Get subject names for the selected IDs
+            const selectedIds = prefs.map(p => p.subject_id);
+            const { data: subjects } = await client
+              .from('subjects')
+              .select('id, name')
+              .in('id', selectedIds);
+            if (subjects && subjects.length > 0) {
+              const selectedNames = new Set(subjects.map(s => s.name.toLowerCase()));
+              filteredSessions = allSessions.filter(session => {
+                const sub = (session.subject || '').toLowerCase();
+                // Keep session if subject matches one of the student's courses
+                // or if session has no subject (general)
+                return !sub || sub === 'general' || selectedNames.has(sub);
+              });
+            }
+          }
+          // If no prefs set → show nothing, nudge student to pick courses
+          else if (!prefErr && prefs && prefs.length === 0) {
+            container.innerHTML = `
+              <div class="attendance-card" style="text-align:center; padding:40px 20px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text-light); margin-bottom:12px;"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><line x1="12" y1="6" x2="12" y2="12"/><line x1="9" y1="9" x2="15" y2="9"/></svg>
+                <h3 style="margin-bottom:8px;">No Courses Selected</h3>
+                <p style="color:var(--text-light); margin:0 0 16px;">You haven't selected any courses yet. Attendance sessions will appear here once you enrol in your courses.</p>
+                <a href="courses.html" class="btn btn-primary">Select My Courses</a>
+              </div>`;
+            return;
+          }
+        }
+      } catch (filterErr) {
+        // Filter failed — fall back to showing all sessions
+        console.warn('Could not filter sessions by courses:', filterErr);
+        filteredSessions = allSessions;
+      }
+      // ─────────────────────────────────────────────────────────────────
+
+      if (filteredSessions.length === 0) {
+        container.innerHTML = `<div class="attendance-card" style="text-align:center; padding:40px 20px;"><h3>No Attendance Sessions</h3><p style="color:var(--text-light); margin:0;">There are currently no active or scheduled attendance sessions for your enrolled courses.</p></div>`;
         return;
       }
-      const submissionChecks = await Promise.all(allSessions.map(session => window.supaAttendance.checkAlreadySubmitted(session.id, currentUser.id)));
+      const submissionChecks = await Promise.all(filteredSessions.map(session => window.supaAttendance.checkAlreadySubmitted(session.id, currentUser.id)));
       let gridHtml = '<div class="attendance-grid">';
-      allSessions.forEach((session, idx) => {
+      filteredSessions.forEach((session, idx) => {
         const submitted = submissionChecks[idx] && submissionChecks[idx].data;
         gridHtml += renderSessionCard(session, Boolean(submitted));
       });
