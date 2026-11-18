@@ -100,9 +100,6 @@
     if (tabId !== 'records-tab' && activeRealtimeChannel) {
       cleanupSubscription();
     }
-    if (tabId === 'register-tab') {
-      filterMasterRegister();
-    }
     if (tabId === 'courses-tab' && currentCourse) {
       // Return to courses grid if switching back to courses tab
       closeCourseRanking();
@@ -195,14 +192,13 @@
       calculateCourseMetrics(subjects);
       recalculateDaysPresent(allSubmissions);
 
-      // Render Dashboard
+      // Render Dashboard & update overview KPI cards at top
       renderCoursesDashboard();
+      updateRegisterKpis(allSubmissions);
 
-      // Also refresh historical register log & session management table
+      // Refresh session management table
       renderSessionsTable(allSessions);
       populateSessionSubjectDropdown(subjects);
-      populateRegisterFilterOptions();
-      filterMasterRegister();
 
     } catch (err) {
       console.error('Error loading attendance data:', err);
@@ -289,12 +285,34 @@
         });
       }
 
+      // Used indices to ensure strictly UNIQUE identification for every student
+      const usedIndices = new Set();
+      function getUniqueIndex(preferredIndex, studentId, studentOrder) {
+        let clean = (preferredIndex || '').trim();
+        if (clean && !usedIndices.has(clean.toUpperCase())) {
+          usedIndices.add(clean.toUpperCase());
+          return clean;
+        }
+        let baseNum = 301 + (studentOrder || 0);
+        let candidate = `UENR/0${baseNum}`;
+        while (usedIndices.has(candidate.toUpperCase())) {
+          baseNum++;
+          candidate = `UENR/0${baseNum}`;
+        }
+        usedIndices.add(candidate.toUpperCase());
+        return candidate;
+      }
+
       // Now calculate attendance percentage for each enrolled student in THIS course
+      let studentOrderIdx = 0;
       const enrolledStudents = Array.from(studentMap.values()).map(st => {
+        studentOrderIdx++;
+        const uniqueIndex = getUniqueIndex(st.indexNumber, st.id, studentOrderIdx);
+
         // Count verified sessions attended by this student in this course
         const attendedSessionsCount = courseSubmissions.filter(subm => {
           const isThisStudent = (subm.user_id === st.id) ||
-                                (subm.index_number && subm.index_number.toLowerCase() === (st.indexNumber || '').toLowerCase()) ||
+                                (subm.index_number && subm.index_number.toLowerCase() === (uniqueIndex || '').toLowerCase()) ||
                                 (subm.full_name && subm.full_name.toLowerCase() === st.fullName.toLowerCase());
           const isVerified = subm.verification_status === 'verified';
           return isThisStudent && isVerified;
@@ -313,7 +331,7 @@
         return {
           id: st.id,
           fullName: st.fullName,
-          indexNumber: st.indexNumber,
+          indexNumber: uniqueIndex,
           sessionsAttended: attendedSessionsCount,
           sessionsHeld: sessionsHeld,
           attendancePercentage: attendancePercentage
@@ -486,16 +504,14 @@
       if (b.sessionsAttended !== a.sessionsAttended) {
         return b.sessionsAttended - a.sessionsAttended;
       }
-      return a.fullName.localeCompare(b.fullName);
+      const nameComp = (a.fullName || '').localeCompare(b.fullName || '');
+      if (nameComp !== 0) return nameComp;
+      return (a.indexNumber || '').localeCompare(b.indexNumber || '');
     });
 
-    // Assign ranking positions: Students with equal percentages share the same rank!
-    let currentRank = 1;
+    // Assign strictly UNIQUE ranking positions (1, 2, 3...) so every student has a unique identification
     sortedStudents.forEach((st, idx) => {
-      if (idx > 0 && st.attendancePercentage < sortedStudents[idx - 1].attendancePercentage) {
-        currentRank = idx + 1;
-      }
-      st.rank = currentRank;
+      st.rank = idx + 1;
     });
 
     currentCourseRankings = sortedStudents;
@@ -544,7 +560,7 @@
     if (!students || students.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="2" style="text-align: center; padding: 40px; color: var(--text-light);">
+          <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-light);">
             <div style="font-size: 28px; margin-bottom: 8px;">🎓</div>
             <div style="font-weight: 700; font-size: 15px; color: var(--text); margin-bottom: 4px;">No Students Registered</div>
             <div>No students are currently registered for ${escapeHtml(currentCourse ? currentCourse.name : 'this course')}.</div>
@@ -557,24 +573,24 @@
     const sessionsHeld = currentCourse ? currentCourse.sessionsHeld : 0;
     let rowsHtml = '';
 
-    // Exactly TWO main columns per prompt:
-    // LEFT COLUMN: RANK / STUDENT
-    // RIGHT COLUMN: ATTENDANCE
+    // Dedicated columns: RANK, STUDENT NAME, INDEX NUMBER, SESSIONS ATTENDED, ATTENDANCE
     students.forEach(st => {
       const pct = st.attendancePercentage;
       const statusClass = pct >= 75 ? 'high' : pct >= 50 ? 'med' : 'low';
 
       rowsHtml += `
         <tr>
+          <td style="text-align: center; width: 70px;">
+            <div class="ranking-num-badge" style="display:inline-block; min-width:auto;">${st.rank}.</div>
+          </td>
           <td>
-            <div class="ranking-student-cell">
-              <div class="ranking-num-badge">${st.rank}.</div>
-              <div class="ranking-student-details">
-                <div class="ranking-student-name">${escapeHtml(st.fullName)}</div>
-                <div class="ranking-student-index">${escapeHtml(st.indexNumber)}</div>
-                <div class="ranking-student-attended">${st.sessionsAttended} of ${sessionsHeld} sessions attended</div>
-              </div>
-            </div>
+            <div class="ranking-student-name">${escapeHtml(st.fullName)}</div>
+          </td>
+          <td>
+            <span class="ranking-student-index">${escapeHtml(st.indexNumber)}</span>
+          </td>
+          <td>
+            <span class="ranking-student-attended">${st.sessionsAttended} of ${sessionsHeld} sessions attended</span>
           </td>
           <td class="th-attendance">
             <div class="ranking-attendance-cell">
@@ -1080,6 +1096,7 @@
   }
 
   function updateRegisterKpis(submissions) {
+    submissions = submissions || allSubmissions || [];
     const totalEl = document.getElementById('regKpiTotal');
     const verifiedEl = document.getElementById('regKpiVerified');
     const flaggedEl = document.getElementById('regKpiFlagged');

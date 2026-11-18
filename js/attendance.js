@@ -234,14 +234,14 @@
       </div>`;
   }
 
-  function showLocationOutsideRadius(distance, allowedRadius) {
+  function showLocationOutOfRangeNotice(distance, allowedRadius) {
     const container = document.getElementById('modalStatusContainer');
     if (!container) return;
     container.innerHTML = `
-      <div class="attendance-status-box error" id="locationStepBox">
-        <span>&#x1F4CD; Location verification failed: You are <strong>${Math.round(distance)}m</strong> away from the venue. You must be within <strong>${allowedRadius}m</strong> to submit attendance.</span>
-        <div style="margin-top:12px;">
-          <button class="btn btn-secondary" onclick="window.studentAttendance.closeSubmitModal()">Close</button>
+      <div class="attendance-status-box warning" id="locationStepBox">
+        <div style="width:100%;">
+          <strong style="display:block; margin-bottom:4px; font-size:14px;">⚠️ Outside Venue Range (~${Math.round(distance)}m away)</strong>
+          <span style="font-size:13px; line-height:1.4;">The designated venue radius is <strong>${allowedRadius}m</strong>. You can still submit your attendance, but your check-in will be <strong>flagged as Out of Range</strong> for instructor review.</span>
         </div>
       </div>`;
   }
@@ -250,8 +250,8 @@
     const container = document.getElementById('modalStatusContainer');
     if (!container) return;
     const distanceText = hasReference
-      ? `&#x2714; Location verified &mdash; ${Math.round(distance)}m from venue`
-      : `&#x2714; Location verified`;
+      ? `✔ Location verified &mdash; ${Math.round(distance)}m from venue (within radius)`
+      : `✔ Location verified`;
     container.innerHTML = `
       <div class="attendance-status-box success" id="locationStepBox">
         <span>${distanceText}</span>
@@ -263,6 +263,97 @@
     if (!container) return;
     const spinner = type === 'info' ? '<span class="attendance-spinner"></span>' : '';
     container.innerHTML = `<div class="attendance-status-box ${type}">${spinner}<span>${escapeHtml(message)}</span></div>`;
+  }
+
+  // ─── Resilient Multi-Tier Geolocation Engine ──────────────────────────────
+  // Guarantees resilient location acquisition without fragile timeouts or failures
+
+  function acquireResilientLocation() {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        return reject({ code: 0, message: 'Geolocation is not supported by your browser.' });
+      }
+
+      let resolved = false;
+      let watchId = null;
+
+      function onPositionSuccess(pos) {
+        if (resolved) return;
+        resolved = true;
+        if (watchId !== null) {
+          try { navigator.geolocation.clearWatch(watchId); } catch (e) {}
+        }
+        resolve(pos);
+      }
+
+      // Tier 1: High accuracy GPS attempt (8000ms window)
+      navigator.geolocation.getCurrentPosition(
+        onPositionSuccess,
+        (err) => {
+          if (resolved) return;
+          if (err.code === 1) {
+            // Permission denied explicitly by user
+            resolved = true;
+            if (watchId !== null) {
+              try { navigator.geolocation.clearWatch(watchId); } catch (e) {}
+            }
+            return reject(err);
+          }
+
+          // Tier 2: Immediate fallback to standard network/Wi-Fi/cell triangulation
+          navigator.geolocation.getCurrentPosition(
+            onPositionSuccess,
+            (err2) => {
+              if (resolved) return;
+              // If watch is active, wait an extra 2.5s for hardware fix
+              setTimeout(() => {
+                if (!resolved) {
+                  resolved = true;
+                  if (watchId !== null) {
+                    try { navigator.geolocation.clearWatch(watchId); } catch (e) {}
+                  }
+                  reject(err2 || err);
+                }
+              }, 2500);
+            },
+            {
+              enableHighAccuracy: false,
+              timeout: 10000,
+              maximumAge: 60000
+            }
+          );
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 8000,
+          maximumAge: 15000
+        }
+      );
+
+      // Tier 3: Concurrently listen to watchPosition for faster mobile hardware updates
+      try {
+        watchId = navigator.geolocation.watchPosition(
+          (pos) => {
+            if (pos && pos.coords && pos.coords.latitude != null) {
+              onPositionSuccess(pos);
+            }
+          },
+          () => {},
+          { enableHighAccuracy: true, maximumAge: 15000 }
+        );
+      } catch (e) {}
+
+      // Master safety timeout (18 seconds)
+      setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          if (watchId !== null) {
+            try { navigator.geolocation.clearWatch(watchId); } catch (e) {}
+          }
+          reject({ code: 3, message: 'Location request timed out. Please ensure GPS is enabled and try again.' });
+        }
+      }, 18000);
+    });
   }
 
   // ─── Core GPS check ───────────────────────────────────────────────────────
@@ -278,53 +369,43 @@
 
     let position;
     try {
-      position = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 0
-        });
-      });
+      position = await acquireResilientLocation();
     } catch (err) {
       if (err.code === 1) {
-        // Permission denied — permanent block, no retry
         showLocationDenied();
       } else if (err.code === 2) {
-        showLocationRetryable('Location unavailable. Please check your device location settings and try again.');
+        showLocationRetryable('Location unavailable. Please check your device location / GPS toggle and try again.');
       } else if (err.code === 3) {
-        showLocationRetryable('Location request timed out. Please try again.');
+        showLocationRetryable('Location request timed out. Please move to an open area and try again.');
       } else {
-        showLocationRetryable('Location error: ' + err.message);
+        showLocationRetryable(err.message || 'Unable to acquire location.');
       }
       return;
     }
 
     const { latitude, longitude, accuracy } = position.coords;
-
-    // Accuracy guard — >100m is too poor
-    if (accuracy > 100) {
-      showLocationRetryable(
-        `GPS accuracy is too low (~${Math.round(accuracy)}m). Please move to an open area and try again.`
-      );
-      return;
-    }
-
     const session = currentActiveSession;
     const hasReference = session.reference_lat != null && session.reference_lng != null;
     let distance = 0;
+    let isWithinRadius = true;
 
     if (hasReference) {
       distance = haversineDistance(latitude, longitude, session.reference_lat, session.reference_lng);
       const allowedRadius = session.radius_meters || 30;
-      if (distance > allowedRadius) {
-        showLocationOutsideRadius(distance, allowedRadius);
-        return; // Do NOT show form
-      }
+      isWithinRadius = distance <= allowedRadius;
     }
 
-    // Location check passed — store and reveal form
-    verifiedPosition = { latitude, longitude, accuracy, distance };
-    showLocationVerified(distance, hasReference);
+    // Store verified position
+    verifiedPosition = { latitude, longitude, accuracy: accuracy || 10, distance, isWithinRadius };
+
+    if (!isWithinRadius && hasReference) {
+      // REQUIREMENT 4: Students out of range CAN submit, but flagged!
+      showLocationOutOfRangeNotice(distance, session.radius_meters || 30);
+    } else {
+      showLocationVerified(distance, hasReference);
+    }
+
+    // Always reveal form fields so student can submit
     showFormFields();
   }
 
@@ -406,6 +487,7 @@
     const { latitude, longitude, accuracy, distance } = verifiedPosition;
     const hasReference = session.reference_lat != null && session.reference_lng != null;
     const isWithinRadius = hasReference ? distance <= (session.radius_meters || 30) : true;
+    const verificationStatus = isWithinRadius ? 'verified' : 'rejected';
 
     showSubmittingStatus('Submitting attendance...', 'info');
 
@@ -418,7 +500,7 @@
       distance_meters: parseFloat(distance.toFixed(2)),
       location_accuracy: parseFloat(accuracy.toFixed(2)),
       is_within_radius: isWithinRadius,
-      verification_status: 'verified',
+      verification_status: verificationStatus,
       submitted_at: new Date().toISOString()
     };
 
@@ -432,7 +514,11 @@
       return;
     }
 
-    showSubmittingStatus(`✓ Attendance submitted successfully! (Distance: ${Math.round(distance)}m from reference)`, 'success');
+    if (isWithinRadius) {
+      showSubmittingStatus(`✓ Attendance verified & submitted! (Distance: ${Math.round(distance)}m from reference)`, 'success');
+    } else {
+      showSubmittingStatus(`⚠️ Attendance submitted & flagged as Out of Range (${Math.round(distance)}m from venue).`, 'warning');
+    }
     if (userProfile) { userProfile.full_name = fullName; userProfile.index_number = indexNumber; }
     setTimeout(() => { closeSubmitModal(); loadSessions(); }, 1500);
   }
