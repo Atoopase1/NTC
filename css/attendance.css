@@ -295,3 +295,230 @@
     align-items: flex-start;
   }
 }
+
+/* ============================================
+   Master Attendance Register Styles (Admin)
+   ============================================ */
+
+.register-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.register-kpi-card {
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.register-kpi-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.register-kpi-icon.primary {
+  background: rgba(0, 59, 247, 0.1);
+  color: var(--primary, #003bf7);
+}
+
+.register-kpi-icon.success {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.register-kpi-icon.warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.register-kpi-icon.purple {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+
+.register-kpi-info h4 {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-light, #64748b);
+  margin: 0 0 4px;
+}
+
+.register-kpi-info .kpi-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text, #1e293b);
+  margin: 0;
+  line-height: 1;
+}
+
+.register-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.register-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.register-filter-bar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 14px 18px;
+  background: var(--background, #f8fafc);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.register-search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+}
+
+.register-search-wrap input {
+  width: 100%;
+  padding: 8px 14px 8px 36px;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text, #1e293b);
+  font-family: inherit;
+  outline: none;
+}
+
+.register-search-wrap svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light, #94a3b8);
+}
+
+.register-roll-tag {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-light, #64748b);
+  background: var(--background, #f1f5f9);
+  padding: 2px 8px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+.register-index-tag {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary, #003bf7);
+  background: rgba(0, 59, 247, 0.08);
+  padding: 2px 8px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+.btn-excel-green {
+  background: #107c41 !important;
+  color: white !important;
+  border: none !important;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-excel-green:hover {
+  background: #0b5c30 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 124, 65, 0.25);
+}
+
+.btn-copy-clip {
+  background: var(--surface, #ffffff) !important;
+  color: var(--text, #1e293b) !important;
+  border: 1.5px solid var(--border, #e2e8f0) !important;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-copy-clip:hover {
+  border-color: var(--primary, #003bf7) !important;
+  color: var(--primary, #003bf7) !important;
+  transform: translateY(-1px);
+}
+
+.admin-notice-card {
+  background: linear-gradient(135deg, rgba(0, 59, 247, 0.06), rgba(0, 59, 247, 0.02));
+  border: 1.5px solid rgba(0, 59, 247, 0.2);
+  border-radius: 14px;
+  padding: 16px 20px;
+}
+
+.register-badge-count {
+  background: var(--background, #f1f5f9);
+  color: var(--text-light, #64748b);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border, #e2e8f0);
+}
+
+@media (max-width: 640px) {
+  .register-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .register-actions {
+    justify-content: stretch;
+  }
+  .register-actions button {
+    flex: 1;
+    justify-content: center;
+  }
+  .register-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+

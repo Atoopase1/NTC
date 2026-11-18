@@ -29,6 +29,13 @@
   }
 
   async function initAuthAndLoad() {
+    // Show admin banner if current user is an administrator
+    const isAdmin = localStorage.getItem('preptrack_is_admin') === 'true' || localStorage.getItem('ntc_is_admin') === 'true';
+    const adminBanner = document.getElementById('adminNoticeBanner');
+    if (adminBanner && isAdmin) {
+      adminBanner.style.display = 'block';
+    }
+
     const client = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : window.supabaseClient;
     if (!client) { setTimeout(initAuthAndLoad, 300); return; }
     try {
@@ -36,8 +43,11 @@
       if (error || !user) { window.location.href = 'login.html'; return; }
       currentUser = user;
       try {
-        const { data: profile } = await client.from('profiles').select('full_name, index_number, course').eq('id', user.id).maybeSingle();
+        const { data: profile } = await client.from('profiles').select('full_name, index_number, course, role').eq('id', user.id).maybeSingle();
         userProfile = profile || {};
+        if (adminBanner && (profile?.role === 'admin' || isAdmin)) {
+          adminBanner.style.display = 'block';
+        }
       } catch (e) { userProfile = {}; }
       await loadSessions();
     } catch (err) { window.location.href = 'login.html'; }

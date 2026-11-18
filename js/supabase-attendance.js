@@ -205,6 +205,51 @@
     return { data, error };
   }
 
+  /**
+   * Get all attendance submissions across all sessions for the Master Register
+   */
+  async function getAllAttendanceSubmissions() {
+    const client = getClient();
+    if (!client) return { data: null, error: new Error('Supabase client not initialized') };
+
+    const { data, error } = await client
+      .from('attendance_submissions')
+      .select('*, attendance_sessions(title, subject, session_date, start_time, end_time, location_name, radius_meters)')
+      .order('submitted_at', { ascending: false });
+
+    return { data, error };
+  }
+
+  /**
+   * Update attendance verification status (manual admin override)
+   */
+  async function updateAttendanceSubmissionStatus(submissionId, status) {
+    const client = getClient();
+    if (!client) return { error: new Error('Supabase client not initialized') };
+
+    const { error } = await client
+      .from('attendance_submissions')
+      .update({ verification_status: status })
+      .eq('id', submissionId);
+
+    return { error };
+  }
+
+  /**
+   * Delete single attendance submission
+   */
+  async function deleteAttendanceSubmission(submissionId) {
+    const client = getClient();
+    if (!client) return { error: new Error('Supabase client not initialized') };
+
+    const { error } = await client
+      .from('attendance_submissions')
+      .delete()
+      .eq('id', submissionId);
+
+    return { error };
+  }
+
   window.supaAttendance = {
     createAttendanceSession,
     getAttendanceSessions,
@@ -215,6 +260,9 @@
     submitAttendance,
     checkAlreadySubmitted,
     getAttendanceSubmissions,
+    getAllAttendanceSubmissions,
+    updateAttendanceSubmissionStatus,
+    deleteAttendanceSubmission,
     getStudentAttendanceHistory
   };
 
