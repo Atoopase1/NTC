@@ -1,7 +1,7 @@
 {
-  "name": "NTC Exam Prep",
-  "short_name": "NTC Prep",
-  "description": "Pass your Teacher Licensure Exam with NTC Exam Prep",
+  "name": "PrepTrack",
+  "short_name": "PrepTrack",
+  "description": "Your Learning. Your Progress. Your Future. — Prepare smarter with PrepTrack.",
   "start_url": "/pages/dashboard.html",
   "display": "standalone",
   "orientation": "portrait",

@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initResults();
   
   function initResults() {
-    const resultStr = sessionStorage.getItem('ntc_current_result');
+    const resultStr = sessionStorage.getItem('preptrack_current_result') || sessionStorage.getItem('ntc_current_result');
     
     if (!resultStr) {
       window.showToast('No recent exam results found. Redirecting to dashboard...', 'error');
@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
       printBtn.innerHTML = originalText;
       printBtn.disabled = false;
 
-      const resultStr = sessionStorage.getItem('ntc_current_result');
+      const resultStr = sessionStorage.getItem('preptrack_current_result') || sessionStorage.getItem('ntc_current_result');
       if (!resultStr) return;
       
       const result = JSON.parse(resultStr);

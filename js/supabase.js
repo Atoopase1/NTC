@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // NTC Exam Prep - Supabase Integration
 // Connects to Supabase backend for Auth & DB
 // ============================================
@@ -91,8 +91,14 @@ async function signIn(email, password) {
 async function signOut() {
   if (!supabaseClient) return;
   await supabaseClient.auth.signOut();
-  localStorage.removeItem('ntc_is_admin');
-  localStorage.removeItem('ntc_view_mode');
+  localStorage.removeItem('preptrack_is_admin');
+  localStorage.removeItem('ntc_is_admin'); localStorage.removeItem('preptrack_is_admin');
+  localStorage.removeItem('preptrack_admin_email');
+  localStorage.removeItem('ntc_admin_email'); localStorage.removeItem('preptrack_admin_email');
+  localStorage.removeItem('preptrack_admin_permissions');
+  localStorage.removeItem('ntc_admin_permissions'); localStorage.removeItem('preptrack_admin_permissions');
+  localStorage.removeItem('preptrack_view_mode');
+  localStorage.removeItem('ntc_view_mode'); localStorage.removeItem('preptrack_view_mode');
   window.location.href = '/pages/login.html';
 }
 
@@ -125,6 +131,9 @@ async function signInWithGoogle() {
 /**
  * Check user role and redirect to the correct page.
  * Called after any login method (email+password or Google OAuth).
+ * 
+ * NOTE: Server-side Row Level Security (RLS) is the actual security boundary.
+ * Setting localStorage keys here is strictly for frontend UI routing and display performance.
  */
 async function checkAdminAndRedirect(userEmail) {
   const ADMIN_EMAIL = 'atoopase@gmail.com';
@@ -146,12 +155,20 @@ async function checkAdminAndRedirect(userEmail) {
           if (user) {
             const { data: profile, error: profileError } = await supabaseClient
               .from('profiles')
-              .select('role, admin_permissions')
+              .select('role, admin_permissions, blocked_until')
               .eq('id', user.id)
               .single();
             if (profileError) console.warn('Profile role fetch error (non-fatal):', profileError.message);
+            // Check not blocked
+            if (profile && profile.blocked_until && new Date(profile.blocked_until) > new Date()) {
+              console.warn('Admin account is blocked');
+              resolve(false);
+              return;
+            }
             if (profile && profile.role === 'admin') {
-              localStorage.setItem('ntc_admin_permissions', JSON.stringify(profile.admin_permissions || []));
+              const permsJson = JSON.stringify(profile.admin_permissions || []);
+              localStorage.setItem('preptrack_admin_permissions', permsJson);
+              localStorage.setItem('ntc_admin_permissions', permsJson); localStorage.setItem('preptrack_admin_permissions', permsJson);
               resolve(true);
               return;
             }
@@ -172,17 +189,22 @@ async function checkAdminAndRedirect(userEmail) {
   }
 
   if (isAdmin) {
-    localStorage.setItem('ntc_is_admin', 'true');
-    localStorage.setItem('ntc_admin_email', userEmail);
-    const viewMode = localStorage.getItem('ntc_view_mode') || 'admin';
+    localStorage.setItem('preptrack_is_admin', 'true');
+    localStorage.setItem('ntc_is_admin', 'true'); localStorage.setItem('preptrack_is_admin', 'true');
+    localStorage.setItem('preptrack_admin_email', userEmail);
+    localStorage.setItem('ntc_admin_email', userEmail); localStorage.setItem('preptrack_admin_email', userEmail);
+    const viewMode = localStorage.getItem('preptrack_view_mode') || localStorage.getItem('ntc_view_mode') || 'admin';
     if (viewMode === 'admin') {
       window.location.href = '/pages/admin-lessons.html';
       return;
     }
   } else {
-    localStorage.removeItem('ntc_is_admin');
-    localStorage.removeItem('ntc_admin_email');
-    localStorage.removeItem('ntc_admin_permissions');
+    localStorage.removeItem('preptrack_is_admin');
+    localStorage.removeItem('ntc_is_admin'); localStorage.removeItem('preptrack_is_admin');
+    localStorage.removeItem('preptrack_admin_email');
+    localStorage.removeItem('ntc_admin_email'); localStorage.removeItem('preptrack_admin_email');
+    localStorage.removeItem('preptrack_admin_permissions');
+    localStorage.removeItem('ntc_admin_permissions'); localStorage.removeItem('preptrack_admin_permissions');
   }
 
   window.location.href = '/pages/dashboard.html';
@@ -348,9 +370,9 @@ async function saveExamResult(userId, examData) {
   } catch (error) {
     console.warn('Could not save exam to DB. Saving locally.', error);
     // Fallback local storage
-    const results = JSON.parse(localStorage.getItem('ntc_exam_results') || '[]');
+    const results = JSON.parse(localStorage.getItem('preptrack_exam_results') || localStorage.getItem('ntc_exam_results') || '[]');
     results.push({ ...examData, userId, date: new Date().toISOString() });
-    localStorage.setItem('ntc_exam_results', JSON.stringify(results));
+    localStorage.setItem('ntc_exam_results', JSON.stringify(results)); localStorage.setItem('preptrack_exam_results', JSON.stringify(results));
     return true;
   }
 }
@@ -388,7 +410,7 @@ async function getExamHistory(userId) {
   }
   
   // Always check local storage as well for offline/unsynced exams
-  const localRaw = JSON.parse(localStorage.getItem('ntc_exam_results') || '[]');
+  const localRaw = JSON.parse(localStorage.getItem('preptrack_exam_results') || localStorage.getItem('ntc_exam_results') || '[]');
   const localResults = localRaw.filter(r => !userId || r.userId === userId);
   
   // Merge avoiding duplicates
@@ -425,7 +447,7 @@ async function getSubjects() {
     return data;
   } catch (error) {
     console.warn('Could not fetch subjects from DB. Using local fallback.', error);
-    const localData = localStorage.getItem('ntc_subjects');
+    const localData = localStorage.getItem('preptrack_subjects') || localStorage.getItem('ntc_subjects');
     if (localData) return JSON.parse(localData);
     
     // Default fallback
@@ -1041,13 +1063,26 @@ window.supaDB = {
 /**
  * Check if the current admin has a specific granular permission.
  * Super admin (atoopase@gmail.com) always returns true.
+ * 
+ * SECURITY NOTE:
+ * Frontend permission checks are DISPLAY-ONLY security (used to hide/disable UI controls).
+ * Actual data protection, mutations, and query restrictions are strictly enforced server-side
+ * via PostgreSQL Row Level Security (RLS) policies and security definer functions in Supabase.
  */
 window.hasAdminPermission = function(feature) {
-  const adminEmail = localStorage.getItem('ntc_admin_email');
+  const adminEmail = localStorage.getItem('preptrack_admin_email') || localStorage.getItem('ntc_admin_email');
   if (adminEmail === 'atoopase@gmail.com') return true;
   
   try {
-    const perms = JSON.parse(localStorage.getItem('ntc_admin_permissions') || '[]');
+    const rawPerms = localStorage.getItem('preptrack_admin_permissions') || localStorage.getItem('ntc_admin_permissions');
+    const perms = JSON.parse(rawPerms || '[]');
+    // Support aliases for permissions
+    if (feature === 'manage_students' || feature === 'manage_users') {
+      return perms.includes('manage_students') || perms.includes('manage_users');
+    }
+    if (feature === 'manage_materials' || feature === 'manage_lessons') {
+      return perms.includes('manage_materials') || perms.includes('manage_lessons');
+    }
     return perms.includes(feature);
   } catch (e) {
     return false;

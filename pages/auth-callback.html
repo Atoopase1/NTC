@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Signing in... | NTC Exam Prep</title>
+  <title>Signing in... | PrepTrack</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -51,7 +51,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="NTC Prep">
+  <meta name="apple-mobile-web-app-title" content="PrepTrack">
   <link rel="apple-touch-icon" href="/icons/icon-192.png"></head>
 <body>
   <div class="callback-container">
@@ -152,6 +152,7 @@
           if (!handled) {
             console.error('No session found after timeout. URL hash:', window.location.hash);
             document.getElementById('errorMsg').style.display = 'block';
+            localStorage.removeItem('preptrack_is_admin');
             localStorage.removeItem('ntc_is_admin');
           }
         }, 8000);
@@ -159,6 +160,7 @@
       } catch (err) {
         console.error('Auth callback error:', err);
         document.getElementById('errorMsg').style.display = 'block';
+        localStorage.removeItem('preptrack_is_admin');
         localStorage.removeItem('ntc_is_admin');
       }
     })();
@@ -167,8 +169,8 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('[NTC] SW registered:', reg.scope))
-          .catch(err => console.warn('[NTC] SW registration failed:', err));
+          .then(reg => console.log('[PrepTrack] SW registered:', reg.scope))
+          .catch(err => console.warn('[PrepTrack] SW registration failed:', err));
       });
     }
   </script></body>

@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // NTC Exam Prep - Profile Logic
 // Handles profile updates, password changes, stats
 // ============================================
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fallback to localStorage ONLY if Supabase is completely unavailable
     if (!window.supaAuth && (!history || history.length === 0)) {
       try {
-        const local = JSON.parse(localStorage.getItem('ntc_exam_results') || '[]');
+        const local = JSON.parse((localStorage.getItem('preptrack_exam_results') || localStorage.getItem('ntc_exam_results')) || '[]');
         if (local.length > 0) history = local;
       } catch(e) {}
     }
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     } else {
-      const storedUser = JSON.parse(localStorage.getItem('ntc_user') || '{}');
+      const storedUser = JSON.parse((localStorage.getItem('preptrack_user') || localStorage.getItem('ntc_user')) || '{}');
       userData.email = storedUser.email || 'student@example.com';
       userData.fullName = storedUser.fullName || '';
       userData.phone = storedUser.phone || '';
@@ -183,10 +183,10 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         } else {
           // Mock update
-          const storedUser = JSON.parse(localStorage.getItem('ntc_user') || '{}');
+          const storedUser = JSON.parse((localStorage.getItem('preptrack_user') || localStorage.getItem('ntc_user')) || '{}');
           storedUser.fullName = fullName;
           storedUser.phone = phone;
-          localStorage.setItem('ntc_user', JSON.stringify(storedUser));
+          localStorage.setItem('preptrack_user', JSON.stringify(storedUser)); localStorage.setItem('ntc_user', JSON.stringify(storedUser));
           window.showToast('Profile updated successfully (Demo)', 'success');
         }
         
@@ -296,9 +296,9 @@ document.addEventListener('DOMContentLoaded', () => {
               reader.onload = (ev) => resolve(ev.target.result);
               reader.readAsDataURL(file);
             });
-            const storedUser = JSON.parse(localStorage.getItem('ntc_user') || '{}');
+            const storedUser = JSON.parse((localStorage.getItem('preptrack_user') || localStorage.getItem('ntc_user')) || '{}');
             storedUser.avatar_url = newUrl;
-            localStorage.setItem('ntc_user', JSON.stringify(storedUser));
+            localStorage.setItem('preptrack_user', JSON.stringify(storedUser)); localStorage.setItem('ntc_user', JSON.stringify(storedUser));
           }
           
           if (newUrl) {
@@ -335,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Global function to open Review Modal
   window.openReviewModal = (historyIndex) => {
-    const historyStr = localStorage.getItem('ntc_exam_results');
+    const historyStr = (localStorage.getItem('preptrack_exam_results') || localStorage.getItem('ntc_exam_results'));
     if (!historyStr) return;
     
     const history = JSON.parse(historyStr);

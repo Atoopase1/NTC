@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // NTC Exam Prep - Authentication Logic
 // Login and Registration form handling
 // ============================================
@@ -100,7 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.disabled = false;
           } else {
             window.showToast('Login successful! Redirecting...', 'success');
-            localStorage.setItem('ntc_user', JSON.stringify({ email }));
+            localStorage.setItem('preptrack_user', JSON.stringify({ email }));
+            localStorage.setItem('ntc_user', JSON.stringify({ email })); localStorage.setItem('preptrack_user', JSON.stringify({ email }));
             // Use the shared role-check redirect (admin vs student)
             if (window.supaAuth && window.supaAuth.checkAdminAndRedirect) {
               await window.supaAuth.checkAdminAndRedirect(email);
@@ -117,7 +118,8 @@ document.addEventListener('DOMContentLoaded', () => {
           // Mock login for demo purposes if supabase isn't loaded
           setTimeout(() => {
             window.showToast('Demo Login successful! Redirecting...', 'success');
-            localStorage.setItem('ntc_user', JSON.stringify({ email }));
+            localStorage.setItem('preptrack_user', JSON.stringify({ email }));
+            localStorage.setItem('ntc_user', JSON.stringify({ email })); localStorage.setItem('preptrack_user', JSON.stringify({ email }));
             window.location.href = 'dashboard.html';
           }, 1500);
         }
@@ -229,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
       isAuthenticated = !!user;
     } else {
       // Check demo storage
-      isAuthenticated = !!localStorage.getItem('ntc_user');
+      isAuthenticated = !!(localStorage.getItem('preptrack_user') || localStorage.getItem('ntc_user'));
     }
     
     if (!isAuthenticated) {
@@ -275,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     } else {
-      const storedUser = JSON.parse(localStorage.getItem('ntc_user') || '{}');
+      const storedUser = JSON.parse(localStorage.getItem('preptrack_user') || localStorage.getItem('ntc_user') || '{}');
       if (storedUser.email) {
         displayName = storedUser.email.split('@')[0];
       }
@@ -338,7 +340,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (window.supaAuth) {
         await window.supaAuth.signOut();
       } else {
-        localStorage.removeItem('ntc_user');
+        localStorage.removeItem('preptrack_user');
+        localStorage.removeItem('ntc_user'); localStorage.removeItem('preptrack_user');
         window.location.href = 'login.html';
       }
     });

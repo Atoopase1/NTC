@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const subjectFilter = document.getElementById('subjectFilter');
   
   let allMaterials = [];
-  let savedIds = JSON.parse(localStorage.getItem('ntc_saved_materials') || '[]');
+  let savedIds = JSON.parse(localStorage.getItem('preptrack_saved_materials') || '[]');
   
   // Social State
   let allLikes = [];
@@ -35,7 +35,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (modal) modal.classList.remove('active');
       // Reset image panels when closing image viewer
       if (window._resetImagePanels) window._resetImagePanels();
-      // Stop video if playing
+      // Clear video container and stop playback
+      const container = document.getElementById('videoPlayerContainer');
+      if (container) container.innerHTML = '';
       const video = document.getElementById('videoPlayer');
       if (video) {
         if (video.tagName === 'IFRAME') {
@@ -45,6 +47,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
     });
+  });
+
+  // ESC key handler for video and other modals
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const activeModal = document.querySelector('.viewer-modal.active');
+      if (activeModal) {
+        activeModal.classList.remove('active');
+        if (window._resetImagePanels) window._resetImagePanels();
+        const container = document.getElementById('videoPlayerContainer');
+        if (container) container.innerHTML = '';
+        const video = document.getElementById('videoPlayer');
+        if (video) {
+          if (video.tagName === 'IFRAME') {
+            video.src = '';
+          } else if (typeof video.pause === 'function') {
+            video.pause();
+          }
+        }
+      }
+    }
   });
 
   async function loadData() {
@@ -141,6 +164,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?)|(shorts\/)|(live\/))\??v?=?([^#&?]*).*/;
     const match = url.match(regExp);
     return (match && match[9] && match[9].length === 11) ? match[9] : null;
+  }
+
+  function isDirectVideo(url) {
+    if (!url) return false;
+    const lower = url.toLowerCase().split('?')[0];
+    return /\.(mp4|webm|ogg|mov|avi|mkv)$/.test(lower);
+  }
+
+  function getYouTubeEmbedUrl(videoId) {
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1`;
   }
 
   function renderGrid(items) {
@@ -242,11 +275,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const ytId = getYouTubeId(item.media_url);
         const thumb = ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&q=80';
         const caption = (item.content || item.description || '').trim();
-        // Store URL safely in map — avoids apostrophe/special char issues in onclick
-        window._videoUrlMap[item.id] = { url: item.media_url, title: item.title || item.subtopic || '' };
+        // Store item safely in map — avoids apostrophe/special char issues in onclick
+        window._videoUrlMap[item.id] = item;
         
         cardHtml = `
-          <div class="mat-card feed-item social-post" id="post-${item.id}" data-video-id="${item.id}" onclick="(function(el){var c=el.closest('[data-video-id]');var d=c&&window._videoUrlMap[c.dataset.videoId];if(d)openVideo(d.url,d.title);})(this)">
+          <div class="mat-card feed-item social-post" id="post-${item.id}" data-video-id="${item.id}" onclick="(function(el){var c=el.closest('[data-video-id]');var d=c&&window._videoUrlMap[c.dataset.videoId];if(d)openVideoModal(d);})(this)">
             ${btnHtml}
             <div class="feed-media-wrap post-image-wrapper">
               <div class="mat-badge-top" style="position:absolute; top:12px; left:12px; z-index:10; background:rgba(0,0,0,0.6); padding:4px 8px; border-radius:4px; color:white; font-size:0.75rem; font-weight:600; display:flex; align-items:center; gap:4px; backdrop-filter:blur(4px);">
@@ -264,7 +297,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               ${caption ? `
               <div class="feed-caption-row post-caption-row" style="margin-bottom:0;">
                 <span class="feed-caption-text post-caption-text" id="caption-${item.id}">${caption}</span>
-                <button class="feed-more-btn post-more-btn" id="readmore-${item.id}" onclick="event.stopPropagation(); const d=window._videoUrlMap['${item.id}']; if(d) window.openVideo(d.url,d.title)" style="display:none;">More</button>
+                <button class="feed-more-btn post-more-btn" id="readmore-${item.id}" onclick="event.stopPropagation(); const d=window._videoUrlMap['${item.id}']; if(d) window.openVideoModal(d)" style="display:none;">More</button>
               </div>
               ` : ''}
               ${actionsHtml}
@@ -784,60 +817,97 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  window.openVideo = (url, title) => {
-    // Set titles
-    document.getElementById('modalVideoTitle').textContent = title || 'Video Player';
-    const bottomTitle = document.getElementById('videoBottomTitle');
-    if (bottomTitle) bottomTitle.textContent = title || '';
-
-    // --- Extract YouTube video ID ---
-    let ytId = getYouTubeId(url);
-
-    // Show YouTube button
-    const ytLink = document.getElementById('videoOpenYT');
+  function openVideoModal(lesson) {
+    const modal = document.getElementById('modalVideo');
+    if (!modal) return;
+    
+    // Stop any existing playback
+    const existingContainer = document.getElementById('videoPlayerContainer');
+    if (existingContainer) existingContainer.innerHTML = '';
+    
+    const url = (typeof lesson === 'string' ? lesson : (lesson && lesson.media_url)) || '';
+    const title = (typeof lesson === 'object' && lesson ? (lesson.title || lesson.subtopic) : arguments[1]) || 'Video';
+    
+    // Set title
+    const titleEl = document.getElementById('videoModalTitle');
+    if (titleEl) titleEl.textContent = title;
+    
+    // Show/hide YouTube link
+    const ytLink = document.getElementById('videoYtLink');
+    const ytId = getYouTubeId(url);
+    
     if (ytLink) {
-      ytLink.href = ytId ? 'https://www.youtube.com/watch?v=' + ytId : url;
-      ytLink.style.display = 'flex';
+      if (ytId) {
+        ytLink.href = `https://www.youtube.com/watch?v=${ytId}`;
+        ytLink.style.display = 'inline-flex';
+      } else if (url) {
+        ytLink.href = url;
+        ytLink.style.display = 'inline-flex';
+        ytLink.textContent = 'Open Video';
+      } else {
+        ytLink.style.display = 'none';
+      }
     }
-
-    // Build the player
-    const container = document.querySelector('.video-viewer-body');
-    const isYouTubeUrl = url && (url.includes('youtube.com') || url.includes('youtu.be'));
-
+    
+    // Show loading
+    const loadingEl = document.getElementById('videoLoadingIndicator');
+    const errorEl = document.getElementById('videoErrorState');
+    const errorMsg = document.getElementById('videoErrorMsg');
+    const errorLink = document.getElementById('videoErrorLink');
+    if (loadingEl) loadingEl.style.display = 'flex';
+    if (errorEl) errorEl.style.display = 'none';
+    
+    modal.classList.add('active');
+    
     if (ytId) {
-      // Valid YouTube Video -> Iframe
-      container.innerHTML =
-        '<div class="yt-container">' +
-          '<iframe id="videoPlayer"' +
-          ' src="https://www.youtube.com/embed/' + ytId + '?autoplay=1&rel=0&modestbranding=1"' +
-          ' frameborder="0"' +
-          ' allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"' +
-          ' allowfullscreen></iframe>' +
-        '</div>';
-    } else if (isYouTubeUrl) {
-      // Invalid/Unparseable YouTube Video -> Error (avoids black screen <video> tag)
-      container.innerHTML =
-        '<div class="yt-container" style="display:flex;align-items:center;justify-content:center;color:#ff4444;text-align:center;padding:20px;">' +
-          '<div>' +
-            '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:10px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>' +
-            '<h3>Invalid YouTube Link</h3>' +
-            '<p style="font-size:0.9rem;opacity:0.8;margin-top:5px;word-break:break-all;">' + url + '</p>' +
-          '</div>' +
-        '</div>';
+      // YouTube embed
+      const iframe = document.createElement('iframe');
+      iframe.id = 'videoPlayer';
+      iframe.src = getYouTubeEmbedUrl(ytId);
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+      iframe.allowFullscreen = true;
+      iframe.style.cssText = 'width:100%;height:100%;border:none;';
+      iframe.onload = () => { if (loadingEl) loadingEl.style.display = 'none'; };
+      iframe.onerror = () => {
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (errorEl) errorEl.style.display = 'flex';
+        if (errorMsg) errorMsg.textContent = 'This video could not be embedded. It may be restricted.';
+        if (errorLink) { errorLink.href = `https://www.youtube.com/watch?v=${ytId}`; errorLink.textContent = 'Watch on YouTube'; errorLink.style.display = 'inline-flex'; }
+      };
+      if (existingContainer) existingContainer.appendChild(iframe);
+      // Fallback: hide loading after 10s if onload never fires
+      setTimeout(() => { if (loadingEl) loadingEl.style.display = 'none'; }, 10000);
+    } else if (isDirectVideo(url)) {
+      // HTML5 video
+      const video = document.createElement('video');
+      video.id = 'videoPlayer';
+      video.src = url;
+      video.controls = true;
+      video.autoplay = true;
+      video.style.cssText = 'width:100%;height:100%;background:#000;';
+      video.onloadedmetadata = () => { if (loadingEl) loadingEl.style.display = 'none'; };
+      video.onerror = () => {
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (errorEl) errorEl.style.display = 'flex';
+        if (errorMsg) errorMsg.textContent = 'This video format could not be played in your browser.';
+        if (errorLink && url) { errorLink.href = url; errorLink.textContent = 'Download Video'; errorLink.style.display = 'inline-flex'; }
+      };
+      if (existingContainer) existingContainer.appendChild(video);
+    } else if (url) {
+      // Unsupported URL
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (errorEl) errorEl.style.display = 'flex';
+      if (errorMsg) errorMsg.textContent = 'This video cannot be played directly. Click below to open it.';
+      if (errorLink) { errorLink.href = url; errorLink.textContent = 'Open Video'; errorLink.style.display = 'inline-flex'; }
     } else {
-      // Standard Direct Video -> <video> tag
-      container.innerHTML =
-        '<div class="yt-container">' +
-          '<video id="videoPlayer" controls autoplay' +
-          ' style="width:100%;height:100%;object-fit:contain;">' +
-          '<source src="' + url + '">' +
-          'Your browser does not support video.' +
-          '</video>' +
-        '</div>';
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (errorEl) errorEl.style.display = 'flex';
+      if (errorMsg) errorMsg.textContent = 'No video URL provided for this lesson.';
     }
+  }
 
-    modals.video.classList.add('active');
-  };
+  window.openVideoModal = openVideoModal;
+  window.openVideo = openVideoModal;
 
   window.openText = (id) => {
     const item = allMaterials.find(m => m.id === id);
@@ -902,7 +972,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
       savedIds.push(id);
     }
-    localStorage.setItem('ntc_saved_materials', JSON.stringify(savedIds));
+    localStorage.setItem('preptrack_saved_materials', JSON.stringify(savedIds));
     applyFilters(); // Re-render to update bookmark icons
   };
   // --- Social Interactions --- //

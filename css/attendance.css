@@ -1,0 +1,297 @@
+/* ============================================
+   PrepTrack - Attendance System Styles
+   Mobile-friendly, accessible & responsive
+   ============================================ */
+
+/* Attendance Cards (Student View) */
+.attendance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-md, 16px);
+  margin-top: var(--space-md, 16px);
+}
+
+.attendance-card {
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.attendance-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.attendance-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.attendance-card-header h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text, #1e293b);
+  margin: 0;
+}
+
+.attendance-card-body {
+  flex: 1;
+  color: var(--text-light, #64748b);
+  font-size: 0.925rem;
+  line-height: 1.6;
+}
+
+.attendance-card-body p {
+  margin: 4px 0;
+}
+
+.attendance-card-body strong {
+  color: var(--text, #334155);
+}
+
+.attendance-card-body em {
+  display: block;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--surface, #f8fafc);
+  border-left: 3px solid var(--primary, #003bf7);
+  border-radius: 4px;
+  font-style: normal;
+  font-size: 0.85rem;
+}
+
+.attendance-card-footer {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border, #e2e8f0);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+}
+
+.status-badge.active,
+.status-badge.verified {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.closed,
+.status-badge.rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-badge.scheduled {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Modal for Submit Attendance */
+.attendance-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: attFadeIn 0.2s ease-out;
+}
+
+.attendance-modal {
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  animation: attSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.attendance-modal-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.attendance-modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text, #0f172a);
+}
+
+.attendance-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-light, #64748b);
+  line-height: 1;
+}
+
+.attendance-modal-close:hover {
+  color: var(--text, #0f172a);
+}
+
+.attendance-modal-body {
+  padding: 20px;
+}
+
+.attendance-modal-body .form-group {
+  margin-bottom: 16px;
+}
+
+.attendance-modal-body label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text, #334155);
+}
+
+.attendance-modal-body input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border, #cbd5e1);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: var(--card-bg, #ffffff);
+  color: var(--text, #0f172a);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.attendance-modal-body input:focus {
+  outline: none;
+  border-color: var(--primary, #003bf7);
+  box-shadow: 0 0 0 3px rgba(0, 59, 247, 0.15);
+}
+
+.attendance-modal-body input[readonly] {
+  background: var(--surface, #f8fafc);
+  color: var(--text-light, #64748b);
+  cursor: not-allowed;
+}
+
+.attendance-modal-footer {
+  padding: 16px 20px;
+  background: var(--surface, #f8fafc);
+  border-top: 1px solid var(--border, #e2e8f0);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* Status Messages & Spinners */
+.attendance-status-box {
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.attendance-status-box.info {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+}
+
+.attendance-status-box.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.attendance-status-box.success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.attendance-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(0, 59, 247, 0.2);
+  border-top-color: var(--primary, #003bf7);
+  border-radius: 50%;
+  animation: attSpin 0.7s linear infinite;
+  display: inline-block;
+}
+
+.text-muted {
+  color: var(--text-light, #64748b);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.success-text {
+  color: #166534;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+@keyframes attFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes attSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes attSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive utilities */
+@media (max-width: 640px) {
+  .attendance-grid {
+    grid-template-columns: 1fr;
+  }
+  .attendance-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

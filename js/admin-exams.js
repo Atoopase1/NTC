@@ -1,15 +1,47 @@
-// ============================================
+﻿// ============================================
 // NTC Exam Prep - Admin Scheduled Exams Logic
 // ============================================
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!window.supaDB) return;
 
-  // Protect route
-  if (localStorage.getItem('ntc_is_admin') !== 'true') {
-    window.location.href = 'dashboard.html';
+  // Protect route: Quick local check first (for performance), then verify with server
+  const quickCheck = localStorage.getItem('preptrack_is_admin') || localStorage.getItem('ntc_is_admin');
+  if (quickCheck !== 'true') {
+    window.location.href = '/pages/dashboard.html';
     return;
   }
+  // Server-side verification (non-blocking, runs async)
+  (async () => {
+    try {
+      const client = window.getSupabaseClient ? window.getSupabaseClient() : (window.supabaseClient || null);
+      if (!client) return;
+      const { data: { user } } = await client.auth.getUser();
+      if (!user) {
+        localStorage.removeItem('preptrack_is_admin');
+        localStorage.removeItem('ntc_is_admin'); localStorage.removeItem('preptrack_is_admin');
+        window.location.href = '/pages/login.html';
+        return;
+      }
+      // Super admin is always OK
+      if (user.email === 'atoopase@gmail.com') return;
+      // Check DB role
+      const { data: profile } = await client.from('profiles').select('role, blocked_until').eq('id', user.id).single();
+      if (!profile || profile.role !== 'admin') {
+        localStorage.removeItem('preptrack_is_admin');
+        localStorage.removeItem('ntc_is_admin'); localStorage.removeItem('preptrack_is_admin');
+        window.location.href = '/pages/dashboard.html';
+        return;
+      }
+      // Check not blocked
+      if (profile.blocked_until && new Date(profile.blocked_until) > new Date()) {
+        localStorage.removeItem('preptrack_is_admin');
+        localStorage.removeItem('ntc_is_admin'); localStorage.removeItem('preptrack_is_admin');
+        window.location.href = '/pages/login.html';
+        return;
+      }
+    } catch(e) { console.warn('Admin verification error:', e); }
+  })();
 
   const scheduleExamForm = document.getElementById('scheduleExamForm');
   const examSubjectSelect = document.getElementById('examSubject');

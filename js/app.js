@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // NTC Exam Prep - App JS
 // Global app functionality, UI interactions, theme
 // ============================================
@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   // === Admin View Switching ===
-  const isAdmin = localStorage.getItem('ntc_is_admin') === 'true';
+  const isAdmin = (localStorage.getItem('preptrack_is_admin') || localStorage.getItem('ntc_is_admin')) === 'true';
   const isAdminSidebar = document.querySelector('.admin-sidebar');
 
   if (isAdmin) {
@@ -206,7 +206,10 @@ document.addEventListener('DOMContentLoaded', () => {
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           View as Student
         `;
-        switchLink.addEventListener('click', () => localStorage.setItem('ntc_view_mode', 'student'));
+        switchLink.addEventListener('click', () => {
+          localStorage.setItem('preptrack_view_mode', 'student');
+          localStorage.setItem('ntc_view_mode', 'student'); localStorage.setItem('preptrack_view_mode', 'student');
+        });
       } else {
         // Student page — offer "Return to Admin"
         switchLink.href = 'admin-lessons.html';
@@ -215,7 +218,10 @@ document.addEventListener('DOMContentLoaded', () => {
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
           Admin Portal
         `;
-        switchLink.addEventListener('click', () => localStorage.setItem('ntc_view_mode', 'admin'));
+        switchLink.addEventListener('click', () => {
+          localStorage.setItem('preptrack_view_mode', 'admin');
+          localStorage.setItem('ntc_view_mode', 'admin'); localStorage.setItem('preptrack_view_mode', 'admin');
+        });
       }
 
       // Insert before the logout divider (last .dropdown-divider)
@@ -246,7 +252,10 @@ document.addEventListener('DOMContentLoaded', () => {
           View as Student
         `;
         studentLink.style.cssText = 'margin-top:var(--space-md);border-top:1px solid var(--border);padding-top:var(--space-md);';
-        studentLink.addEventListener('click', () => localStorage.setItem('ntc_view_mode', 'student'));
+        studentLink.addEventListener('click', () => {
+          localStorage.setItem('preptrack_view_mode', 'student');
+          localStorage.setItem('ntc_view_mode', 'student'); localStorage.setItem('preptrack_view_mode', 'student');
+        });
         lastSection.appendChild(studentLink);
       } else if (!isAdminSidebar && lastSection) {
         // Inject into student sidebar (e.g. Dashboard, Profile)
@@ -260,7 +269,10 @@ document.addEventListener('DOMContentLoaded', () => {
           </span>
           Admin Portal
         `;
-        adminLink.addEventListener('click', () => localStorage.setItem('ntc_view_mode', 'admin'));
+        adminLink.addEventListener('click', () => {
+          localStorage.setItem('preptrack_view_mode', 'admin');
+          localStorage.setItem('ntc_view_mode', 'admin'); localStorage.setItem('preptrack_view_mode', 'admin');
+        });
         lastSection.appendChild(adminLink);
       }
     }

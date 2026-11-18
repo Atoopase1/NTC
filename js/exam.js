@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // NTC Exam Prep - Exam Logic
 // Handles CBT interface, timer, questions
 // ============================================
@@ -174,8 +174,8 @@ document.addEventListener('DOMContentLoaded', () => {
           };
           
           // Clear any previous progress for this exam
-          sessionStorage.removeItem('ntc_exam_progress');
-          sessionStorage.setItem('ntc_exam_config', JSON.stringify(config));
+          sessionStorage.removeItem('preptrack_exam_progress'); sessionStorage.removeItem('ntc_exam_progress');
+          sessionStorage.setItem('preptrack_exam_config', JSON.stringify(config)); sessionStorage.setItem('ntc_exam_config', JSON.stringify(config));
           window.location.href = 'exam.html';
         } catch (e) {
           console.error(e);
@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   // ── Exam Interface Logic ──────────────────────────────────────────
-  const configStr = sessionStorage.getItem('ntc_exam_config');
+  const configStr = sessionStorage.getItem('preptrack_exam_config') || sessionStorage.getItem('ntc_exam_config');
   const isSetupMode = window.location.search.includes('setup=1');
   
   if (examInterface && configStr && !isSetupMode) {
@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
       examConfig = JSON.parse(configStr);
       
       // Restore any saved progress
-      const savedProgress = sessionStorage.getItem('ntc_exam_progress');
+      const savedProgress = sessionStorage.getItem('preptrack_exam_progress') || sessionStorage.getItem('ntc_exam_progress');
       if (savedProgress) {
         try {
           const progress = JSON.parse(savedProgress);
@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
         flagged,
         timeRemaining
       };
-      sessionStorage.setItem('ntc_exam_progress', JSON.stringify(progress));
+      sessionStorage.setItem('preptrack_exam_progress', JSON.stringify(progress)); sessionStorage.setItem('ntc_exam_progress', JSON.stringify(progress));
     }
     
     async function loadQuestions() {
@@ -582,7 +582,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
       
       // ── Save result to sessionStorage for results.html ──────────
-      sessionStorage.setItem('ntc_current_result', JSON.stringify(resultData));
+      sessionStorage.setItem('preptrack_current_result', JSON.stringify(resultData)); sessionStorage.setItem('ntc_current_result', JSON.stringify(resultData));
       
       // ── Save to Supabase ─────────────────────────────────────────
       if (window.supaDB && window.supaAuth) {
@@ -604,14 +604,14 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // ── Also save to localStorage as fallback ────────────────────
       try {
-        const history = JSON.parse(localStorage.getItem('ntc_exam_results') || '[]');
+        const history = JSON.parse(localStorage.getItem('preptrack_exam_results') || localStorage.getItem('ntc_exam_results') || '[]');
         history.push(resultData);
-        localStorage.setItem('ntc_exam_results', JSON.stringify(history));
+        localStorage.setItem('preptrack_exam_results', JSON.stringify(history)); localStorage.setItem('ntc_exam_results', JSON.stringify(history));
       } catch(e) {}
       
       // ── Clear progress (exam done) ───────────────────────────────
-      sessionStorage.removeItem('ntc_exam_progress');
-      sessionStorage.removeItem('ntc_exam_config');
+      sessionStorage.removeItem('preptrack_exam_progress'); sessionStorage.removeItem('ntc_exam_progress');
+      sessionStorage.removeItem('preptrack_exam_config'); sessionStorage.removeItem('ntc_exam_config');
       
       // ── Redirect to results ──────────────────────────────────────
       setTimeout(() => {

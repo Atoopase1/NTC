@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manage Admins - Prep Admin Portal</title>
+  <title>Admin Management | PrepTrack Admin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -18,7 +18,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="NTC Prep">
+  <meta name="apple-mobile-web-app-title" content="PrepTrack">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <style>
     @media (min-width: 768px) {
@@ -163,6 +163,10 @@
             <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span>
             Scheduled Exams
           </a>
+                    <a href="admin-attendance.html" class="sidebar-link">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+            Attendance
+          </a>
           <a href="admin-admins.html" class="sidebar-link active" id="superAdminLink">
             <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
             Manage Admins
@@ -172,8 +176,10 @@
     </aside>
 
     <script>
-      // Enforce Super Admin Only
-      if (localStorage.getItem('ntc_admin_email') !== 'atoopase@gmail.com') {
+      // Enforce Super Admin Only (Fast client check; server-side verification runs in js/admin-admins.js)
+      const cachedAdminEmail = localStorage.getItem('preptrack_admin_email') || localStorage.getItem('ntc_admin_email');
+      const cachedIsAdmin = localStorage.getItem('preptrack_is_admin') || localStorage.getItem('ntc_is_admin');
+      if (cachedIsAdmin !== 'true' || cachedAdminEmail !== 'atoopase@gmail.com') {
         alert('Only the Super Admin can manage other admins.');
         window.location.href = 'dashboard.html';
       }
@@ -183,27 +189,92 @@
     <main class="dashboard-main">
       <div class="admin-header">
         <div class="admin-header-title">
-          <h1>Manage Admins</h1>
-          <p>Super Admin control panel. Add or remove admins, and set granular access permissions.</p>
+          <h1>Admin Management</h1>
+          <p>Super Administrator control panel. Search, promote students to admins, and set granular access permissions.</p>
         </div>
       </div>
 
-      <!-- Controls -->
-      <div class="admin-header-actions reveal delay-1" style="margin-top:var(--space-md);">
-        <div style="display:flex; gap:10px; width:100%; align-items:center;">
-          <div style="position:relative; flex:1; max-width:300px;">
+      <!-- Promote User to Admin Section -->
+      <div class="admin-card reveal delay-1" style="margin-top:var(--space-md); margin-bottom:var(--space-lg); padding:var(--space-lg);">
+        <div style="margin-bottom:var(--space-md);">
+          <h2 style="font-size:var(--text-lg); font-weight:700; margin-bottom:4px; display:flex; align-items:center; gap:8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary);"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+            Promote User to Admin
+          </h2>
+          <p style="color:var(--text-light); font-size:var(--text-sm);">Search for a user by email or name to grant admin privileges with granular permissions.</p>
+        </div>
+
+        <div style="display:flex; gap:10px; max-width:640px; align-items:center; margin-bottom:var(--space-md);">
+          <div style="position:relative; flex:1;">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; left:12px; top:12px; color:var(--text-light);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="adminSearch" class="admin-input" placeholder="Search admins or students to add..." style="padding-left:38px;height:40px;width:100%;">
+            <input type="text" id="promoteSearchInput" class="admin-input" placeholder="Search user by email or name..." style="padding-left:38px;height:40px;width:100%;">
           </div>
-          <button class="btn btn-primary" id="searchNewAdminBtn" style="height:40px;">Find User to Add</button>
+          <button class="btn btn-primary" id="promoteSearchBtn" style="height:40px; white-space:nowrap;">Search User</button>
+        </div>
+
+        <!-- Found User Result & Permissions Selection Box -->
+        <div id="foundUserBox" style="display:none; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-lg); padding:var(--space-md); margin-top:var(--space-md);">
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:var(--space-sm); margin-bottom:var(--space-md); padding-bottom:var(--space-sm); border-bottom:1px solid var(--border);">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div id="foundUserAvatar" style="width:40px; height:40px; border-radius:50%; background:var(--primary-ghost); color:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px;">U</div>
+              <div>
+                <div id="foundUserName" style="font-weight:700; color:var(--text);">User Name</div>
+                <div id="foundUserEmail" style="font-size:var(--text-xs); color:var(--text-light);">user@example.com</div>
+              </div>
+            </div>
+            <span class="badge" style="background:var(--surface-hover); color:var(--text); font-size:12px; padding:4px 10px; border-radius:99px;" id="foundUserRoleBadge">Role: Student</span>
+          </div>
+
+          <div style="margin-bottom:var(--space-md);">
+            <label style="font-weight:600; font-size:var(--text-sm); color:var(--text); display:block; margin-bottom:8px;">Grant Permissions:</label>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:var(--text);">
+                <input type="checkbox" id="promotePermStudents" value="manage_students" checked style="width:16px;height:16px;">
+                <span>Manage Students</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:var(--text);">
+                <input type="checkbox" id="promotePermCourses" value="manage_courses" checked style="width:16px;height:16px;">
+                <span>Manage Courses</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:var(--text);">
+                <input type="checkbox" id="promotePermMaterials" value="manage_lessons" checked style="width:16px;height:16px;">
+                <span>Manage Learning Materials</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:var(--text);">
+                <input type="checkbox" id="promotePermExams" value="manage_exams" checked style="width:16px;height:16px;">
+                <span>Manage Examinations</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:var(--text);">
+                <input type="checkbox" id="promotePermAttendance" value="manage_attendance" checked style="width:16px;height:16px;">
+                <span>Manage Attendance</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:var(--text);">
+                <input type="checkbox" id="promotePermResults" value="view_results" checked style="width:16px;height:16px;">
+                <span>View Exam Results</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:var(--text);">
+                <input type="checkbox" id="promotePermAdmins" value="manage_admins" style="width:16px;height:16px;">
+                <span>Manage Other Admins (super admin only)</span>
+              </label>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button class="btn btn-outline" id="promoteCancelBtn" style="height:38px; font-size:13px;">Cancel</button>
+            <button class="btn btn-primary" id="promoteSubmitBtn" style="height:38px; font-size:13px;">Promote to Admin</button>
+          </div>
         </div>
       </div>
 
-      <!-- Stats -->
-      <div class="admin-stats-grid reveal delay-1" style="grid-template-columns: repeat(1, 1fr); margin-bottom:var(--space-lg); margin-top:var(--space-lg);">
-        <div class="admin-card" style="padding:var(--space-lg);text-align:center;">
-          <div style="font-size:36px;font-weight:800;color:var(--primary);margin-bottom:5px;" id="statTotalAdmins">-</div>
-          <div style="color:var(--text-light);font-size:var(--text-sm);text-transform:uppercase;letter-spacing:1px;font-weight:600;">Total Admins</div>
+      <!-- Current Admins Controls & Stats -->
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:var(--space-md);">
+        <div style="position:relative; flex:1; max-width:360px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; left:12px; top:12px; color:var(--text-light);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="adminSearch" class="admin-input" placeholder="Filter current admins..." style="padding-left:38px;height:40px;width:100%;">
+        </div>
+        <div class="admin-card" style="padding:8px 18px; display:flex; align-items:center; gap:10px;">
+          <span style="color:var(--text-light); font-size:var(--text-sm); font-weight:600;">Total Admins:</span>
+          <span style="font-size:20px; font-weight:800; color:var(--primary);" id="statTotalAdmins">-</span>
         </div>
       </div>
 
@@ -240,41 +311,58 @@
       <div class="modal-content" style="max-width:500px;">
         <div class="modal-header">
           <h2 class="modal-title">Manage Admin Access</h2>
-          <button class="modal-close" id="closePermissionsModal">ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â</button>
+          <button class="modal-close" id="closePermissionsModal">&times;</button>
         </div>
         <div class="modal-body">
-          <div style="margin-bottom:var(--space-md);">
+          <div style="margin-bottom:var(--space-md); padding-bottom:var(--space-sm); border-bottom:1px solid var(--border);">
             <strong id="modalAdminName" style="color:var(--primary);font-size:18px;"></strong>
             <div id="modalAdminEmail" style="color:var(--text-light);font-size:14px;"></div>
           </div>
           
           <div class="admin-form-row">
-            <label class="admin-label">Assign Granular Permissions</label>
-            <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                <input type="checkbox" id="permManageUsers" value="manage_users" style="width:18px;height:18px;">
-                <span>Manage Users (Students)</span>
+            <label class="admin-label" style="font-weight:700; margin-bottom:8px; display:block;">Granular Permissions</label>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-top:8px;">
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+                <input type="checkbox" id="permManageUsers" value="manage_students" style="width:16px;height:16px;">
+                <span>Manage Students</span>
               </label>
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                <input type="checkbox" id="permManageLessons" value="manage_lessons" style="width:18px;height:18px;">
-                <span>Manage Lessons & Materials</span>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+                <input type="checkbox" id="permManageCourses" value="manage_courses" style="width:16px;height:16px;">
+                <span>Manage Courses</span>
               </label>
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                <input type="checkbox" id="permManageExams" value="manage_exams" style="width:18px;height:18px;">
-                <span>Manage Scheduled Exams</span>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+                <input type="checkbox" id="permManageLessons" value="manage_lessons" style="width:16px;height:16px;">
+                <span>Manage Learning Materials</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+                <input type="checkbox" id="permManageExams" value="manage_exams" style="width:16px;height:16px;">
+                <span>Manage Examinations</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+                <input type="checkbox" id="permManageAttendance" value="manage_attendance" style="width:16px;height:16px;">
+                <span>Manage Attendance</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+                <input type="checkbox" id="permViewResults" value="view_results" style="width:16px;height:16px;">
+                <span>View Exam Results</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+                <input type="checkbox" id="permManageAdmins" value="manage_admins" style="width:16px;height:16px;">
+                <span>Manage Other Admins (super admin only)</span>
               </label>
             </div>
           </div>
 
-          <div style="margin-top:20px; padding:10px; border-radius:8px; border:1px solid rgba(239,68,68,0.2);">
+          <div style="margin-top:20px; padding:12px; border-radius:8px; border:1px solid rgba(239,68,68,0.2); background:rgba(239,68,68,0.02);">
+            <div style="color:var(--danger); font-weight:700; margin-bottom:8px; font-size:13px;">Account Management & Restrictions</div>
             <button class="btn btn-outline" id="blockAdminBtn" style="border-color:var(--danger); color:var(--danger); width:100%; margin-bottom:10px;">Block Admin Account</button>
             <button class="btn btn-outline" id="unblockAdminBtn" style="border-color:var(--success); color:var(--success); width:100%; margin-bottom:10px; display:none;">Unblock Admin Account</button>
-            <div style="color:var(--danger); font-weight:600; margin-bottom:5px; margin-top:15px;">Danger Zone</div>
             <button class="btn btn-outline" id="revokeAdminBtn" style="border-color:var(--danger); color:var(--danger); width:100%;">Revoke Admin Rights (Demote to Student)</button>
           </div>
         </div>
-        <div class="modal-footer">
-          <button class="btn btn-primary" id="savePermissionsBtn" style="width:100%;">Save Permissions</button>
+        <div class="modal-footer" style="display:flex; gap:10px; justify-content:flex-end;">
+          <button class="btn btn-outline" id="cancelPermissionsModalBtn">Cancel</button>
+          <button class="btn btn-primary" id="savePermissionsBtn">Save Permissions</button>
         </div>
       </div>
     </div>
