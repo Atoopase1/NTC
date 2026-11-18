@@ -1,33 +1,22 @@
-# Database
+# Database Migrations & Security
 
-All Supabase SQL files for PrepTrack.
+All Supabase SQL files for the PrepTrack platform.
 
-## Files
-
-| File | Purpose |
-|------|---------|
-| database.sql | Core schema (profiles, exam_results, lessons, subjects, scheduled_exams) |
-| preptrack_migration.sql | **Main upgrade migration** � adds courses, attendance, admin roles |
-| dmin_migration.sql | Admin role and permission setup |
-| migration_v2.sql | v2 schema patches |
-| ix_rls.sql | Row Level Security policy fixes |
-| setup_messages.sql | Messaging/notifications schema |
-| setup_social.sql | Social features schema |
-
-## How to run
-
-1. Go to [Supabase Dashboard](https://supabase.com/dashboard) ? Your project ? **SQL Editor**
-2. Paste the file contents and click **Run**
-3. Run in this order for a fresh setup:
-   - database.sql
-   - preptrack_migration.sql
-"@
-
-Set-Content -Path "c:\Users\techn\OneDrive\Desktop\preptrack\scripts\README.md" -Value @"
-# Scripts
-
-Utility scripts for local development and asset processing.
+## Files & Recommended Run Order
 
 | File | Purpose |
 |------|---------|
-| emove_bg.py | Background removal utility for image assets |
+| `preptrack_migration.sql` | **Main upgrade migration** — creates `attendance_sessions`, `attendance_submissions`, `student_course_preferences`, extends `profiles`, sets up RLS and Realtime. |
+| `security_hardening.sql` | **Database Hardening** — PostgreSQL triggers verifying GPS radius, exam scores, anti-privilege escalation, and anti-tamper policies. |
+| `database.sql` | Core initial schema (profiles, exam_results, lessons, subjects, scheduled_exams). |
+| `admin_migration.sql` | Admin role and permissions setup. |
+| `migration_v2.sql` | v2 schema patches and extensions. |
+| `fix_rls.sql` | Row Level Security policies clean-up. |
+| `setup_messages.sql` | Messaging/notifications schema. |
+| `setup_social.sql` | Social and community features schema. |
+
+## How to Apply
+
+1. Open your [Supabase Dashboard](https://supabase.com/dashboard) -> Select your project -> Go to **SQL Editor**.
+2. Open `preptrack_migration.sql`, copy and paste the contents into the SQL Editor, and click **Run**.
+3. Open `security_hardening.sql`, copy and paste into the SQL Editor, and click **Run** to enforce server-side validation.

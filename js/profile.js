@@ -61,10 +61,10 @@ document.addEventListener('DOMContentLoaded', () => {
               <div style="flex:1; min-width: 200px;">
                 <div style="display:flex; align-items:center; gap: var(--space-sm); margin-bottom: 6px;">
                   <span style="font-size: var(--text-xs); font-weight: 700; padding: 2px 10px; border-radius: 99px; background: var(--${passClass}); color: white;">${passLabel}</span>
-                  <h4 style="margin:0; font-size: var(--text-base);">${exam.title || exam.subject}</h4>
+                  <h4 style="margin:0; font-size: var(--text-base);">${escapeHtml(exam.title || exam.subject)}</h4>
                 </div>
                 <div style="font-size: var(--text-xs); color: var(--text-light); display: flex; gap: 16px; flex-wrap: wrap;">
-                  <span>📚 ${exam.subject || '—'}</span>
+                  <span>📚 ${escapeHtml(exam.subject || '—')}</span>
                   <span>📅 ${date}</span>
                   <span>🏆 Score: <strong>${exam.score}/${exam.total}</strong> (${exam.percentage}%)</span>
                 </div>
@@ -401,4 +401,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     window.openModal('reviewModal');
   };
+
+  function escapeHtml(text) {
+    if (!text) return '';
+    return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  }
 });
