@@ -10,3 +10,4 @@
 # Fallback: SPA-style catch-all (do NOT redirect auth-callback to index.html)
 # Auth callback must be served as a real file
 /pages/auth-callback.html   /pages/auth-callback.html   200
+

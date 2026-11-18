@@ -118,3 +118,4 @@ server.listen(PORT, () => {
   console.log(`  Auth callback URL for Supabase:`);
   console.log(`  \x1b[33mhttp://localhost:${PORT}/pages/auth-callback.html\x1b[0m\n`);
 });
+

@@ -1,9 +1,9 @@
-// ============================================
+﻿// ============================================
 // PrepTrack - Service Worker
 // Caches assets for offline use
 // ============================================
 
-const CACHE_NAME = 'preptrack-v39';
+const CACHE_NAME = 'preptrack-v40';
 
 // Core assets to cache on install
 const PRECACHE_ASSETS = [
