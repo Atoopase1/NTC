@@ -924,25 +924,31 @@
 
 /* Course Modal */
 .course-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(4px);
-  z-index: 1000;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(15, 23, 42, 0.65) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  z-index: 999999 !important;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
+  box-sizing: border-box;
 }
 
 .course-modal-card {
-  background: var(--surface, #ffffff);
-  border-radius: 16px;
-  width: 100%;
-  max-width: 480px;
-  padding: 26px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-  border: 1px solid var(--border, #e2e8f0);
+  background: #ffffff !important;
+  border-radius: 16px !important;
+  width: 100% !important;
+  max-width: 480px !important;
+  padding: 26px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  border: 1px solid #e2e8f0 !important;
+  position: relative !important;
+  box-sizing: border-box !important;
 }
 
 @media (max-width: 640px) {

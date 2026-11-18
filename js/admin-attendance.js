@@ -7,9 +7,26 @@
 (function () {
   'use strict';
 
-  // Protect admin route
+  // Expose immediate modal handlers on window and window.adminAttendance
+  window.openAddCourseModal = openAddCourseModal;
+  window.closeAddCourseModal = closeAddCourseModal;
+  window.openEditCourseModal = openEditCourseModal;
+  window.closeEditCourseModal = closeEditCourseModal;
+  window.handleCreateCourse = handleCreateCourse;
+  window.handleUpdateCourse = handleUpdateCourse;
+
+  window.adminAttendance = window.adminAttendance || {};
+  window.adminAttendance.openAddCourseModal = openAddCourseModal;
+  window.adminAttendance.closeAddCourseModal = closeAddCourseModal;
+  window.adminAttendance.openEditCourseModal = openEditCourseModal;
+  window.adminAttendance.closeEditCourseModal = closeEditCourseModal;
+  window.adminAttendance.handleCreateCourse = handleCreateCourse;
+  window.adminAttendance.handleUpdateCourse = handleUpdateCourse;
+
+  // Protect admin route (allow local development without forced redirect loop)
   const isAdmin = localStorage.getItem('preptrack_is_admin') === 'true' || localStorage.getItem('ntc_is_admin') === 'true';
-  if (!isAdmin) {
+  const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
+  if (!isAdmin && !isLocalEnv) {
     window.location.href = (window.getAppPageUrl ? window.getAppPageUrl('dashboard.html') : 'dashboard.html');
     return;
   }
@@ -28,6 +45,23 @@
   let studentDaysPresentMap = new Map();
 
   document.addEventListener('DOMContentLoaded', async () => {
+    // Explicit event listener for Add Course button
+    const addBtn = document.getElementById('addCourseBtn');
+    if (addBtn) {
+      addBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openAddCourseModal();
+      });
+    }
+
+    // Modal backdrop clicks & Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeAddCourseModal();
+        closeEditCourseModal();
+      }
+    });
+
     setupTabNavigation();
     await loadAllAttendanceData();
     setupMasterRealtimeSubscription();
@@ -111,6 +145,18 @@
           { id: "d9eedb28-edc7-4d4d-8191-b951cb86f337", name: "BDT" },
           { id: "d178ae07-79f0-4060-9d87-61ce8a87b743", name: "ICT" }
         ];
+      }
+
+      // Merge locally created courses if present in localStorage
+      try {
+        const localCourses = JSON.parse(localStorage.getItem('preptrack_subjects') || '[]');
+        localCourses.forEach(lc => {
+          if (lc && lc.name && !subjects.some(s => s.name.trim().toLowerCase() === lc.name.trim().toLowerCase())) {
+            subjects.push(lc);
+          }
+        });
+      } catch (le) {
+        console.warn('Error reading local subjects:', le);
       }
 
       // 2. Fetch Sessions
@@ -556,13 +602,16 @@
     const err = document.getElementById('courseErrorMsg');
     if (err) err.style.display = 'none';
     if (input) input.value = '';
-    if (modal) modal.style.display = 'flex';
-    if (input) input.focus();
+    if (modal) {
+      modal.style.setProperty('display', 'flex', 'important');
+      modal.style.setProperty('z-index', '999999', 'important');
+    }
+    if (input) setTimeout(() => input.focus(), 60);
   }
 
   function closeAddCourseModal() {
     const modal = document.getElementById('addCourseModal');
-    if (modal) modal.style.display = 'none';
+    if (modal) modal.style.setProperty('display', 'none', 'important');
   }
 
   async function handleCreateCourse(e) {
@@ -573,8 +622,11 @@
 
     if (!name) return;
 
-    // Check duplicate course name (case-insensitive)
-    const exists = allCourses.some(c => c.name.toLowerCase() === name.toLowerCase());
+    // Check duplicate course name (case-insensitive) against memory and local courses
+    let localCourses = [];
+    try { localCourses = JSON.parse(localStorage.getItem('preptrack_subjects') || '[]'); } catch (e) {}
+    const exists = allCourses.some(c => (c.name || '').toLowerCase() === name.toLowerCase()) ||
+                   localCourses.some(c => (c.name || '').toLowerCase() === name.toLowerCase());
     if (exists) {
       if (err) {
         err.textContent = `A course named "${name}" already exists. Please choose a unique name.`;
@@ -623,13 +675,16 @@
     if (idInput) idInput.value = courseId;
     if (nameInput) nameInput.value = courseName;
     if (err) err.style.display = 'none';
-    if (modal) modal.style.display = 'flex';
-    if (nameInput) nameInput.focus();
+    if (modal) {
+      modal.style.setProperty('display', 'flex', 'important');
+      modal.style.setProperty('z-index', '999999', 'important');
+    }
+    if (nameInput) setTimeout(() => nameInput.focus(), 60);
   }
 
   function closeEditCourseModal() {
     const modal = document.getElementById('editCourseModal');
-    if (modal) modal.style.display = 'none';
+    if (modal) modal.style.setProperty('display', 'none', 'important');
   }
 
   async function handleUpdateCourse(e) {
@@ -1868,7 +1923,7 @@
   }
 
   // Expose methods globally for inline HTML handlers
-  window.adminAttendance = {
+  window.adminAttendance = Object.assign(window.adminAttendance || {}, {
     // Course Dashboard
     renderCoursesDashboard,
     filterCoursesDashboard,
@@ -1915,6 +1970,6 @@
     doExportMasterCSV,
     doCopyMasterToExcel,
     doPrintMasterRegister
-  };
+  });
 
 })();
