@@ -118,7 +118,7 @@
       let gridHtml = '<div class="attendance-grid">';
       filteredSessions.forEach((session, idx) => {
         const submitted = submissionChecks[idx] && submissionChecks[idx].data;
-        gridHtml += renderSessionCard(session, Boolean(submitted));
+        gridHtml += renderSessionCard(session, submitted);
       });
       gridHtml += '</div>';
       container.innerHTML = gridHtml;
@@ -151,7 +151,10 @@
         </div>
         <div class="attendance-card-footer">
           ${alreadySubmitted ?
-            '<p class="success-text"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Attendance Submitted</p>' :
+            (alreadySubmitted.verification_status === 'rejected' ?
+              '<p class="warning-text" style="color:#d97706;font-weight:600;display:inline-flex;align-items:center;gap:6px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Attendance Submitted (Flagged Out of Range)</p>' :
+              '<p class="success-text"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Attendance Submitted (Verified)</p>'
+            ) :
             isOpen ?
             `<button class="btn btn-primary" onclick="window.studentAttendance.openSubmitForm('${session.id}')">Submit Attendance</button>` :
             isClosed ?
@@ -163,99 +166,31 @@
     `;
   }
 
-  // ─── Helpers to show/hide modal form fields ───────────────────────────────
+  // ─── Google Maps Precision Geolocation Tracker ────────────────────────────
+  let studentWatchId = null;
+  let isLocationLocked = false;
+  let bestGpsFix = null;
+  let gpsSamplesCount = 0;
 
-  function getFormGroups() {
-    // Returns the .form-group wrappers for name and index inputs
-    const nameInput = document.getElementById('studentFullName');
-    const indexInput = document.getElementById('studentIndexNumber');
-    const groups = [];
-    if (nameInput) {
-      const grp = nameInput.closest('.form-group') || nameInput.parentElement;
-      if (grp) groups.push(grp);
-    }
-    if (indexInput) {
-      const grp = indexInput.closest('.form-group') || indexInput.parentElement;
-      if (grp) groups.push(grp);
-    }
-    return groups;
-  }
-
-  function hideFormFields() {
-    getFormGroups().forEach(g => { g.style.display = 'none'; });
-    const submitBtn = document.getElementById('btnSubmitAttendance');
-    if (submitBtn) submitBtn.style.display = 'none';
-  }
-
-  function showFormFields() {
-    getFormGroups().forEach(g => { g.style.display = ''; });
-    const submitBtn = document.getElementById('btnSubmitAttendance');
-    if (submitBtn) {
-      submitBtn.style.display = '';
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Submit Attendance';
-    }
-  }
-
-  // ─── Location-step UI helpers ─────────────────────────────────────────────
-
-  function showLocationChecking() {
+  function renderStudentMapsWidget(statusClass, title, desc, pillText, actionsHtml = '') {
     const container = document.getElementById('modalStatusContainer');
     if (!container) return;
     container.innerHTML = `
-      <div class="attendance-status-box info" id="locationStepBox">
-        <span class="attendance-spinner"></span>
-        <span>Verifying your location&hellip;</span>
-      </div>`;
-  }
-
-  function showLocationDenied() {
-    const container = document.getElementById('modalStatusContainer');
-    if (!container) return;
-    container.innerHTML = `
-      <div class="attendance-status-box error" id="locationStepBox">
-        <span>&#x1F6AB; Location access is required to submit attendance. Please enable it in your browser settings.</span>
-        <div style="margin-top:12px;">
-          <button class="btn btn-secondary" onclick="window.studentAttendance.closeSubmitModal()">Close</button>
+      <div class="maps-gps-container ${statusClass}" id="studentGpsWidget">
+        <div class="maps-radar-wrapper">
+          <div class="maps-radar-ring"></div>
+          <div class="maps-radar-dot"></div>
         </div>
-      </div>`;
-  }
-
-  function showLocationRetryable(message) {
-    const container = document.getElementById('modalStatusContainer');
-    if (!container) return;
-    container.innerHTML = `
-      <div class="attendance-status-box error" id="locationStepBox">
-        <span>${escapeHtml(message)}</span>
-        <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="btn btn-primary" onclick="window.studentAttendance._retryLocation()">Try Again</button>
-          <button class="btn btn-secondary" onclick="window.studentAttendance.closeSubmitModal()">Cancel</button>
+        <div class="maps-gps-content">
+          <div class="maps-gps-title">${title}</div>
+          <div class="maps-gps-desc">${desc}</div>
+          <div class="maps-gps-meta">
+            <span class="maps-accuracy-pill">${pillText}</span>
+          </div>
+          ${actionsHtml ? `<div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">${actionsHtml}</div>` : ''}
         </div>
-      </div>`;
-  }
-
-  function showLocationOutOfRangeNotice(distance, allowedRadius) {
-    const container = document.getElementById('modalStatusContainer');
-    if (!container) return;
-    container.innerHTML = `
-      <div class="attendance-status-box warning" id="locationStepBox">
-        <div style="width:100%;">
-          <strong style="display:block; margin-bottom:4px; font-size:14px;">⚠️ Outside Venue Range (~${Math.round(distance)}m away)</strong>
-          <span style="font-size:13px; line-height:1.4;">The designated venue radius is <strong>${allowedRadius}m</strong>. You can still submit your attendance, but your check-in will be <strong>flagged as Out of Range</strong> for instructor review.</span>
-        </div>
-      </div>`;
-  }
-
-  function showLocationVerified(distance, hasReference) {
-    const container = document.getElementById('modalStatusContainer');
-    if (!container) return;
-    const distanceText = hasReference
-      ? `✔ Location verified &mdash; ${Math.round(distance)}m from venue (within radius)`
-      : `✔ Location verified`;
-    container.innerHTML = `
-      <div class="attendance-status-box success" id="locationStepBox">
-        <span>${distanceText}</span>
-      </div>`;
+      </div>
+    `;
   }
 
   function showSubmittingStatus(message, type = 'info') {
@@ -265,148 +200,242 @@
     container.innerHTML = `<div class="attendance-status-box ${type}">${spinner}<span>${escapeHtml(message)}</span></div>`;
   }
 
-  // ─── Resilient Multi-Tier Geolocation Engine ──────────────────────────────
-  // Guarantees resilient location acquisition without fragile timeouts or failures
-
-  function acquireResilientLocation() {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        return reject({ code: 0, message: 'Geolocation is not supported by your browser.' });
-      }
-
-      let resolved = false;
-      let watchId = null;
-
-      function onPositionSuccess(pos) {
-        if (resolved) return;
-        resolved = true;
-        if (watchId !== null) {
-          try { navigator.geolocation.clearWatch(watchId); } catch (e) {}
-        }
-        resolve(pos);
-      }
-
-      // Tier 1: High accuracy GPS attempt (8000ms window)
-      navigator.geolocation.getCurrentPosition(
-        onPositionSuccess,
-        (err) => {
-          if (resolved) return;
-          if (err.code === 1) {
-            // Permission denied explicitly by user
-            resolved = true;
-            if (watchId !== null) {
-              try { navigator.geolocation.clearWatch(watchId); } catch (e) {}
-            }
-            return reject(err);
-          }
-
-          // Tier 2: Immediate fallback to standard network/Wi-Fi/cell triangulation
-          navigator.geolocation.getCurrentPosition(
-            onPositionSuccess,
-            (err2) => {
-              if (resolved) return;
-              // If watch is active, wait an extra 2.5s for hardware fix
-              setTimeout(() => {
-                if (!resolved) {
-                  resolved = true;
-                  if (watchId !== null) {
-                    try { navigator.geolocation.clearWatch(watchId); } catch (e) {}
-                  }
-                  reject(err2 || err);
-                }
-              }, 2500);
-            },
-            {
-              enableHighAccuracy: false,
-              timeout: 10000,
-              maximumAge: 60000
-            }
-          );
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 8000,
-          maximumAge: 15000
-        }
-      );
-
-      // Tier 3: Concurrently listen to watchPosition for faster mobile hardware updates
-      try {
-        watchId = navigator.geolocation.watchPosition(
-          (pos) => {
-            if (pos && pos.coords && pos.coords.latitude != null) {
-              onPositionSuccess(pos);
-            }
-          },
-          () => {},
-          { enableHighAccuracy: true, maximumAge: 15000 }
-        );
-      } catch (e) {}
-
-      // Master safety timeout (18 seconds)
-      setTimeout(() => {
-        if (!resolved) {
-          resolved = true;
-          if (watchId !== null) {
-            try { navigator.geolocation.clearWatch(watchId); } catch (e) {}
-          }
-          reject({ code: 3, message: 'Location request timed out. Please ensure GPS is enabled and try again.' });
-        }
-      }, 18000);
-    });
-  }
-
-  // ─── Core GPS check ───────────────────────────────────────────────────────
-
-  async function runLocationCheck() {
+  function startMapsLocationTracking() {
+    isLocationLocked = false;
+    bestGpsFix = null;
+    gpsSamplesCount = 0;
     verifiedPosition = null;
-    showLocationChecking();
+
+    const submitBtn = document.getElementById('btnSubmitAttendance');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.className = 'btn btn-primary';
+      submitBtn.innerHTML = '<span class="attendance-spinner" style="width:14px;height:14px;border-width:2px;margin-right:6px;"></span> Calibrating GPS...';
+    }
+
+    if (studentWatchId !== null) {
+      try { navigator.geolocation.clearWatch(studentWatchId); } catch (e) {}
+      studentWatchId = null;
+    }
 
     if (!navigator.geolocation) {
-      showLocationDenied();
+      handleLocationFailure({ code: 0, message: 'Geolocation is not supported by your browser.' });
       return;
     }
 
-    let position;
+    renderStudentMapsWidget(
+      'calibrating',
+      '🛰️ Acquiring True Location (Maps GPS)...',
+      'Please tap <strong>"Allow"</strong> if your browser prompts for location permission. Calibrating true coordinates...',
+      'Satellite search...'
+    );
+
+    function onFix(pos) {
+      if (!pos || !pos.coords) return;
+      gpsSamplesCount++;
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const acc = Math.round(pos.coords.accuracy || 20);
+
+      const session = currentActiveSession;
+      const hasReference = session && session.reference_lat != null && session.reference_lng != null;
+      let dist = 0;
+      if (hasReference) {
+        dist = haversineDistance(lat, lng, session.reference_lat, session.reference_lng);
+      }
+
+      if (!bestGpsFix || acc < bestGpsFix.accuracy) {
+        bestGpsFix = { lat, lng, accuracy: acc, distance: dist };
+      } else if (hasReference) {
+        bestGpsFix.distance = dist;
+      }
+
+      if (!isLocationLocked) {
+        const distStr = hasReference ? ` | ~${Math.round(dist)}m from venue` : '';
+        renderStudentMapsWidget(
+          'calibrating',
+          '🛰️ Calibrating High-Precision GPS...',
+          `Acquired ${gpsSamplesCount} satellite fix${gpsSamplesCount > 1 ? 'es' : ''}. Refined coordinate: ${bestGpsFix.lat.toFixed(5)}, ${bestGpsFix.lng.toFixed(5)}${distStr}`,
+          `±${bestGpsFix.accuracy}m accuracy`
+        );
+      }
+
+      // Maps convergence logic: accuracy <= 20m, or (samples >= 3 and accuracy <= 35m)
+      if (!isLocationLocked && (bestGpsFix.accuracy <= 20 || (gpsSamplesCount >= 3 && bestGpsFix.accuracy <= 35))) {
+        lockLocationAndEnableSubmission(bestGpsFix);
+      }
+    }
+
+    function onErr(err) {
+      if (isLocationLocked) return;
+      handleLocationFailure(err);
+    }
+
+    // Trigger high-precision watchPosition (Google Maps style)
     try {
-      position = await acquireResilientLocation();
-    } catch (err) {
-      if (err.code === 1) {
-        showLocationDenied();
-      } else if (err.code === 2) {
-        showLocationRetryable('Location unavailable. Please check your device location / GPS toggle and try again.');
-      } else if (err.code === 3) {
-        showLocationRetryable('Location request timed out. Please move to an open area and try again.');
-      } else {
-        showLocationRetryable(err.message || 'Unable to acquire location.');
+      studentWatchId = navigator.geolocation.watchPosition(
+        onFix,
+        onErr,
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 25000 }
+      );
+    } catch (e) {
+      onErr(e);
+    }
+
+    // Also trigger immediate getCurrentPosition for fastest initial browser prompt
+    try {
+      navigator.geolocation.getCurrentPosition(
+        onFix,
+        onErr,
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 12000 }
+      );
+    } catch (e) {}
+
+    // Auto-lock best fix after 5.5 seconds so students are not delayed
+    setTimeout(() => {
+      if (!isLocationLocked && bestGpsFix) {
+        lockLocationAndEnableSubmission(bestGpsFix);
+      }
+    }, 5500);
+  }
+
+  function lockLocationAndEnableSubmission(coords) {
+    isLocationLocked = true;
+    if (studentWatchId !== null) {
+      try { navigator.geolocation.clearWatch(studentWatchId); } catch (e) {}
+      studentWatchId = null;
+    }
+
+    const session = currentActiveSession;
+    const hasReference = session && session.reference_lat != null && session.reference_lng != null;
+    const allowedRadius = (session && session.radius_meters) || 30;
+    let distance = coords.distance || 0;
+    if (hasReference) {
+      distance = haversineDistance(coords.lat, coords.lng, session.reference_lat, session.reference_lng);
+    }
+    const isWithinRadius = hasReference ? distance <= allowedRadius : true;
+
+    verifiedPosition = {
+      latitude: coords.lat,
+      longitude: coords.lng,
+      accuracy: coords.accuracy || 10,
+      distance: distance,
+      isWithinRadius: isWithinRadius
+    };
+
+    const submitBtn = document.getElementById('btnSubmitAttendance');
+
+    if (isWithinRadius) {
+      // IN RANGE: Verified
+      renderStudentMapsWidget(
+        'verified',
+        '✔ Location Verified (Within Venue Radius)',
+        `You are ~<strong>${Math.round(distance)}m</strong> from the lecture venue (allowed radius: <strong>${allowedRadius}m</strong>). Satellite GPS confirmed.`,
+        `±${coords.accuracy}m accuracy (Verified In-Range)`
+      );
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.className = 'btn btn-primary';
+        submitBtn.innerHTML = '✔ Submit Attendance';
+      }
+    } else {
+      // REQUIREMENT 2: OUT OF RANGE / FAR LOCATION: Allowed to submit, but FLAGGED!
+      renderStudentMapsWidget(
+        'flagged',
+        `⚠️ Outside Venue Range (~${Math.round(distance)}m away)`,
+        `The lecture venue radius is <strong>${allowedRadius}m</strong>. You are in a far location (~${Math.round(distance)}m away), but <strong>you are permitted to submit your attendance</strong>. Your submission will be recorded with your exact GPS location and <strong>flagged as Out of Range</strong> for instructor review.`,
+        `⚠️ Out of Range: ~${Math.round(distance)}m (Venue: ${allowedRadius}m)`
+      );
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.className = 'btn btn-warning-submit';
+        submitBtn.innerHTML = '⚠️ Submit Attendance (Flagged Out of Range)';
+      }
+    }
+  }
+
+  function handleLocationFailure(err) {
+    if (isLocationLocked) return;
+
+    if (err && err.code === 1) {
+      // User blocked permission
+      renderStudentMapsWidget(
+        'error',
+        '🔒 Location Permission Blocked',
+        'Location access is blocked by your browser. To allow: click the lock / settings icon (🔒) in your address bar, set Location to <strong>Allow</strong>, and click Retry.',
+        'Permission Denied',
+        `<button type="button" class="btn btn-primary btn-sm" onclick="window.studentAttendance._retryLocation()">🔄 Retry Location</button>
+         <button type="button" class="btn btn-outline btn-sm" onclick="window.studentAttendance.submitWithoutGps()" style="color:#d97706;border-color:#d97706;">⚠️ Submit as Flagged (No GPS)</button>`
+      );
+      const submitBtn = document.getElementById('btnSubmitAttendance');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.className = 'btn btn-warning-submit';
+        submitBtn.innerHTML = '⚠️ Submit Attendance (Flagged)';
       }
       return;
     }
 
-    const { latitude, longitude, accuracy } = position.coords;
-    const session = currentActiveSession;
-    const hasReference = session.reference_lat != null && session.reference_lng != null;
-    let distance = 0;
-    let isWithinRadius = true;
+    // Try fallback to low-accuracy Wi-Fi/IP location
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const acc = Math.round(pos.coords.accuracy || 100);
+        const session = currentActiveSession;
+        let dist = 0;
+        if (session && session.reference_lat != null) {
+          dist = haversineDistance(lat, lng, session.reference_lat, session.reference_lng);
+        }
+        lockLocationAndEnableSubmission({ lat, lng, accuracy: acc, distance: dist });
+      },
+      (err2) => {
+        // Even if completely failed: allow submission with Flagged status so student is NEVER blocked!
+        renderStudentMapsWidget(
+          'flagged',
+          '⚠️ GPS Satellite Signal Weak Indoors',
+          'Could not lock precision satellite GPS. You can still submit your attendance — it will be recorded and <strong>flagged for instructor review</strong>.',
+          'Signal Weak / Indoor Coarse',
+          `<button type="button" class="btn btn-primary btn-sm" onclick="window.studentAttendance._retryLocation()">🔄 Retry GPS</button>`
+        );
+        verifiedPosition = {
+          latitude: 0,
+          longitude: 0,
+          accuracy: 500,
+          distance: 9999,
+          isWithinRadius: false
+        };
+        const submitBtn = document.getElementById('btnSubmitAttendance');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.className = 'btn btn-warning-submit';
+          submitBtn.innerHTML = '⚠️ Submit Attendance (Flagged)';
+        }
+      },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+    );
+  }
 
-    if (hasReference) {
-      distance = haversineDistance(latitude, longitude, session.reference_lat, session.reference_lng);
-      const allowedRadius = session.radius_meters || 30;
-      isWithinRadius = distance <= allowedRadius;
+  function submitWithoutGps() {
+    verifiedPosition = {
+      latitude: 0,
+      longitude: 0,
+      accuracy: 999,
+      distance: 9999,
+      isWithinRadius: false
+    };
+    renderStudentMapsWidget(
+      'flagged',
+      '⚠️ Submitting without GPS Verification',
+      'Your attendance will be submitted and <strong>flagged as Out of Range / Unverified</strong> for your instructor.',
+      'Flagged Submission'
+    );
+    const submitBtn = document.getElementById('btnSubmitAttendance');
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.className = 'btn btn-warning-submit';
+      submitBtn.innerHTML = '⚠️ Submit Attendance (Flagged)';
     }
-
-    // Store verified position
-    verifiedPosition = { latitude, longitude, accuracy: accuracy || 10, distance, isWithinRadius };
-
-    if (!isWithinRadius && hasReference) {
-      // REQUIREMENT 4: Students out of range CAN submit, but flagged!
-      showLocationOutOfRangeNotice(distance, session.radius_meters || 30);
-    } else {
-      showLocationVerified(distance, hasReference);
-    }
-
-    // Always reveal form fields so student can submit
-    showFormFields();
   }
 
   // ─── Public API ───────────────────────────────────────────────────────────
@@ -422,43 +451,49 @@
     const details = document.getElementById('modalSessionDetails');
     const nameInput = document.getElementById('studentFullName');
     const indexInput = document.getElementById('studentIndexNumber');
-    const submitBtn = document.getElementById('btnSubmitAttendance');
 
     if (title) title.textContent = `Check-In: ${session.title}`;
-    if (details) details.textContent = `${session.subject || 'General'} | Required within ${session.radius_meters || 30}m of ${session.location_name || 'session venue'}`;
+    if (details) details.textContent = `${session.subject || 'General'} | Venue: ${session.location_name || 'Designated Venue'} (${session.radius_meters || 30}m radius)`;
 
-    // Pre-fill form values (even though hidden initially)
+    // Pre-fill form values immediately
     if (nameInput) nameInput.value = (userProfile && userProfile.full_name) || (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name) || '';
     if (indexInput) indexInput.value = (userProfile && userProfile.index_number) || '';
-
-    // Reset submit button state
-    if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Submit Attendance';
-    }
-
-    // Hide form fields until location is verified
-    hideFormFields();
 
     // Show modal
     if (modal) modal.style.display = 'flex';
 
-    // Immediately start GPS check
-    runLocationCheck();
+    // Immediately start Google Maps-style location check & satellite tracking
+    startMapsLocationTracking();
   }
 
   function closeSubmitModal() {
     const modal = document.getElementById('submitModal');
     if (modal) modal.style.display = 'none';
+    if (studentWatchId !== null) {
+      try { navigator.geolocation.clearWatch(studentWatchId); } catch (e) {}
+      studentWatchId = null;
+    }
     currentActiveSession = null;
     verifiedPosition = null;
+    isLocationLocked = false;
   }
 
   async function handleSubmitClick() {
     if (!currentActiveSession) return;
+
+    // If verifiedPosition not yet set, use fallback flagged position so student can ALWAYS submit!
     if (!verifiedPosition) {
-      showSubmittingStatus('Location has not been verified. Please close and try again.', 'error');
-      return;
+      if (bestGpsFix) {
+        lockLocationAndEnableSubmission(bestGpsFix);
+      } else {
+        verifiedPosition = {
+          latitude: 0,
+          longitude: 0,
+          accuracy: 999,
+          distance: 9999,
+          isWithinRadius: false
+        };
+      }
     }
 
     const nameInput = document.getElementById('studentFullName');
@@ -468,8 +503,16 @@
     const fullName = nameInput ? nameInput.value.trim() : '';
     const indexNumber = indexInput ? indexInput.value.trim() : '';
 
-    if (!fullName) { showSubmittingStatus('Please enter your full name.', 'error'); return; }
-    if (!indexNumber) { showSubmittingStatus('Please enter your index / ID number.', 'error'); return; }
+    if (!fullName) {
+      alert('Please enter your full name.');
+      if (nameInput) nameInput.focus();
+      return;
+    }
+    if (!indexNumber) {
+      alert('Please enter your index / ID number.');
+      if (indexInput) indexInput.focus();
+      return;
+    }
 
     if (submitBtn) submitBtn.disabled = true;
     await submitAttendanceForm(currentActiveSession.id, fullName, indexNumber, currentActiveSession);
@@ -478,18 +521,25 @@
 
   async function submitAttendanceForm(sessionId, fullName, indexNumber, session) {
     const now = new Date();
-    if (now < new Date(session.start_time)) { showSubmittingStatus('Attendance is not open yet.', 'error'); return; }
-    if (now > new Date(session.end_time) || session.status === 'closed') { showSubmittingStatus('Attendance has closed.', 'error'); return; }
+    if (now < new Date(session.start_time)) {
+      showSubmittingStatus('Attendance is not open yet.', 'error');
+      return;
+    }
+    if (now > new Date(session.end_time) || session.status === 'closed') {
+      showSubmittingStatus('Attendance has closed.', 'error');
+      return;
+    }
 
     const { data: existing } = await window.supaAttendance.checkAlreadySubmitted(sessionId, currentUser.id);
-    if (existing) { showSubmittingStatus('You have already submitted attendance for this session.', 'error'); return; }
+    if (existing) {
+      showSubmittingStatus('You have already submitted attendance for this session.', 'error');
+      return;
+    }
 
-    const { latitude, longitude, accuracy, distance } = verifiedPosition;
-    const hasReference = session.reference_lat != null && session.reference_lng != null;
-    const isWithinRadius = hasReference ? distance <= (session.radius_meters || 30) : true;
+    const { latitude, longitude, accuracy, distance, isWithinRadius } = verifiedPosition;
     const verificationStatus = isWithinRadius ? 'verified' : 'rejected';
 
-    showSubmittingStatus('Submitting attendance...', 'info');
+    showSubmittingStatus('Submitting your attendance...', 'info');
 
     const payload = {
       session_id: sessionId,
@@ -497,9 +547,9 @@
       index_number: indexNumber,
       student_lat: latitude,
       student_lng: longitude,
-      distance_meters: parseFloat(distance.toFixed(2)),
-      location_accuracy: parseFloat(accuracy.toFixed(2)),
-      is_within_radius: isWithinRadius,
+      distance_meters: parseFloat((distance || 0).toFixed(2)),
+      location_accuracy: parseFloat((accuracy || 10).toFixed(2)),
+      is_within_radius: Boolean(isWithinRadius),
       verification_status: verificationStatus,
       submitted_at: new Date().toISOString()
     };
@@ -515,12 +565,20 @@
     }
 
     if (isWithinRadius) {
-      showSubmittingStatus(`✓ Attendance verified & submitted! (Distance: ${Math.round(distance)}m from reference)`, 'success');
+      showSubmittingStatus(`✔ Attendance verified & submitted! (${Math.round(distance)}m from lecture venue)`, 'success');
     } else {
       showSubmittingStatus(`⚠️ Attendance submitted & flagged as Out of Range (${Math.round(distance)}m from venue).`, 'warning');
     }
-    if (userProfile) { userProfile.full_name = fullName; userProfile.index_number = indexNumber; }
-    setTimeout(() => { closeSubmitModal(); loadSessions(); }, 1500);
+
+    if (userProfile) {
+      userProfile.full_name = fullName;
+      userProfile.index_number = indexNumber;
+    }
+
+    setTimeout(() => {
+      closeSubmitModal();
+      loadSessions();
+    }, 1600);
   }
 
   function escapeHtml(text) {
@@ -528,11 +586,12 @@
     return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
   }
 
-  // Expose retry so the inline onclick in showLocationRetryable can call it
+  // Expose student attendance API
   window.studentAttendance = {
     openSubmitForm,
     closeSubmitModal,
     handleSubmitClick,
-    _retryLocation: runLocationCheck
+    submitWithoutGps,
+    _retryLocation: startMapsLocationTracking
   };
 })();

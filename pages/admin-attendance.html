@@ -531,7 +531,31 @@
 
             <!-- Location Section -->
             <div class="admin-card" style="background: var(--surface); margin-bottom: var(--space-md);">
-              <h4 style="margin-bottom: var(--space-sm); font-size: var(--text-md);">📍 Reference Location</h4>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: var(--space-sm); flex-wrap:wrap; gap:8px;">
+                <h4 style="margin:0; font-size: var(--text-md); display:flex; align-items:center; gap:6px;">
+                  <span>📍 Lecture Venue Location</span>
+                  <span class="status-badge" style="background:#e0f2fe; color:#0369a1; font-size:11px;">Google Maps GPS</span>
+                </h4>
+                <button type="button" class="btn btn-primary btn-sm" id="btnAdminGetLocation" onclick="window.adminAttendance.getAdminLocation()" style="display:inline-flex; align-items:center; gap:6px;">
+                  <span>📡 Detect True Venue Location</span>
+                </button>
+              </div>
+
+              <!-- Live Maps Radar Box for Lecturer -->
+              <div id="adminMapsStatusBox" class="maps-gps-container" style="display:none; margin-bottom:12px;">
+                <div class="maps-radar-wrapper">
+                  <div class="maps-radar-ring"></div>
+                  <div class="maps-radar-dot"></div>
+                </div>
+                <div class="maps-gps-content">
+                  <div class="maps-gps-title" id="adminMapsTitle">🛰️ Calibrating high-precision GPS...</div>
+                  <div class="maps-gps-desc" id="adminMapsDesc">Requesting browser location permission...</div>
+                  <div class="maps-gps-meta" id="adminMapsMeta">
+                    <span class="maps-accuracy-pill" id="adminMapsAccuracyPill">±--m accuracy</span>
+                  </div>
+                </div>
+              </div>
+
               <div class="admin-form-row">
                 <div>
                   <label class="admin-label" for="sessionLocationName">Location Name</label>
@@ -540,20 +564,18 @@
                 <div>
                   <label class="admin-label" for="sessionLat">Latitude</label>
                   <input type="number" id="sessionLat" class="admin-input" step="any" readonly
-                    placeholder="Click 'Get My Location'">
+                    placeholder="Click 'Detect True Venue Location'">
                 </div>
                 <div>
                   <label class="admin-label" for="sessionLng">Longitude</label>
                   <input type="number" id="sessionLng" class="admin-input" step="any" readonly
-                    placeholder="Click 'Get My Location'">
+                    placeholder="Click 'Detect True Venue Location'">
                 </div>
               </div>
               <div class="admin-form-row" style="align-items:flex-end;">
                 <div>
-                  <button type="button" class="btn btn-outline" onclick="window.adminAttendance.getAdminLocation()">
-                    📍 Get My Location
-                  </button>
                   <p id="locationAccuracyMsg" style="font-size:var(--text-xs);color:var(--text-light);margin-top:4px;">
+                    Click "Detect True Venue Location" to trigger high-precision GPS convergence.
                   </p>
                 </div>
                 <div>

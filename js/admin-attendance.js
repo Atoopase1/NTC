@@ -1467,10 +1467,22 @@
     customContainer.style.display = select.value === 'custom' ? 'block' : 'none';
   }
 
+  let adminLocationWatchId = null;
+
   function getAdminLocation() {
     const statusMsg = document.getElementById('locationAccuracyMsg');
     const latInput = document.getElementById('sessionLat');
     const lngInput = document.getElementById('sessionLng');
+    const statusBox = document.getElementById('adminMapsStatusBox');
+    const titleEl = document.getElementById('adminMapsTitle');
+    const descEl = document.getElementById('adminMapsDesc');
+    const pillEl = document.getElementById('adminMapsAccuracyPill');
+    const btnEl = document.getElementById('btnAdminGetLocation');
+
+    if (adminLocationWatchId !== null) {
+      try { navigator.geolocation.clearWatch(adminLocationWatchId); } catch (e) {}
+      adminLocationWatchId = null;
+    }
 
     if (!navigator.geolocation) {
       if (statusMsg) {
@@ -1480,34 +1492,141 @@
       return;
     }
 
+    if (statusBox) {
+      statusBox.style.display = 'flex';
+      statusBox.className = 'maps-gps-container calibrating';
+    }
+    if (titleEl) titleEl.textContent = '🛰️ Triggering Google Maps GPS...';
+    if (descEl) descEl.textContent = 'Please tap "Allow" if browser prompts for location permission. Calibrating true venue...';
+    if (pillEl) pillEl.textContent = 'Satellite search...';
+    if (btnEl) {
+      btnEl.disabled = true;
+      btnEl.innerHTML = '<span class="attendance-spinner" style="width:14px;height:14px;border-width:2px;margin-right:6px;"></span> Calibrating GPS...';
+    }
     if (statusMsg) {
-      statusMsg.style.color = 'var(--text-light)';
-      statusMsg.textContent = 'Acquiring GPS location...';
+      statusMsg.style.color = '#0284c7';
+      statusMsg.textContent = 'Acquiring satellite lock for true lecture venue coordinates...';
     }
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        const acc = Math.round(pos.coords.accuracy);
+    let bestCoords = null;
+    let sampleCount = 0;
+    let isLocked = false;
 
+    function handleNewFix(pos) {
+      if (!pos || !pos.coords) return;
+      sampleCount++;
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const acc = Math.round(pos.coords.accuracy || 20);
+
+      if (!bestCoords || acc < bestCoords.accuracy) {
+        bestCoords = { lat, lng, accuracy: acc };
         if (latInput) latInput.value = lat.toFixed(6);
         if (lngInput) lngInput.value = lng.toFixed(6);
+      }
 
-        if (statusMsg) {
-          statusMsg.style.color = acc <= 50 ? '#059669' : '#d97706';
-          statusMsg.textContent = `✓ Captured! Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)} (Accuracy: ~${acc}m)`;
+      if (pillEl) pillEl.textContent = `±${bestCoords.accuracy}m accuracy (${sampleCount} fix${sampleCount > 1 ? 'es' : ''})`;
+      if (descEl) descEl.textContent = `Live GPS tracking active. Refined coordinate: ${bestCoords.lat.toFixed(5)}, ${bestCoords.lng.toFixed(5)}`;
+
+      // Convergence criteria: precision <= 15m or (>= 3 samples and precision <= 25m)
+      if (!isLocked && (bestCoords.accuracy <= 15 || (sampleCount >= 3 && bestCoords.accuracy <= 25))) {
+        lockTrueVenue(bestCoords);
+      }
+    }
+
+    function lockTrueVenue(coords) {
+      isLocked = true;
+      if (adminLocationWatchId !== null) {
+        try { navigator.geolocation.clearWatch(adminLocationWatchId); } catch (e) {}
+        adminLocationWatchId = null;
+      }
+      if (statusBox) {
+        statusBox.className = 'maps-gps-container verified';
+      }
+      if (titleEl) titleEl.textContent = '✔ True Lecture Venue Locked!';
+      if (descEl) descEl.textContent = `High-accuracy GPS reference captured: ${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`;
+      if (pillEl) pillEl.textContent = `±${coords.accuracy}m accuracy (Verified True Fix)`;
+      if (btnEl) {
+        btnEl.disabled = false;
+        btnEl.innerHTML = `✔ Venue Locked (±${coords.accuracy}m)`;
+      }
+      if (statusMsg) {
+        statusMsg.style.color = '#059669';
+        statusMsg.textContent = `✓ True Lecture Location Locked! Lat: ${coords.lat.toFixed(6)}, Lng: ${coords.lng.toFixed(6)} (Accuracy: ~${coords.accuracy}m)`;
+      }
+    }
+
+    function handleGeoError(err) {
+      console.warn('Geolocation error:', err);
+      if (isLocked) return;
+
+      if (err.code === 1) {
+        // PERMISSION_DENIED
+        if (statusBox) statusBox.className = 'maps-gps-container error';
+        if (titleEl) titleEl.textContent = '🔒 Location Permission Denied';
+        if (descEl) descEl.innerHTML = 'Location access is blocked. Click the lock / settings icon (🔒) in your browser URL bar, change Location to <strong>Allow</strong>, and try again.';
+        if (btnEl) {
+          btnEl.disabled = false;
+          btnEl.innerHTML = '🔄 Retry Venue Location';
         }
-      },
-      (err) => {
-        console.error('Location error:', err);
         if (statusMsg) {
           statusMsg.style.color = '#dc2626';
-          statusMsg.textContent = `Location error: ${err.message}. Please allow location permissions.`;
+          statusMsg.textContent = 'Permission denied. Please allow location in your browser.';
         }
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-    );
+      } else {
+        // Fallback to low-accuracy Wi-Fi / IP if satellite watch is slow
+        navigator.geolocation.getCurrentPosition(
+          (fallbackPos) => {
+            handleNewFix(fallbackPos);
+            if (bestCoords && !isLocked) {
+              lockTrueVenue(bestCoords);
+            }
+          },
+          (err2) => {
+            if (isLocked) return;
+            if (statusBox) statusBox.className = 'maps-gps-container error';
+            if (titleEl) titleEl.textContent = '⚠️ Weak GPS Satellite Signal';
+            if (descEl) descEl.textContent = 'Could not acquire satellite fix. You can enter venue coordinates manually or click retry.';
+            if (btnEl) {
+              btnEl.disabled = false;
+              btnEl.innerHTML = '🔄 Retry Venue Location';
+            }
+            if (statusMsg) {
+              statusMsg.style.color = '#d97706';
+              statusMsg.textContent = 'Weak signal. You may enter coordinates manually or retry.';
+            }
+          },
+          { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+        );
+      }
+    }
+
+    // Trigger high-precision watchPosition immediately (Maps style)
+    try {
+      adminLocationWatchId = navigator.geolocation.watchPosition(
+        handleNewFix,
+        handleGeoError,
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
+      );
+    } catch (e) {
+      handleGeoError(e);
+    }
+
+    // Also trigger immediate getCurrentPosition for fastest initial prompt
+    try {
+      navigator.geolocation.getCurrentPosition(
+        handleNewFix,
+        handleGeoError,
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 12000 }
+      );
+    } catch (e) {}
+
+    // Auto-lock best fix after 6 seconds if accuracy hasn't reached <= 15m (e.g. indoor laptop)
+    setTimeout(() => {
+      if (!isLocked && bestCoords) {
+        lockTrueVenue(bestCoords);
+      }
+    }, 6000);
   }
 
   async function handleCreateSession(e) {
