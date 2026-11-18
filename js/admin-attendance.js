@@ -473,9 +473,7 @@
           table: 'attendance_submissions',
           filter: `session_id=eq.${sessionId}`
         }, handleNewSubmission)
-        .subscribe((status) => {
-          console.log(`Realtime attendance channel status: ${status}`);
-        });
+        .subscribe();
     } catch (e) {
       console.warn('Realtime subscription error:', e);
     }

@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // NTC Exam Prep - Profile Logic
 // Handles profile updates, password changes, stats
 // ============================================
@@ -140,15 +140,20 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Display avatar
     const avatarInitials = document.getElementById('profileAvatarInitials');
+    const avatarTextSpan = document.getElementById('profileAvatarText') || avatarInitials;
     if (userData.avatar_url) {
-      avatarInitials.style.display = 'none';
-      const container = avatarInitials.parentElement;
-      container.style.backgroundImage = `url(${userData.avatar_url})`;
-      container.style.backgroundSize = 'cover';
-      container.style.backgroundPosition = 'center';
-      container.style.border = '2px solid var(--primary)';
+      if (avatarTextSpan !== avatarInitials) avatarTextSpan.style.display = 'none';
+      avatarInitials.style.backgroundImage = `url(${userData.avatar_url})`;
+      avatarInitials.style.backgroundSize = 'cover';
+      avatarInitials.style.backgroundPosition = 'center';
+      avatarInitials.style.border = '2px solid var(--primary)';
     } else {
-      avatarInitials.textContent = displayName.substring(0, 2).toUpperCase();
+      const initText = displayName.substring(0, 2).toUpperCase();
+      if (avatarTextSpan !== avatarInitials) {
+        avatarTextSpan.textContent = initText;
+      } else {
+        avatarInitials.textContent = initText;
+      }
     }
   }
 
@@ -193,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update display (safe — fullName is always defined here)
         const displayName = fullName || document.getElementById('profileDisplayEmail').textContent.split('@')[0];
         document.getElementById('profileDisplayName').textContent = displayName;
-        const initialsEl = document.getElementById('profileAvatarInitials');
+        const initialsEl = document.getElementById('profileAvatarText') || document.getElementById('profileAvatarInitials');
         if (initialsEl && initialsEl.style.display !== 'none') {
            initialsEl.textContent = (fullName || 'U').substring(0, 2).toUpperCase();
         }
@@ -271,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.target.files && e.target.files[0]) {
         const file = e.target.files[0];
         const initials = document.getElementById('profileAvatarInitials');
-        const avatarContainer = initials.parentElement;
+        const avatarContainer = initials;
         
         // Show loading state
         window.showToast('Uploading profile photo...', 'info');

@@ -5,21 +5,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Profile | PrepTrack</title>
-
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <!-- CSS -->
   <link rel="stylesheet" href="../css/style.css?v=6">
-  <link rel="stylesheet" href="../css/dashboard.css?v=4">
+  <link rel="stylesheet" href="../css/dashboard.css?v=5">
   <link rel="stylesheet" href="../css/responsive.css">
-
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- PWA -->
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#003BF7">
   <meta name="mobile-web-app-capable" content="yes">
@@ -27,35 +19,501 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="PrepTrack">
   <link rel="apple-touch-icon" href="/icons/logo.PNG">
+
+  <style>
+    /* ─── Profile Page Scoped Styles ─── */
+
+    /* Hero Banner */
+    .profile-hero {
+      position: relative;
+      height: 100px;
+      border-radius: var(--radius-lg, 14px);
+      overflow: visible;
+      margin-bottom: 48px;
+      background: linear-gradient(120deg, #003BF7 0%, #6C47FF 50%, #00C6AE 100%);
+      box-shadow: 0 4px 32px 0 rgba(0,59,247,0.13);
+    }
+
+    .profile-hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.18) 100%);
+      pointer-events: none;
+    }
+
+    /* Hero blur edges */
+    .profile-hero-blur {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      border-radius: inherit;
+      backdrop-filter: blur(0px);
+      pointer-events: none;
+    }
+
+    /* Avatar cluster */
+    .profile-identity {
+      position: absolute;
+      bottom: -38px;
+      left: 24px;
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+      z-index: 10;
+    }
+
+    .profile-avatar-wrap {
+      position: relative;
+      width: 76px;
+      height: 76px;
+      flex-shrink: 0;
+    }
+
+    .profile-avatar-circle {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #003BF7 0%, #6C47FF 100%);
+      border: 3px solid var(--card-bg, #fff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.5px;
+      box-shadow: 0 4px 18px rgba(0,59,247,0.22);
+      cursor: pointer;
+      transition: box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .profile-avatar-circle:hover .avatar-cam-badge {
+      opacity: 1;
+    }
+
+    .avatar-cam-badge {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.42);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.18s;
+    }
+
+    .avatar-cam-badge svg {
+      color: #fff;
+    }
+
+    .profile-meta {
+      padding-bottom: 6px;
+    }
+
+    .profile-display-name {
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: var(--text, #111);
+      line-height: 1.2;
+      margin: 0 0 2px;
+    }
+
+    .profile-display-email {
+      font-size: 0.78rem;
+      color: var(--text-light, #666);
+      margin: 0 0 8px;
+    }
+
+    .profile-stat-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .stat-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      background: var(--surface, #f3f4f6);
+      color: var(--text, #222);
+      border: 1px solid var(--border, #e5e7eb);
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+    }
+
+    .stat-chip-icon {
+      font-size: 0.82em;
+    }
+
+    /* ─── Two-column grid ─── */
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    @media (max-width: 700px) {
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+      .profile-identity {
+        left: 16px;
+        gap: 12px;
+      }
+      .profile-hero {
+        margin-bottom: 52px;
+      }
+    }
+
+    /* ─── Compact panel card ─── */
+    .profile-panel {
+      background: var(--card-bg, #fff);
+      border: 1px solid var(--border, #e5e7eb);
+      border-radius: var(--radius-lg, 14px);
+      padding: 18px 18px;
+      transition: box-shadow 0.18s;
+    }
+
+    .profile-panel:hover {
+      box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+    }
+
+    .panel-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-light, #888);
+      margin: 0 0 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border, #f0f0f0);
+    }
+
+    /* ─── Action buttons ─── */
+    .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: 9px;
+      border: 1px solid var(--border, #e5e7eb);
+      background: transparent;
+      color: var(--text, #222);
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.14s, border-color 0.14s, color 0.14s;
+      margin-bottom: 8px;
+      font-family: inherit;
+    }
+
+    .action-btn:last-child {
+      margin-bottom: 0;
+    }
+
+    .action-btn:hover {
+      background: var(--surface, #f5f5f5);
+      border-color: var(--primary, #003BF7);
+      color: var(--primary, #003BF7);
+    }
+
+    .action-btn.danger {
+      border-color: transparent;
+      color: #E53E3E;
+    }
+
+    .action-btn.danger:hover {
+      background: #FFF5F5;
+      border-color: #FED7D7;
+      color: #C53030;
+    }
+
+    .action-btn-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: var(--surface, #f3f4f6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.14s;
+    }
+
+    .action-btn:hover .action-btn-icon {
+      background: rgba(0,59,247,0.09);
+    }
+
+    .action-btn.danger .action-btn-icon {
+      background: #FFF5F5;
+    }
+
+    .action-btn.danger:hover .action-btn-icon {
+      background: #FED7D7;
+    }
+
+    /* ─── Info rows ─── */
+    .info-row {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border, #f0f0f0);
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .info-row:first-of-type {
+      padding-top: 0;
+    }
+
+    .info-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--text-light, #9ca3af);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .info-value {
+      font-size: 0.84rem;
+      color: var(--text, #111);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .info-locked {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 0.65rem;
+      color: var(--text-light, #aaa);
+      background: var(--surface, #f3f4f6);
+      border-radius: 4px;
+      padding: 1px 5px;
+      border: 1px solid var(--border, #e5e7eb);
+    }
+
+    /* ─── Slide-in forms ─── */
+    .profile-form-panel {
+      grid-column: 1 / -1;
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease, margin-top 0.3s;
+      pointer-events: none;
+      margin-top: 0;
+    }
+
+    .profile-form-panel.open {
+      max-height: 700px;
+      opacity: 1;
+      pointer-events: auto;
+      margin-top: 0;
+    }
+
+    .profile-form-inner {
+      background: var(--card-bg, #fff);
+      border: 1px solid var(--border, #e5e7eb);
+      border-radius: var(--radius-lg, 14px);
+      padding: 22px 24px 24px;
+    }
+
+    .form-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .form-panel-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text, #111);
+    }
+
+    .form-panel-close {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      border: 1px solid var(--border, #e5e7eb);
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-light, #888);
+      transition: background 0.14s;
+      font-family: inherit;
+    }
+
+    .form-panel-close:hover {
+      background: var(--surface, #f5f5f5);
+      color: var(--text, #222);
+    }
+
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 540px) {
+      .form-grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border, #f0f0f0);
+    }
+
+    /* dark mode glassmorphism accents */
+    [data-theme="dark"] .profile-panel,
+    body.dark .profile-panel {
+      background: rgba(255,255,255,0.04);
+      border-color: rgba(255,255,255,0.09);
+      backdrop-filter: blur(12px);
+    }
+
+    [data-theme="dark"] .profile-form-inner,
+    body.dark .profile-form-inner {
+      background: rgba(255,255,255,0.05);
+      border-color: rgba(255,255,255,0.09);
+      backdrop-filter: blur(16px);
+    }
+
+    [data-theme="dark"] .stat-chip,
+    body.dark .stat-chip {
+      background: rgba(255,255,255,0.07);
+      border-color: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.85);
+    }
+
+    [data-theme="dark"] .action-btn,
+    body.dark .action-btn {
+      border-color: rgba(255,255,255,0.09);
+      color: rgba(255,255,255,0.85);
+    }
+
+    [data-theme="dark"] .action-btn:hover,
+    body.dark .action-btn:hover {
+      background: rgba(0,59,247,0.14);
+      border-color: rgba(0,59,247,0.4);
+    }
+
+    [data-theme="dark"] .info-row,
+    body.dark .info-row {
+      border-color: rgba(255,255,255,0.07);
+    }
+
+    [data-theme="dark"] .panel-title,
+    body.dark .panel-title {
+      border-color: rgba(255,255,255,0.08);
+    }
+
+    /* input file hidden */
+    #avatarUpload { display: none; }
+
+    /* Page content wrapper */
+    .profile-page-content {
+      padding: 24px 24px 48px;
+      max-width: 860px;
+    }
+
+    @media (max-width: 600px) {
+      .profile-page-content {
+        padding: 16px 14px 48px;
+      }
+    }
+
+    /* Role badge */
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(0,59,247,0.12);
+      color: #003BF7;
+      border: 1px solid rgba(0,59,247,0.18);
+    }
+
+    [data-theme="dark"] .role-badge,
+    body.dark .role-badge {
+      background: rgba(0,59,247,0.22);
+      color: #7DA9FF;
+      border-color: rgba(0,59,247,0.35);
+    }
+
+    /* Divider line */
+    .section-divider {
+      grid-column: 1 / -1;
+      height: 1px;
+      background: var(--border, #e5e7eb);
+      margin: 2px 0 4px;
+      opacity: 0.6;
+    }
+  </style>
 </head>
 
 <body>
-
   <!-- Navigation -->
   <nav class="navbar">
     <div class="container" style="max-width: 100%;">
       <div style="display: flex; align-items: center; gap: var(--space-md);">
         <button class="sidebar-toggle-btn" id="sidebarToggle" aria-label="Toggle Sidebar">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         </button>
-
         <a href="dashboard.html" class="navbar-brand">
           <div class="brand-icon"><img src="/icons/logo.PNG" alt="PrepTrack Logo"></div>
           <span>PrepTrack</span>
         </a>
       </div>
-
-      <div class="navbar-actions">
+      <div class="navbar-user" style="display: flex; align-items: center; gap: var(--space-sm);">
         <button class="theme-toggle" id="themeToggle" aria-label="Toggle Dark Mode"></button>
-        <div class="user-dropdown">
-          <div class="user-dropdown-toggle">
-            <div class="avatar avatar-sm user-avatar-initials">U</div>
+        <div style="position: relative;">
+          <div class="user-profile-btn" id="userProfileBtn">
+            <img src="" alt="Profile" class="user-avatar" id="userAvatar" onerror="this.style.display='none'">
+            <span class="user-avatar-initials" style="display:none;"></span>
             <span class="user-name">User Name</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="user-dropdown-menu" id="userDropdownMenu">
+            <a href="profile.html" class="dropdown-item">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              My Profile
+            </a>
+            <div class="dropdown-divider"></div>
+            <a href="#" class="dropdown-item danger" id="logoutBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              Log Out
+            </a>
           </div>
         </div>
       </div>
@@ -71,33 +529,15 @@
         <div class="sidebar-section">
           <div class="sidebar-section-title">Menu</div>
           <a href="dashboard.html" class="sidebar-link">
-            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"
-                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
-                <line x1="18" x2="18" y1="20" y2="10" />
-                <line x1="12" x2="12" y1="20" y2="4" />
-                <line x1="6" x2="6" y1="20" y2="14" />
-              </svg></span>
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10" /><line x1="12" x2="12" y1="20" y2="4" /><line x1="6" x2="6" y1="20" y2="14" /></svg></span>
             Dashboard
           </a>
           <a href="exam.html" class="sidebar-link">
-            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"
-                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
-                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="16" x2="8" y1="13" y2="13" />
-                <line x1="16" x2="8" y1="17" y2="17" />
-                <line x1="10" x2="8" y1="9" y2="9" />
-              </svg></span>
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span>
             Mock Exams
           </a>
           <a href="resources.html" class="sidebar-link">
-            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"
-                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
-                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
-              </svg></span>
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span>
             Study Resources
           </a>
           <a href="courses.html" class="sidebar-link">
@@ -109,182 +549,209 @@
             Attendance
           </a>
         </div>
-
         <div class="sidebar-section">
           <div class="sidebar-section-title">Account</div>
           <a href="profile.html" class="sidebar-link active">
-            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"
-                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
-                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg></span>
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
             Profile Settings
           </a>
         </div>
       </div>
     </aside>
 
-    <!-- Main Content -->
-    <main class="dashboard-main">
-      <div style="max-width: 800px; margin-left: 0; text-align: left;">
-        <h1 style="margin-bottom: var(--space-xl);">Account Profile</h1>
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <div class="profile-page-content">
 
-        <!-- Profile Hero Card -->
-        <div class="widget reveal" style="margin-bottom: var(--space-xl); overflow: hidden;">
-        <!-- Gradient Banner -->
-        <div style="height: 100px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark, #3730a3) 100%); position: relative;"></div>
+        <!-- ── Hero Banner ── -->
+        <div class="profile-hero">
+          <div class="profile-hero-blur"></div>
 
-        <!-- Avatar + Info -->
-        <div style="padding: var(--space-lg) var(--space-xl) var(--space-xl); position: relative;">
-          <div style="display: flex; align-items: center; gap: var(--space-lg); flex-wrap: wrap; margin-bottom: var(--space-lg);">
-            <label class="profile-photo-upload" title="Change Profile Photo" style="flex-shrink:0;">
-              <div class="avatar avatar-2xl" style="border: 4px solid var(--surface); box-shadow: 0 4px 16px rgba(0,0,0,0.15); margin-top: -60px; background-color: var(--surface);">
-                <span id="profileAvatarInitials">U</span>
-              </div>
-              <div class="upload-badge" title="Change Photo">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              </div>
+          <!-- Identity cluster overlapping banner -->
+          <div class="profile-identity">
+            <!-- Avatar -->
+            <div class="profile-avatar-wrap">
+              <label for="avatarUpload" style="display:block; width:100%; height:100%; cursor:pointer;">
+                <div class="profile-avatar-circle" id="profileAvatarInitials">
+                  <span id="profileAvatarText">U</span>
+                  <div class="avatar-cam-badge">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  </div>
+                </div>
+              </label>
               <input type="file" id="avatarUpload" accept="image/*">
-            </label>
-
-            <div style="flex:1; min-width:200px;">
-              <h2 id="profileDisplayName" style="font-size: var(--text-2xl); font-weight: 800; margin-bottom: 2px;">User Name</h2>
-              <p id="profileDisplayEmail" style="color: var(--text-light); font-size: var(--text-sm); margin:0;">student@example.com</p>
             </div>
 
-            <div style="display:flex; gap: var(--space-md); flex-wrap: wrap; padding-bottom: 4px;">
-              <button type="button" class="btn btn-primary" id="showProfileFormBtn" onclick="document.getElementById('personalInfoWidget').style.display='block'; this.style.display='none'; document.getElementById('showPasswordFormBtn').style.display='none';">
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                Edit Profile
-              </button>
-              <button type="button" class="btn btn-outline" id="showPasswordFormBtn" onclick="document.getElementById('securityWidget').style.display='block'; this.style.display='none'; document.getElementById('showProfileFormBtn').style.display='none';">
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                Change Password
-              </button>
-              <a href="#" class="btn btn-outline" id="logoutBtn" style="color: var(--danger); border-color: var(--danger);">
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Log Out
-              </a>
-            </div>
-          </div>
-
-          <!-- Stats Row -->
-          <div style="display: flex; gap: var(--space-xl); padding: var(--space-lg) var(--space-xl); background: var(--surface-alt, var(--surface-hover)); border-radius: var(--radius-lg); flex-wrap: wrap;">
-            <div style="text-align: left; flex:1; min-width: 80px;">
-              <div style="font-size: var(--text-2xl); font-weight: 800; color: var(--primary);" id="profileExamsCount">0</div>
-              <div style="font-size: var(--text-xs); color: var(--text-light); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Exams Taken</div>
-            </div>
-            <div style="width: 1px; background: var(--border); flex-shrink:0;"></div>
-            <div style="text-align: left; flex:1; min-width: 80px;">
-              <div style="font-size: var(--text-2xl); font-weight: 800; color: var(--success, #22c55e);" id="profileAvgScore">0%</div>
-              <div style="font-size: var(--text-xs); color: var(--text-light); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Avg Score</div>
+            <!-- Name / Email / Chips -->
+            <div class="profile-meta">
+              <p class="profile-display-name" id="profileDisplayName">Loading…</p>
+              <p class="profile-display-email" id="profileDisplayEmail">—</p>
+              <div class="profile-stat-chips">
+                <span class="stat-chip">
+                  <span class="stat-chip-icon">📋</span>
+                  <span id="profileExamsCount">0</span> Exams
+                </span>
+                <span class="stat-chip">
+                  <span class="stat-chip-icon">⭐</span>
+                  <span id="profileAvgScore">—</span>% Avg
+                </span>
+                <span class="stat-chip">
+                  <span class="stat-chip-icon">🎓</span>
+                  <span class="role-badge">Teacher</span>
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+        <!-- /Hero Banner -->
 
-      <!-- Edit Profile Form (hidden by default) -->
-      <div class="widget reveal delay-1" id="personalInfoWidget" style="display:none; margin-bottom: var(--space-xl);">
-        <div class="widget-header" style="display:flex; align-items:center; justify-content:space-between;">
-          <h3 class="widget-title">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px; vertical-align:middle;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            Edit Profile
-          </h3>
-          <button type="button" class="btn btn-ghost" style="font-size:0.85rem;" onclick="document.getElementById('personalInfoWidget').style.display='none'; document.getElementById('showProfileFormBtn').style.display='inline-flex'; document.getElementById('showPasswordFormBtn').style.display='inline-flex';">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            Cancel
-          </button>
-        </div>
-        <div class="widget-body">
-          <form id="profileForm">
-            <div class="form-row profile-form-row">
-              <div class="form-group">
-                <label class="form-label" for="profileName">Full Name</label>
-                <input type="text" id="profileName" class="form-input" required placeholder="Your full name">
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="profilePhone">Phone Number</label>
-                <input type="tel" id="profilePhone" class="form-input" placeholder="+233 xx xxx xxxx">
-              </div>
+        <!-- ── Two-column grid ── -->
+        <div class="profile-grid">
+
+          <!-- Left: Quick Actions -->
+          <div class="profile-panel" id="personalInfoWidget">
+            <p class="panel-title">Quick Actions</p>
+
+            <button class="action-btn" id="showProfileFormBtn" type="button">
+              <span class="action-btn-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </span>
+              Edit Profile
+            </button>
+
+            <button class="action-btn" id="showPasswordFormBtn" type="button">
+              <span class="action-btn-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </span>
+              Change Password
+            </button>
+
+            <button class="action-btn danger" id="logoutBtn" type="button">
+              <span class="action-btn-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              </span>
+              Log Out
+            </button>
+          </div>
+
+          <!-- Right: Account Info (read-only snapshot) -->
+          <div class="profile-panel" id="securityWidget">
+            <p class="panel-title">Account Info</p>
+
+            <div class="info-row">
+              <span class="info-label">Full Name</span>
+              <span class="info-value" id="_infoName">—</span>
             </div>
+            <div class="info-row">
+              <span class="info-label">Email</span>
+              <span class="info-value">
+                <span id="_infoEmail">—</span>
+                <span class="info-locked">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  locked
+                </span>
+              </span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Phone</span>
+              <span class="info-value" id="_infoPhone">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Date of Birth</span>
+              <span class="info-value" id="_infoDob">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">School / Institution</span>
+              <span class="info-value" id="_infoSchool">—</span>
+            </div>
+          </div>
 
-            <div class="form-row profile-form-row">
-              <div class="form-group">
-                <label class="form-label" for="profileDob">Date of Birth</label>
-                <input type="date" id="profileDob" class="form-input">
+          <!-- Edit Profile Form (slide-in, full width) -->
+          <div class="profile-form-panel" id="_editProfilePanel">
+            <div class="profile-form-inner">
+              <div class="form-panel-header">
+                <span class="form-panel-title">Edit Profile</span>
+                <button class="form-panel-close" id="_closeProfileForm" type="button" aria-label="Close">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
               </div>
-              <div class="form-group">
-                <label class="form-label" for="profileSchool">Institution / College (Optional)</label>
-                <input type="text" id="profileSchool" class="form-input" placeholder="Where did you train?">
-              </div>
-            </div>
 
-            <div class="form-group">
-              <label class="form-label" for="profileEmail">Email Address</label>
-              <input type="email" id="profileEmail" class="form-input" disabled style="background: var(--surface-hover); cursor: not-allowed;">
-              <span class="form-helper">Email cannot be changed. Contact support if needed.</span>
-            </div>
-
-            <div style="display:flex; gap:var(--space-md); flex-wrap:wrap;">
-              <button type="submit" class="btn btn-primary">Save Changes</button>
-              <button type="button" class="btn btn-ghost" onclick="document.getElementById('personalInfoWidget').style.display='none'; document.getElementById('showProfileFormBtn').style.display='inline-flex'; document.getElementById('showPasswordFormBtn').style.display='inline-flex';">Cancel</button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- Change Password Form (hidden by default) -->
-      <div class="widget reveal delay-1" id="securityWidget" style="display:none;">
-        <div class="widget-header" style="display:flex; align-items:center; justify-content:space-between;">
-          <h3 class="widget-title">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px; vertical-align:middle;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            Change Password
-          </h3>
-          <button type="button" class="btn btn-ghost" style="font-size:0.85rem;" onclick="document.getElementById('securityWidget').style.display='none'; document.getElementById('showPasswordFormBtn').style.display='inline-flex'; document.getElementById('showProfileFormBtn').style.display='inline-flex';">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            Cancel
-          </button>
-        </div>
-        <div class="widget-body">
-          <form id="passwordForm">
-            <div class="form-group">
-              <label class="form-label" for="currentPassword">Current Password</label>
-              <div class="input-group">
-                <span class="input-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-                <input type="password" id="currentPassword" class="form-input" required placeholder="Enter current password">
-              </div>
-            </div>
-
-            <div class="form-row profile-form-row">
-              <div class="form-group">
-                <label class="form-label" for="newPassword">New Password</label>
-                <div class="input-group">
-                  <span class="input-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></span>
-                  <input type="password" id="newPassword" class="form-input" required minlength="6" placeholder="Min. 6 characters">
+              <form id="profileForm">
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label class="form-label" for="profileName">Full Name</label>
+                    <input class="form-input" type="text" id="profileName" name="name" placeholder="Your full name" autocomplete="name">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="profilePhone">Phone Number</label>
+                    <input class="form-input" type="tel" id="profilePhone" name="phone" placeholder="+233 ..." autocomplete="tel">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="profileDob">Date of Birth</label>
+                    <input class="form-input" type="date" id="profileDob" name="dob">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="profileSchool">School / Institution</label>
+                    <input class="form-input" type="text" id="profileSchool" name="school" placeholder="Your school name">
+                  </div>
+                  <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label" for="profileEmail">Email Address</label>
+                    <input class="form-input" type="email" id="profileEmail" name="email" placeholder="you@example.com" autocomplete="email" disabled style="opacity:0.55; cursor:not-allowed;">
+                  </div>
                 </div>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="confirmNewPassword">Confirm New Password</label>
-                <div class="input-group">
-                  <span class="input-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></span>
-                  <input type="password" id="confirmNewPassword" class="form-input" required minlength="6" placeholder="Repeat new password">
+                <div class="form-actions">
+                  <button type="button" class="btn btn-outline" id="_cancelProfileForm" style="font-size:0.82rem; padding:7px 16px;">Cancel</button>
+                  <button type="submit" class="btn btn-primary" style="font-size:0.82rem; padding:7px 18px;">Save Changes</button>
                 </div>
-              </div>
+              </form>
             </div>
+          </div>
 
-            <div style="display:flex; gap:var(--space-md); flex-wrap:wrap;">
-              <button type="submit" class="btn btn-secondary">Update Password</button>
-              <button type="button" class="btn btn-ghost" onclick="document.getElementById('securityWidget').style.display='none'; document.getElementById('showPasswordFormBtn').style.display='inline-flex'; document.getElementById('showProfileFormBtn').style.display='inline-flex';">Cancel</button>
+          <!-- Change Password Form (slide-in, full width) -->
+          <div class="profile-form-panel" id="_editPasswordPanel">
+            <div class="profile-form-inner">
+              <div class="form-panel-header">
+                <span class="form-panel-title">Change Password</span>
+                <button class="form-panel-close" id="_closePasswordForm" type="button" aria-label="Close">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+
+              <form id="passwordForm">
+                <div class="form-grid-2">
+                  <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label" for="currentPassword">Current Password</label>
+                    <input class="form-input" type="password" id="currentPassword" name="currentPassword" placeholder="Enter current password" autocomplete="current-password">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="newPassword">New Password</label>
+                    <input class="form-input" type="password" id="newPassword" name="newPassword" placeholder="At least 8 characters" autocomplete="new-password">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="confirmNewPassword">Confirm Password</label>
+                    <input class="form-input" type="password" id="confirmNewPassword" name="confirmNewPassword" placeholder="Repeat new password" autocomplete="new-password">
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button type="button" class="btn btn-outline" id="_cancelPasswordForm" style="font-size:0.82rem; padding:7px 16px;">Cancel</button>
+                  <button type="submit" class="btn btn-primary" style="font-size:0.82rem; padding:7px 18px;">Update Password</button>
+                </div>
+              </form>
             </div>
-          </form>
+          </div>
+
         </div>
+        <!-- /profile-grid -->
+
+        <!-- Exam History (populated by profile.js) -->
+        <div id="profileExamHistory" style="margin-top: 20px;"></div>
+
       </div>
-      </div>
+      <!-- /profile-page-content -->
     </main>
   </div>
 
-  <!-- Modal for Exam Review -->
+  <!-- Review Modal -->
   <div class="modal-overlay" id="reviewModal">
     <div class="modal" style="max-width: 800px; width: 90%;">
       <div class="modal-header">
@@ -294,9 +761,7 @@
         </button>
       </div>
       <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-        <div id="reviewModalContent">
-          Loading review...
-        </div>
+        <div id="reviewModalContent">Loading review...</div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-outline" onclick="window.closeModal('reviewModal')">Close</button>
@@ -306,17 +771,114 @@
 
   <script src="../js/supabase.js?v=4"></script>
   <script src="../js/app.js?v=6"></script>
-  <script src="../js/auth.js?v=11"></script>
+  <script src="../js/auth.js?v=12"></script>
   <script src="../js/profile.js?v=4"></script>
+
+  <!-- Profile page UI glue: slide-in forms + info panel sync -->
+  <script>
+    (function () {
+      /* ── Panel toggle helpers ── */
+      function openPanel(panel) {
+        panel.classList.add('open');
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+      function closePanel(panel) {
+        panel.classList.remove('open');
+      }
+
+      var editProfilePanel   = document.getElementById('_editProfilePanel');
+      var editPasswordPanel  = document.getElementById('_editPasswordPanel');
+
+      document.getElementById('showProfileFormBtn').addEventListener('click', function () {
+        closePanel(editPasswordPanel);
+        if (editProfilePanel.classList.contains('open')) {
+          closePanel(editProfilePanel);
+        } else {
+          openPanel(editProfilePanel);
+        }
+      });
+
+      document.getElementById('showPasswordFormBtn').addEventListener('click', function () {
+        closePanel(editProfilePanel);
+        if (editPasswordPanel.classList.contains('open')) {
+          closePanel(editPasswordPanel);
+        } else {
+          openPanel(editPasswordPanel);
+        }
+      });
+
+      document.getElementById('_closeProfileForm').addEventListener('click', function () {
+        closePanel(editProfilePanel);
+      });
+      document.getElementById('_cancelProfileForm').addEventListener('click', function () {
+        closePanel(editProfilePanel);
+      });
+
+      document.getElementById('_closePasswordForm').addEventListener('click', function () {
+        closePanel(editPasswordPanel);
+      });
+      document.getElementById('_cancelPasswordForm').addEventListener('click', function () {
+        closePanel(editPasswordPanel);
+      });
+
+      /* ── Mirror profile.js data into the read-only info panel ──
+         profile.js sets profileDisplayName, profileDisplayEmail, profileName,
+         profilePhone, profileDob, profileSchool, profileEmail.
+         We watch for changes and reflect them in our info rows.           */
+      function syncInfoPanel() {
+        var n  = document.getElementById('profileName');
+        var e  = document.getElementById('profileEmail');
+        var ph = document.getElementById('profilePhone');
+        var d  = document.getElementById('profileDob');
+        var sc = document.getElementById('profileSchool');
+
+        if (n  && n.value)  document.getElementById('_infoName').textContent  = n.value;
+        if (e  && e.value)  document.getElementById('_infoEmail').textContent = e.value;
+        if (ph && ph.value) document.getElementById('_infoPhone').textContent  = ph.value || '—';
+        if (d  && d.value)  {
+          // format date nicely
+          try {
+            var parts = d.value.split('-');
+            if (parts.length === 3) {
+              var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+              document.getElementById('_infoDob').textContent =
+                parts[2] + ' ' + months[parseInt(parts[1],10)-1] + ' ' + parts[0];
+            }
+          } catch(err) {
+            document.getElementById('_infoDob').textContent = d.value;
+          }
+        }
+        if (sc && sc.value) document.getElementById('_infoSchool').textContent = sc.value || '—';
+      }
+
+      // Poll for profile.js to populate the hidden form fields then reflect them
+      var syncAttempts = 0;
+      var syncInterval = setInterval(function () {
+        syncAttempts++;
+        var nameEl = document.getElementById('profileName');
+        if ((nameEl && nameEl.value) || syncAttempts > 40) {
+          syncInfoPanel();
+          clearInterval(syncInterval);
+        }
+      }, 150);
+
+      // Also re-sync after the profileForm is submitted (profile.js handles save)
+      var pForm = document.getElementById('profileForm');
+      if (pForm) {
+        pForm.addEventListener('submit', function () {
+          setTimeout(syncInfoPanel, 600);
+        });
+      }
+    })();
+  </script>
+
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
+      window.addEventListener('load', function () {
         navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('[PrepTrack] SW registered:', reg.scope))
-          .catch(err => console.warn('[PrepTrack] SW registration failed:', err));
+          .catch(function (err) { console.warn('[PrepTrack] SW registration failed:', err); });
       });
     }
   </script>
 </body>
-
 </html>

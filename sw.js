@@ -1,9 +1,9 @@
-﻿// ============================================
+// ============================================
 // PrepTrack - Service Worker
 // Caches assets for offline use
 // ============================================
 
-const CACHE_NAME = 'preptrack-v40';
+const CACHE_NAME = 'preptrack-v42';
 
 // Core assets to cache on install
 const PRECACHE_ASSETS = [
@@ -16,19 +16,25 @@ const PRECACHE_ASSETS = [
   '/pages/register.html',
   '/pages/resources.html',
   '/pages/contact.html',
-  '/css/style.css?v=4',
-  '/css/dashboard.css',
+  '/pages/courses.html',
+  '/pages/attendance.html',
+  '/css/style.css?v=6',
+  '/css/dashboard.css?v=5',
   '/css/responsive.css',
+  '/css/courses.css',
+  '/css/attendance.css',
   '/css/materials.css',
-  '/js/app.js?v=5',
-  '/js/auth.js?v=10',
-  '/js/supabase.js?v=4',
-  '/js/exam.js?v=11',
+  '/js/app.js?v=6',
+  '/js/auth.js?v=12',
+  '/js/supabase.js',
+  '/js/supabase-attendance.js',
+  '/js/exam.js',
   '/js/results.js',
-  '/js/profile.js?v=4',
-  '/js/dashboard.js?v=2',
-  '/js/admin-exams.js',
-  '/js/materials.js?v=3',
+  '/js/profile.js',
+  '/js/dashboard.js',
+  '/js/courses.js',
+  '/js/attendance.js',
+  '/js/materials.js',
   '/icons/logo.PNG',
   '/manifest.json'
 ];
@@ -37,10 +43,8 @@ const PRECACHE_ASSETS = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      console.log('[SW] Pre-caching assets...');
-      return cache.addAll(PRECACHE_ASSETS).catch(err => {
+      return cache.addAll(PRECACHE_ASSETS).catch(() => {
         // Don't fail install if some assets are missing
-        console.warn('[SW] Some assets failed to cache:', err);
       });
     })
   );
@@ -54,10 +58,7 @@ self.addEventListener('activate', event => {
       return Promise.all(
         cacheNames
           .filter(name => name !== CACHE_NAME)
-          .map(name => {
-            console.log('[SW] Deleting old cache:', name);
-            return caches.delete(name);
-          })
+          .map(name => caches.delete(name))
       );
     })
   );

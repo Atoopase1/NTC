@@ -119,6 +119,16 @@
       .in('status', ['active', 'scheduled', 'closed'])
       .order('session_date', { ascending: false });
 
+    // Provide a friendlier message when the migration has not been run yet
+    if (error && (error.message || '').includes("schema cache")) {
+      return {
+        data: null,
+        error: new Error(
+          'The attendance feature is not set up yet. Please ask your administrator to run the database migration (preptrack_migration.sql) in Supabase.'
+        )
+      };
+    }
+
     return { data, error };
   }
 

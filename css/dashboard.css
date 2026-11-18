@@ -986,3 +986,28 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+/* ── Dashboard Page Header (overrides landing-page .page-header) ─── */
+/* The global .page-header in style.css has white text for the hero section.
+   Inside the dashboard layout we need theme-aware colours instead. */
+.dashboard-main .page-header {
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  overflow: visible;
+}
+
+.dashboard-main .page-header::before {
+  display: none;
+}
+
+.dashboard-main .page-header h1 {
+  font-size: var(--text-2xl);
+  color: var(--text);
+  margin-bottom: var(--space-xs);
+}
+
+.dashboard-main .page-header p {
+  color: var(--text-light);
+  font-size: var(--text-base);
+}

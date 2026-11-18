@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // NTC Exam Prep - Supabase Integration
 // Connects to Supabase backend for Auth & DB
 // ============================================
@@ -15,7 +15,6 @@ let supabaseClient = null;
 function initSupabase() {
   if (typeof supabase !== 'undefined') {
     supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    console.log('Supabase client initialized');
   } else {
     console.error('Supabase library not loaded. Please include the CDN script in HTML.');
   }
@@ -123,7 +122,6 @@ async function signInWithGoogle() {
   // e.g. http://localhost:5500/NTC-master/ => base = '/NTC-master'
   const basePath = window.location.pathname.replace(/\/pages\/.*|\/index\.html.*|\/$/, '');
   const redirectTo = window.location.origin + basePath + '/pages/auth-callback.html';
-  console.log('[PrepTrack] OAuth redirectTo:', redirectTo);
 
   const { error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
@@ -273,7 +271,6 @@ async function getProfile(userId) {
     
     return data;
   } catch (error) {
-    console.log('Using local profile data fallback');
     // Fallback if DB not setup
     const localData = localStorage.getItem(`user_${userId}_profile`);
     if (localData) return JSON.parse(localData);

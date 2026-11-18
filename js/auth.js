@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // NTC Exam Prep - Authentication Logic
 // Login and Registration form handling
 // ============================================
@@ -217,6 +217,8 @@ document.addEventListener('DOMContentLoaded', () => {
     window.location.pathname.includes('profile') ||
     window.location.pathname.includes('leaderboard') ||
     window.location.pathname.includes('resources') ||
+    window.location.pathname.includes('courses') ||
+    window.location.pathname.includes('attendance') ||
     window.location.pathname.includes('admin');
 
   if (isProtectedPage) {
@@ -292,13 +294,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const chevron = parent.querySelector(':scope > svg');
         if (chevron) chevron.remove();
       }
-      
-      // Hide the dropdown menu entirely via JS globally
-      const dropdownContainer = el.closest('.user-dropdown') || (parent && parent.parentElement);
-      if (dropdownContainer) {
-        const menu = dropdownContainer.querySelector('.user-dropdown-menu');
-        if (menu) menu.style.display = 'none';
-      }
 
       if (isMobile) {
         // On mobile, show only first name
@@ -354,17 +349,21 @@ document.addEventListener('DOMContentLoaded', () => {
   if (profileBtn) {
     profileBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      window.location.href = 'profile.html';
+      if (dropdownMenu) {
+        dropdownMenu.classList.toggle('open');
+      }
     });
 
     // Prevent clicks inside the dropdown from closing it
-    dropdownMenu.addEventListener('click', (e) => {
-      e.stopPropagation();
-    });
+    if (dropdownMenu) {
+      dropdownMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+    }
 
     // Close dropdown when clicking anywhere outside
     document.addEventListener('click', () => {
-      dropdownMenu.classList.remove('open');
+      if (dropdownMenu) dropdownMenu.classList.remove('open');
     });
   }
 });

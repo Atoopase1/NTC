@@ -12,3 +12,7 @@ desktop.ini
 
 # Node (just in case)
 node_modules/
+
+# Dev / scratch files (not for production)
+dev/
+scripts/README.md

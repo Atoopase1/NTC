@@ -40,6 +40,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       const { data, error } = await client.from('student_course_preferences')
         .select('subject_id').eq('user_id', user.id);
       if (error) {
+        // If migration hasn't been run, the table won't exist — silently skip
+        if ((error.message || '').includes('schema cache') || (error.message || '').includes('does not exist')) {
+          console.warn('student_course_preferences table not found. Run preptrack_migration.sql in Supabase.');
+          return;
+        }
         console.warn('Error fetching preferences:', error.message);
       }
       if (data) {
