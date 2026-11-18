@@ -119,7 +119,11 @@ async function signInWithGoogle() {
   
   // Redirect to the auth callback page so we can check admin role after login
   // Always use a proper http/https URL — Google OAuth does not support file:// redirects
-  const redirectTo = window.location.origin + '/pages/auth-callback.html';
+  // Build redirect URL that works whether site is at root or in a subdirectory
+  // e.g. http://localhost:5500/NTC-master/ => base = '/NTC-master'
+  const basePath = window.location.pathname.replace(/\/pages\/.*|\/index\.html.*|\/$/, '');
+  const redirectTo = window.location.origin + basePath + '/pages/auth-callback.html';
+  console.log('[PrepTrack] OAuth redirectTo:', redirectTo);
 
   const { error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
