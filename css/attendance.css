@@ -504,6 +504,68 @@
   border: 1px solid var(--border, #e2e8f0);
 }
 
+.register-class-tag {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e40af;
+  background: #dbeafe;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.register-week-tag {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b21a8;
+  background: #f3e8ff;
+  padding: 2px 7px;
+  border-radius: 6px;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.register-days-tag {
+  font-size: 12px;
+  font-weight: 700;
+  color: #065f46;
+  background: #d1fae5;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.view-toggle-wrap {
+  display: inline-flex;
+  background: var(--background, #f1f5f9);
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #e2e8f0);
+}
+
+.view-toggle-btn {
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light, #64748b);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.view-toggle-btn.active {
+  background: var(--surface, #ffffff);
+  color: var(--primary, #003bf7);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
 @media (max-width: 640px) {
   .register-toolbar {
     flex-direction: column;

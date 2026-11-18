@@ -181,9 +181,17 @@
               <span>Official Attendance Register</span>
               <span id="masterRegisterCount" class="register-badge-count">0 Records</span>
             </h2>
-            <p style="margin: 0; font-size: 0.85rem; color: var(--text-light);">
-              Master roll book containing all submitted student attendance records across all courses and sessions.
+            <p style="margin: 0 0 10px; font-size: 0.85rem; color: var(--text-light);">
+              Master roll book containing student attendance records: Student, Index, Class Name, Course, Week, Time, and Total Days Present.
             </p>
+            <div class="view-toggle-wrap">
+              <button type="button" class="view-toggle-btn active" id="viewDetailBtn" onclick="window.adminAttendance.switchRegisterView('detail')">
+                📋 Individual Logs
+              </button>
+              <button type="button" class="view-toggle-btn" id="viewSummaryBtn" onclick="window.adminAttendance.switchRegisterView('summary')">
+                📊 Class Roll Summary
+              </button>
+            </div>
           </div>
 
           <div class="register-actions">
@@ -210,15 +218,18 @@
         <div class="register-filter-bar">
           <div class="register-search-wrap">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="regSearchInput" placeholder="Search student name, index number..." oninput="window.adminAttendance.filterMasterRegister()">
+            <input type="text" id="regSearchInput" placeholder="Search student, index, class, course..." oninput="window.adminAttendance.filterMasterRegister()">
           </div>
-          <select id="regSubjectFilter" class="admin-input" style="width: auto; min-width: 170px;" onchange="window.adminAttendance.filterMasterRegister()">
+          <select id="regClassFilter" class="admin-input" style="width: auto; min-width: 140px;" onchange="window.adminAttendance.filterMasterRegister()">
+            <option value="all">All Classes</option>
+          </select>
+          <select id="regSubjectFilter" class="admin-input" style="width: auto; min-width: 160px;" onchange="window.adminAttendance.filterMasterRegister()">
             <option value="all">All Courses / Subjects</option>
           </select>
-          <select id="regSessionFilter" class="admin-input" style="width: auto; min-width: 170px;" onchange="window.adminAttendance.filterMasterRegister()">
-            <option value="all">All Sessions</option>
+          <select id="regWeekFilter" class="admin-input" style="width: auto; min-width: 130px;" onchange="window.adminAttendance.filterMasterRegister()">
+            <option value="all">All Weeks</option>
           </select>
-          <select id="regStatusFilter" class="admin-input" style="width: auto; min-width: 150px;" onchange="window.adminAttendance.filterMasterRegister()">
+          <select id="regStatusFilter" class="admin-input" style="width: auto; min-width: 140px;" onchange="window.adminAttendance.filterMasterRegister()">
             <option value="all">All Statuses</option>
             <option value="verified">Verified Present</option>
             <option value="rejected">Flagged / Out of Range</option>
@@ -233,18 +244,18 @@
         <div class="admin-card">
           <div class="admin-table-container">
             <table class="admin-table" id="masterRegisterTable">
-              <thead>
+              <thead id="masterRegisterThead">
                 <tr>
-                  <th style="width: 75px;">Roll #</th>
-                  <th>Student Name</th>
+                  <th style="width: 70px;">Roll #</th>
+                  <th>Student</th>
                   <th>Index Number</th>
-                  <th>Course / Subject</th>
-                  <th>Session Title</th>
-                  <th>Date</th>
-                  <th>Time Checked In</th>
-                  <th>Distance</th>
+                  <th>Class Name</th>
+                  <th>Course</th>
+                  <th>Week</th>
+                  <th>Time</th>
+                  <th>Total Days Present</th>
                   <th>Status</th>
-                  <th style="text-align: right; min-width: 120px;">Actions</th>
+                  <th style="text-align: right; min-width: 110px;">Actions</th>
                 </tr>
               </thead>
               <tbody id="masterRegisterTableBody">
@@ -276,9 +287,46 @@
                 <input type="text" id="sessionTitle" class="admin-input" placeholder="e.g. Week 3 Lecture" required>
               </div>
               <div>
-                <label class="admin-label" for="sessionSubject">Subject</label>
+                <label class="admin-label" for="sessionSubject">Subject / Course</label>
                 <select id="sessionSubject" class="admin-input" required>
                   <option value="" disabled selected>Loading subjects...</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="admin-form-row">
+              <div>
+                <label class="admin-label" for="sessionClassName">Class Name / Cohort</label>
+                <input type="text" id="sessionClassName" class="admin-input" placeholder="e.g. Class A, Cohort 1, B.Ed Primary" list="classList">
+                <datalist id="classList">
+                  <option value="Class A">
+                  <option value="Class B">
+                  <option value="Class C">
+                  <option value="Cohort 1 (Morning)">
+                  <option value="Cohort 2 (Evening)">
+                  <option value="Weekend Class">
+                  <option value="General Class">
+                </datalist>
+              </div>
+              <div>
+                <label class="admin-label" for="sessionWeek">Week Number</label>
+                <select id="sessionWeek" class="admin-input">
+                  <option value="Week 1" selected>Week 1</option>
+                  <option value="Week 2">Week 2</option>
+                  <option value="Week 3">Week 3</option>
+                  <option value="Week 4">Week 4</option>
+                  <option value="Week 5">Week 5</option>
+                  <option value="Week 6">Week 6</option>
+                  <option value="Week 7">Week 7</option>
+                  <option value="Week 8">Week 8</option>
+                  <option value="Week 9">Week 9</option>
+                  <option value="Week 10">Week 10</option>
+                  <option value="Week 11">Week 11</option>
+                  <option value="Week 12">Week 12</option>
+                  <option value="Week 13">Week 13</option>
+                  <option value="Week 14">Week 14</option>
+                  <option value="Week 15">Week 15</option>
+                  <option value="Week 16">Week 16</option>
                 </select>
               </div>
             </div>
@@ -374,7 +422,9 @@
               <thead>
                 <tr>
                   <th>Title</th>
-                  <th>Subject</th>
+                  <th>Class Name</th>
+                  <th>Subject / Course</th>
+                  <th>Week</th>
                   <th>Date</th>
                   <th>Start Time</th>
                   <th>End Time</th>

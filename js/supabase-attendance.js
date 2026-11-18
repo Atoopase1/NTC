@@ -19,7 +19,7 @@
   }
 
   /**
-   * Create an attendance session
+   * Create an attendance session (with graceful fallback if class_name/week columns are not yet migrated)
    */
   async function createAttendanceSession(data) {
     const client = getClient();
@@ -31,13 +31,34 @@
       created_by: user ? user.id : null
     };
 
-    const { data: session, error } = await client
+    // Attempt direct insert with all fields
+    let res = await client
       .from('attendance_sessions')
       .insert([payload])
       .select()
       .single();
 
-    return { data: session, error };
+    // If schema does not yet have class_name or week columns, store them cleanly in instructions/title
+    if (res.error && (res.error.message.includes('class_name') || res.error.message.includes('week') || res.error.message.includes('column'))) {
+      const fallbackPayload = { ...payload };
+      const className = fallbackPayload.class_name || 'Class A';
+      const week = fallbackPayload.week || 'Week 1';
+      delete fallbackPayload.class_name;
+      delete fallbackPayload.week;
+
+      const metaPrefix = `[Class: ${className}] [Week: ${week}]`;
+      fallbackPayload.instructions = fallbackPayload.instructions
+        ? `${metaPrefix} ${fallbackPayload.instructions}`
+        : metaPrefix;
+
+      res = await client
+        .from('attendance_sessions')
+        .insert([fallbackPayload])
+        .select()
+        .single();
+    }
+
+    return res;
   }
 
   /**
@@ -214,7 +235,7 @@
 
     const { data, error } = await client
       .from('attendance_submissions')
-      .select('*, attendance_sessions(title, subject, session_date, start_time, end_time, location_name, radius_meters)')
+      .select('*, attendance_sessions(*)')
       .order('submitted_at', { ascending: false });
 
     return { data, error };

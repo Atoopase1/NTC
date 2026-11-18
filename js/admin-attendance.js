@@ -1,5 +1,6 @@
 // ============================================
 // PrepTrack - Admin Attendance Management Logic
+// Supports Class Name, Week, Time, Course, Total Days Present
 // ============================================
 
 (function () {
@@ -19,6 +20,8 @@
   let cachedSessions = [];
   let allRegisterSubmissions = [];
   let filteredRegisterSubmissions = [];
+  let activeRegisterView = 'detail'; // 'detail' or 'summary'
+  let studentDaysPresentMap = new Map(); // key -> Set of distinct dates/sessions
 
   document.addEventListener('DOMContentLoaded', async () => {
     setupTabNavigation();
@@ -63,6 +66,173 @@
     }
   }
 
+  // Switch between 'detail' (individual logs) and 'summary' (class roll summary)
+  function switchRegisterView(view) {
+    activeRegisterView = view;
+    const detailBtn = document.getElementById('viewDetailBtn');
+    const summaryBtn = document.getElementById('viewSummaryBtn');
+
+    if (view === 'detail') {
+      if (detailBtn) detailBtn.classList.add('active');
+      if (summaryBtn) summaryBtn.classList.remove('active');
+    } else {
+      if (detailBtn) detailBtn.classList.remove('active');
+      if (summaryBtn) summaryBtn.classList.add('active');
+    }
+
+    updateRegisterThead();
+    renderMasterRegister(filteredRegisterSubmissions);
+  }
+
+  function updateRegisterThead() {
+    const thead = document.getElementById('masterRegisterThead');
+    if (!thead) return;
+
+    if (activeRegisterView === 'detail') {
+      thead.innerHTML = `
+        <tr>
+          <th style="width: 70px;">Roll #</th>
+          <th>Student</th>
+          <th>Index Number</th>
+          <th>Class Name</th>
+          <th>Course</th>
+          <th>Week</th>
+          <th>Time</th>
+          <th>Total Days Present</th>
+          <th>Status</th>
+          <th style="text-align: right; min-width: 110px;">Actions</th>
+        </tr>
+      `;
+    } else {
+      thead.innerHTML = `
+        <tr>
+          <th style="width: 70px;">Roll #</th>
+          <th>Student</th>
+          <th>Index Number</th>
+          <th>Class Name</th>
+          <th>Course</th>
+          <th>Total Days Present</th>
+          <th>Attendance Rate</th>
+          <th>Latest Week</th>
+          <th>Latest Time</th>
+          <th style="text-align: right; min-width: 110px;">Actions</th>
+        </tr>
+      `;
+    }
+  }
+
+  // Helper: Extract or fallback Class Name from session metadata
+  function extractSessionClass(session) {
+    if (!session) return 'Class A';
+    if (session.class_name && session.class_name.trim()) return session.class_name.trim();
+
+    // Check instructions for [Class: ...]
+    if (session.instructions) {
+      const match = session.instructions.match(/\[Class:\s*([^\]]+)\]/i);
+      if (match && match[1]) return match[1].trim();
+    }
+
+    // Check title for [Class: ...] or (Class ...)
+    if (session.title) {
+      const match = session.title.match(/\[(?:Class|Cohort):\s*([^\]]+)\]/i) ||
+                    session.title.match(/\((?:Class|Cohort):\s*([^\)]+)\)/i);
+      if (match && match[1]) return match[1].trim();
+    }
+
+    return 'Class A';
+  }
+
+  // Helper: Extract or fallback Week Number from session metadata
+  function extractSessionWeek(session) {
+    if (!session) return 'Week 1';
+    if (session.week && session.week.trim()) return session.week.trim();
+
+    // Check instructions for [Week: ...]
+    if (session.instructions) {
+      const match = session.instructions.match(/\[Week:\s*([^\]]+)\]/i);
+      if (match && match[1]) return match[1].trim();
+    }
+
+    // Check title for Week X or Wk X
+    if (session.title) {
+      const match = session.title.match(/\b(Week\s*\d+|Wk\s*\d+)\b/i);
+      if (match && match[1]) return match[1].replace(/wk/i, 'Week ').trim();
+    }
+
+    // Derive from session date
+    if (session.session_date) {
+      const d = new Date(session.session_date);
+      if (!isNaN(d.getTime())) {
+        const startOfYear = new Date(d.getFullYear(), 0, 1);
+        const pastDays = (d - startOfYear) / 86400000;
+        const weekNum = Math.ceil((pastDays + startOfYear.getDay() + 1) / 7);
+        const academicWeek = ((weekNum - 1) % 16) + 1;
+        return `Week ${academicWeek}`;
+      }
+    }
+
+    return 'Week 1';
+  }
+
+  // Helper: Calculate Total Days Present map
+  function recalculateDaysPresent(submissions) {
+    studentDaysPresentMap.clear();
+
+    submissions.forEach(sub => {
+      if (sub.verification_status === 'verified') {
+        const studentKey = (sub.user_id || sub.index_number || sub.full_name || '').trim().toLowerCase();
+        if (!studentKey) return;
+
+        const session = sub.attendance_sessions || {};
+        const course = (session.subject || sub.course || 'General').trim().toLowerCase();
+        const className = extractSessionClass(session).toLowerCase();
+        const dateKey = session.session_date || (sub.submitted_at ? sub.submitted_at.split('T')[0] : sub.id);
+
+        // Overall student days
+        if (!studentDaysPresentMap.has(studentKey)) {
+          studentDaysPresentMap.set(studentKey, new Set());
+        }
+        studentDaysPresentMap.get(studentKey).add(dateKey);
+
+        // Course-specific student days
+        const courseKey = `${studentKey}:::${course}`;
+        if (!studentDaysPresentMap.has(courseKey)) {
+          studentDaysPresentMap.set(courseKey, new Set());
+        }
+        studentDaysPresentMap.get(courseKey).add(dateKey);
+
+        // Class & Course specific student days
+        const classCourseKey = `${studentKey}:::${className}:::${course}`;
+        if (!studentDaysPresentMap.has(classCourseKey)) {
+          studentDaysPresentMap.set(classCourseKey, new Set());
+        }
+        studentDaysPresentMap.get(classCourseKey).add(dateKey);
+      }
+    });
+  }
+
+  // Get total days present for a student in context
+  function getStudentDaysPresent(sub) {
+    const studentKey = (sub.user_id || sub.index_number || sub.full_name || '').trim().toLowerCase();
+    if (!studentKey) return 0;
+
+    const session = sub.attendance_sessions || {};
+    const course = (session.subject || sub.course || 'General').trim().toLowerCase();
+    const className = extractSessionClass(session).toLowerCase();
+
+    const classCourseKey = `${studentKey}:::${className}:::${course}`;
+    if (studentDaysPresentMap.has(classCourseKey) && studentDaysPresentMap.get(classCourseKey).size > 0) {
+      return studentDaysPresentMap.get(classCourseKey).size;
+    }
+
+    const courseKey = `${studentKey}:::${course}`;
+    if (studentDaysPresentMap.has(courseKey) && studentDaysPresentMap.get(courseKey).size > 0) {
+      return studentDaysPresentMap.get(courseKey).size;
+    }
+
+    return studentDaysPresentMap.get(studentKey)?.size || (sub.verification_status === 'verified' ? 1 : 0);
+  }
+
   // Load subject options for creation form
   async function loadSubjects() {
     const select = document.getElementById('sessionSubject');
@@ -72,7 +242,7 @@
       if (window.supaDB && typeof window.supaDB.getSubjects === 'function') {
         const subjects = await window.supaDB.getSubjects();
         if (subjects && subjects.length > 0) {
-          select.innerHTML = '<option value="" disabled selected>Select a subject</option>' +
+          select.innerHTML = '<option value="" disabled selected>Select a subject / course</option>' +
             subjects.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`).join('');
           return;
         }
@@ -83,7 +253,7 @@
 
     // Default fallback subjects
     const defaults = ['General Education', 'Numeracy Skills', 'Literacy Skills', 'Essential Skills', 'Pedagogy'];
-    select.innerHTML = '<option value="" disabled selected>Select a subject</option>' +
+    select.innerHTML = '<option value="" disabled selected>Select a subject / course</option>' +
       defaults.map(s => `<option value="${s}">${s}</option>`).join('');
   }
 
@@ -181,6 +351,7 @@
       }
 
       allRegisterSubmissions = data || [];
+      recalculateDaysPresent(allRegisterSubmissions);
       populateRegisterFilterOptions();
       filterMasterRegister();
     } catch (err) {
@@ -192,10 +363,33 @@
   }
 
   function populateRegisterFilterOptions() {
+    const classSelect = document.getElementById('regClassFilter');
     const subjectSelect = document.getElementById('regSubjectFilter');
+    const weekSelect = document.getElementById('regWeekFilter');
     const sessionSelect = document.getElementById('regSessionFilter');
 
-    // Populate Subjects
+    // 1. Populate Class Names
+    if (classSelect) {
+      const classesSet = new Set(['Class A', 'Class B', 'Class C', 'General Class']);
+      allRegisterSubmissions.forEach(s => {
+        const cls = extractSessionClass(s.attendance_sessions);
+        if (cls) classesSet.add(cls);
+      });
+      cachedSessions.forEach(s => {
+        const cls = extractSessionClass(s);
+        if (cls) classesSet.add(cls);
+      });
+
+      const currentVal = classSelect.value;
+      let optionsHtml = '<option value="all">All Classes</option>';
+      Array.from(classesSet).sort().forEach(cls => {
+        optionsHtml += `<option value="${escapeHtml(cls)}">${escapeHtml(cls)}</option>`;
+      });
+      classSelect.innerHTML = optionsHtml;
+      if (classesSet.has(currentVal)) classSelect.value = currentVal;
+    }
+
+    // 2. Populate Subjects / Courses
     if (subjectSelect) {
       const subjectsSet = new Set();
       allRegisterSubmissions.forEach(s => {
@@ -215,57 +409,79 @@
       if (subjectsSet.has(currentVal)) subjectSelect.value = currentVal;
     }
 
-    // Populate Sessions
-    if (sessionSelect) {
-      const sessionMap = new Map();
+    // 3. Populate Weeks
+    if (weekSelect) {
+      const weeksSet = new Set();
+      // Preload standard Weeks 1-16
+      for (let w = 1; w <= 16; w++) weeksSet.add(`Week ${w}`);
       allRegisterSubmissions.forEach(s => {
-        if (s.session_id) {
-          const title = s.attendance_sessions?.title || `Session ${s.session_id.substring(0, 8)}`;
-          sessionMap.set(s.session_id, title);
-        }
+        const wk = extractSessionWeek(s.attendance_sessions);
+        if (wk) weeksSet.add(wk);
       });
       cachedSessions.forEach(s => {
-        if (s.id && s.title) sessionMap.set(s.id, s.title);
+        const wk = extractSessionWeek(s);
+        if (wk) weeksSet.add(wk);
       });
 
-      const currentVal = sessionSelect.value;
-      let optionsHtml = '<option value="all">All Sessions</option>';
-      sessionMap.forEach((title, id) => {
-        optionsHtml += `<option value="${escapeHtml(id)}">${escapeHtml(title)}</option>`;
+      const currentVal = weekSelect.value;
+      let optionsHtml = '<option value="all">All Weeks</option>';
+      Array.from(weeksSet).sort((a, b) => {
+        const numA = parseInt(a.replace(/\D/g, ''), 10) || 0;
+        const numB = parseInt(b.replace(/\D/g, ''), 10) || 0;
+        return numA - numB;
+      }).forEach(wk => {
+        optionsHtml += `<option value="${escapeHtml(wk)}">${escapeHtml(wk)}</option>`;
       });
-      sessionSelect.innerHTML = optionsHtml;
-      if (sessionMap.has(currentVal)) sessionSelect.value = currentVal;
+      weekSelect.innerHTML = optionsHtml;
+      if (weeksSet.has(currentVal)) weekSelect.value = currentVal;
     }
   }
 
   function filterMasterRegister() {
     const searchVal = (document.getElementById('regSearchInput')?.value || '').toLowerCase().trim();
+    const classVal = document.getElementById('regClassFilter')?.value || 'all';
     const subjectVal = document.getElementById('regSubjectFilter')?.value || 'all';
-    const sessionVal = document.getElementById('regSessionFilter')?.value || 'all';
+    const weekVal = document.getElementById('regWeekFilter')?.value || 'all';
     const statusVal = document.getElementById('regStatusFilter')?.value || 'all';
     const dateVal = document.getElementById('regDateFilter')?.value || '';
 
     filteredRegisterSubmissions = allRegisterSubmissions.filter(s => {
+      const session = s.attendance_sessions || {};
+      const className = extractSessionClass(session);
+      const weekName = extractSessionWeek(session);
+      const courseName = session.subject || s.course || 'General';
+
       // Search match
       if (searchVal) {
         const name = (s.full_name || '').toLowerCase();
         const indexNum = (s.index_number || '').toLowerCase();
-        const subject = (s.attendance_sessions?.subject || s.course || '').toLowerCase();
-        const title = (s.attendance_sessions?.title || '').toLowerCase();
-        if (!name.includes(searchVal) && !indexNum.includes(searchVal) && !subject.includes(searchVal) && !title.includes(searchVal)) {
+        const cls = className.toLowerCase();
+        const course = courseName.toLowerCase();
+        const wk = weekName.toLowerCase();
+        const title = (session.title || '').toLowerCase();
+        if (!name.includes(searchVal) &&
+            !indexNum.includes(searchVal) &&
+            !cls.includes(searchVal) &&
+            !course.includes(searchVal) &&
+            !wk.includes(searchVal) &&
+            !title.includes(searchVal)) {
           return false;
         }
       }
 
-      // Subject match
-      if (subjectVal !== 'all') {
-        const sub = s.attendance_sessions?.subject || s.course || '';
-        if (sub.toLowerCase() !== subjectVal.toLowerCase()) return false;
+      // Class match
+      if (classVal !== 'all') {
+        if (className.toLowerCase() !== classVal.toLowerCase()) return false;
       }
 
-      // Session match
-      if (sessionVal !== 'all') {
-        if (s.session_id !== sessionVal) return false;
+      // Course / Subject match
+      if (subjectVal !== 'all') {
+        if (courseName.toLowerCase() !== subjectVal.toLowerCase()) return false;
+      }
+
+      // Week match
+      if (weekVal !== 'all') {
+        if (weekName.toLowerCase() !== weekVal.toLowerCase()) return false;
       }
 
       // Status match
@@ -277,7 +493,7 @@
 
       // Date match
       if (dateVal) {
-        const sDate = s.attendance_sessions?.session_date || (s.submitted_at ? s.submitted_at.split('T')[0] : '');
+        const sDate = session.session_date || (s.submitted_at ? s.submitted_at.split('T')[0] : '');
         if (sDate !== dateVal) return false;
       }
 
@@ -325,37 +541,36 @@
       return;
     }
 
+    if (activeRegisterView === 'detail') {
+      renderDetailRegister(submissions, tbody);
+    } else {
+      renderSummaryRegister(submissions, tbody);
+    }
+  }
+
+  // Render View 1: Detailed Attendance Logs (Student, Index, Class Name, Course, Week, Time, Total Days Present, Status)
+  function renderDetailRegister(submissions, tbody) {
     let rowsHtml = '';
     submissions.forEach((s, idx) => {
       const rollNum = `#${String(idx + 1).padStart(3, '0')}`;
       const studentName = escapeHtml(s.full_name || 'Student');
       const indexNum = escapeHtml(s.index_number || 'N/A');
-      const subject = escapeHtml(s.attendance_sessions?.subject || s.course || 'General');
-      const title = escapeHtml(s.attendance_sessions?.title || 'Session');
-      
-      let dateStr = '—';
-      if (s.attendance_sessions?.session_date) {
-        dateStr = escapeHtml(s.attendance_sessions.session_date);
-      } else if (s.submitted_at) {
-        dateStr = new Date(s.submitted_at).toLocaleDateString();
-      }
+
+      const session = s.attendance_sessions || {};
+      const className = escapeHtml(extractSessionClass(session));
+      const courseName = escapeHtml(session.subject || s.course || 'General Education');
+      const weekName = escapeHtml(extractSessionWeek(session));
 
       let timeStr = '—';
       if (s.submitted_at) {
-        timeStr = new Date(s.submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        timeStr = new Date(s.submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       }
 
-      let distanceStr = '—';
-      if (typeof s.distance_meters === 'number') {
-        distanceStr = `${s.distance_meters.toFixed(1)}m`;
-      } else if (s.is_within_radius) {
-        distanceStr = 'Within Range';
-      }
-
+      const totalDays = getStudentDaysPresent(s);
       const isVerified = s.verification_status === 'verified';
       const statusBadge = isVerified
-        ? `<span class="status-badge verified">Verified Present</span>`
-        : `<span class="status-badge rejected">Flagged / Out of Range</span>`;
+        ? `<span class="status-badge verified">Verified</span>`
+        : `<span class="status-badge rejected">Flagged</span>`;
 
       const nextStatus = isVerified ? 'rejected' : 'verified';
 
@@ -364,11 +579,11 @@
           <td><span class="register-roll-tag">${rollNum}</span></td>
           <td><strong>${studentName}</strong></td>
           <td><span class="register-index-tag">${indexNum}</span></td>
-          <td>${subject}</td>
-          <td>${title}</td>
-          <td>${dateStr}</td>
+          <td><span class="register-class-tag">${className}</span></td>
+          <td>${courseName}</td>
+          <td><span class="register-week-tag">${weekName}</span></td>
           <td>${timeStr}</td>
-          <td><span style="font-size: 12px; font-weight: 600;">${distanceStr}</span></td>
+          <td><span class="register-days-tag">📅 ${totalDays} ${totalDays === 1 ? 'Day' : 'Days'} Present</span></td>
           <td>${statusBadge}</td>
           <td style="text-align: right;">
             <div style="display: inline-flex; gap: 6px; align-items: center; justify-content: flex-end;">
@@ -387,16 +602,91 @@
     tbody.innerHTML = rowsHtml;
   }
 
+  // Render View 2: Class Roll Summary (Aggregated by Student per Class & Course)
+  function renderSummaryRegister(submissions, tbody) {
+    const studentSummaryMap = new Map();
+
+    submissions.forEach(s => {
+      const studentKey = (s.user_id || s.index_number || s.full_name || '').trim().toLowerCase();
+      const session = s.attendance_sessions || {};
+      const className = extractSessionClass(session);
+      const courseName = session.subject || s.course || 'General Education';
+      const mapKey = `${studentKey}:::${className}:::${courseName}`;
+
+      if (!studentSummaryMap.has(mapKey)) {
+        studentSummaryMap.set(mapKey, {
+          studentName: s.full_name || 'Student',
+          indexNumber: s.index_number || 'N/A',
+          className: className,
+          courseName: courseName,
+          verifiedDates: new Set(),
+          totalSessionsEncountered: 0,
+          latestWeek: extractSessionWeek(session),
+          latestTime: s.submitted_at ? new Date(s.submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—',
+          latestSubmissionId: s.id,
+          latestStatus: s.verification_status
+        });
+      }
+
+      const entry = studentSummaryMap.get(mapKey);
+      entry.totalSessionsEncountered++;
+      if (s.verification_status === 'verified') {
+        const dateKey = session.session_date || (s.submitted_at ? s.submitted_at.split('T')[0] : s.id);
+        entry.verifiedDates.add(dateKey);
+      }
+    });
+
+    const summaryList = Array.from(studentSummaryMap.values()).sort((a, b) => a.studentName.localeCompare(b.studentName));
+
+    let rowsHtml = '';
+    summaryList.forEach((st, idx) => {
+      const rollNum = `#${String(idx + 1).padStart(3, '0')}`;
+      const daysCount = st.verifiedDates.size;
+      const ratePct = st.totalSessionsEncountered > 0 ? Math.round((daysCount / st.totalSessionsEncountered) * 100) : 100;
+      const rateBadgeColor = ratePct >= 75 ? '#059669' : ratePct >= 50 ? '#d97706' : '#dc2626';
+
+      rowsHtml += `
+        <tr>
+          <td><span class="register-roll-tag">${rollNum}</span></td>
+          <td><strong>${escapeHtml(st.studentName)}</strong></td>
+          <td><span class="register-index-tag">${escapeHtml(st.indexNumber)}</span></td>
+          <td><span class="register-class-tag">${escapeHtml(st.className)}</span></td>
+          <td>${escapeHtml(st.courseName)}</td>
+          <td><span class="register-days-tag">📅 ${daysCount} ${daysCount === 1 ? 'Day' : 'Days'} Present</span></td>
+          <td><span style="font-weight:700; color:${rateBadgeColor};">${ratePct}%</span></td>
+          <td><span class="register-week-tag">${escapeHtml(st.latestWeek)}</span></td>
+          <td>${escapeHtml(st.latestTime)}</td>
+          <td style="text-align: right;">
+            <button class="btn btn-sm btn-outline" onclick="window.adminAttendance.filterByStudent('${escapeHtml(st.indexNumber)}')">
+              View History
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = rowsHtml;
+  }
+
+  function filterByStudent(indexNum) {
+    const searchInput = document.getElementById('regSearchInput');
+    if (searchInput) searchInput.value = indexNum;
+    switchRegisterView('detail');
+    filterMasterRegister();
+  }
+
   function resetMasterFilters() {
     const searchInput = document.getElementById('regSearchInput');
+    const classSelect = document.getElementById('regClassFilter');
     const subjectSelect = document.getElementById('regSubjectFilter');
-    const sessionSelect = document.getElementById('regSessionFilter');
+    const weekSelect = document.getElementById('regWeekFilter');
     const statusSelect = document.getElementById('regStatusFilter');
     const dateInput = document.getElementById('regDateFilter');
 
     if (searchInput) searchInput.value = '';
+    if (classSelect) classSelect.value = 'all';
     if (subjectSelect) subjectSelect.value = 'all';
-    if (sessionSelect) sessionSelect.value = 'all';
+    if (weekSelect) weekSelect.value = 'all';
     if (statusSelect) statusSelect.value = 'all';
     if (dateInput) dateInput.value = '';
 
@@ -420,6 +710,7 @@
       // Update locally
       const item = allRegisterSubmissions.find(s => s.id === submissionId);
       if (item) item.verification_status = newStatus;
+      recalculateDaysPresent(allRegisterSubmissions);
       filterMasterRegister();
 
       if (window.showToast) {
@@ -444,6 +735,7 @@
       }
 
       allRegisterSubmissions = allRegisterSubmissions.filter(s => s.id !== submissionId);
+      recalculateDaysPresent(allRegisterSubmissions);
       filterMasterRegister();
 
       if (window.showToast) {
@@ -457,6 +749,7 @@
 
   // --------------------------------------------
   // Master Register Export & Excel Copy
+  // (student, index, class name, course, week, time, total days present)
   // --------------------------------------------
 
   function doExportMasterCSV() {
@@ -467,27 +760,30 @@
 
     const headers = [
       'Roll #',
-      'Student Name',
-      'Index Number',
-      'Course / Subject',
-      'Session Title',
-      'Session Date',
-      'Time Checked In',
-      'Distance (m)',
+      'Student',
+      'Index',
+      'Class Name',
+      'Course',
+      'Week',
+      'Time',
+      'Total Days Present',
       'Status'
     ];
 
-    const rows = filteredRegisterSubmissions.map((s, idx) => [
-      `#${String(idx + 1).padStart(3, '0')}`,
-      s.full_name || '',
-      s.index_number || '',
-      s.attendance_sessions?.subject || s.course || 'General',
-      s.attendance_sessions?.title || 'Session',
-      s.attendance_sessions?.session_date || (s.submitted_at ? s.submitted_at.split('T')[0] : ''),
-      s.submitted_at ? new Date(s.submitted_at).toLocaleTimeString() : '',
-      typeof s.distance_meters === 'number' ? s.distance_meters.toFixed(1) : (s.is_within_radius ? 'Within Range' : 'N/A'),
-      s.verification_status === 'verified' ? 'Verified' : 'Flagged'
-    ]);
+    const rows = filteredRegisterSubmissions.map((s, idx) => {
+      const session = s.attendance_sessions || {};
+      const roll = `#${String(idx + 1).padStart(3, '0')}`;
+      const student = s.full_name || '';
+      const index = s.index_number || '';
+      const className = extractSessionClass(session);
+      const course = session.subject || s.course || 'General Education';
+      const week = extractSessionWeek(session);
+      const time = s.submitted_at ? new Date(s.submitted_at).toLocaleTimeString() : '';
+      const totalDays = getStudentDaysPresent(s);
+      const status = s.verification_status === 'verified' ? 'Verified' : 'Flagged';
+
+      return [roll, student, index, className, course, week, time, `${totalDays} Days Present`, status];
+    });
 
     const escapeCsvCell = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
     const csvContent = '\uFEFF' + [headers, ...rows].map(row => row.map(escapeCsvCell).join(',')).join('\r\n');
@@ -516,38 +812,39 @@
 
     const headers = [
       'Roll #',
-      'Student Name',
-      'Index Number',
-      'Course / Subject',
-      'Session Title',
-      'Date',
-      'Time Checked In',
-      'Distance (m)',
+      'Student',
+      'Index',
+      'Class Name',
+      'Course',
+      'Week',
+      'Time',
+      'Total Days Present',
       'Status'
     ];
 
     const lines = [headers.join('\t')];
     filteredRegisterSubmissions.forEach((s, idx) => {
+      const session = s.attendance_sessions || {};
       const roll = `#${String(idx + 1).padStart(3, '0')}`;
-      const name = s.full_name || '';
-      const indexNum = s.index_number || '';
-      const course = s.attendance_sessions?.subject || s.course || 'General';
-      const title = s.attendance_sessions?.title || 'Session';
-      const date = s.attendance_sessions?.session_date || (s.submitted_at ? s.submitted_at.split('T')[0] : '');
+      const student = s.full_name || '';
+      const index = s.index_number || '';
+      const className = extractSessionClass(session);
+      const course = session.subject || s.course || 'General Education';
+      const week = extractSessionWeek(session);
       const time = s.submitted_at ? new Date(s.submitted_at).toLocaleTimeString() : '';
-      const dist = typeof s.distance_meters === 'number' ? s.distance_meters.toFixed(1) : (s.is_within_radius ? 'Within Range' : 'N/A');
+      const totalDays = getStudentDaysPresent(s);
       const status = s.verification_status === 'verified' ? 'Verified' : 'Flagged';
 
-      lines.push([roll, name, indexNum, course, title, date, time, dist, status].join('\t'));
+      lines.push([roll, student, index, className, course, week, time, `${totalDays} Days Present`, status].join('\t'));
     });
 
     const tsvData = lines.join('\r\n');
 
     navigator.clipboard.writeText(tsvData).then(() => {
       if (window.showToast) {
-        window.showToast(`📋 Copied ${filteredRegisterSubmissions.length} records! Paste directly into Excel (Ctrl+V).`, 'success');
+        window.showToast(`📋 Copied ${filteredRegisterSubmissions.length} records! Ready to paste directly into Excel (Ctrl+V).`, 'success');
       } else {
-        alert(`Copied ${filteredRegisterSubmissions.length} attendance records! Paste directly into Excel.`);
+        alert(`Copied ${filteredRegisterSubmissions.length} records for Excel!`);
       }
     }).catch(err => {
       console.warn('Clipboard write error, falling back to textarea:', err);
@@ -600,26 +897,27 @@
 
     let rowsHtml = '';
     filteredRegisterSubmissions.forEach((s, idx) => {
+      const session = s.attendance_sessions || {};
       const roll = `#${String(idx + 1).padStart(3, '0')}`;
-      const name = escapeHtml(s.full_name || 'Student');
-      const indexNum = escapeHtml(s.index_number || 'N/A');
-      const course = escapeHtml(s.attendance_sessions?.subject || s.course || 'General');
-      const title = escapeHtml(s.attendance_sessions?.title || 'Session');
-      const date = escapeHtml(s.attendance_sessions?.session_date || (s.submitted_at ? s.submitted_at.split('T')[0] : ''));
-      const time = s.submitted_at ? new Date(s.submitted_at).toLocaleTimeString() : '';
-      const dist = typeof s.distance_meters === 'number' ? `${s.distance_meters.toFixed(1)}m` : 'N/A';
-      const status = s.verification_status === 'verified' ? 'Verified Present' : 'Flagged / Out of Range';
+      const student = escapeHtml(s.full_name || 'Student');
+      const index = escapeHtml(s.index_number || 'N/A');
+      const className = escapeHtml(extractSessionClass(session));
+      const course = escapeHtml(session.subject || s.course || 'General Education');
+      const week = escapeHtml(extractSessionWeek(session));
+      const time = s.submitted_at ? new Date(s.submitted_at).toLocaleTimeString() : '—';
+      const totalDays = getStudentDaysPresent(s);
+      const status = s.verification_status === 'verified' ? 'Verified' : 'Flagged';
 
       rowsHtml += `
         <tr>
           <td style="text-align:center; font-family:monospace; font-weight:bold;">${roll}</td>
-          <td><strong>${name}</strong></td>
-          <td style="font-family:monospace;">${indexNum}</td>
+          <td><strong>${student}</strong></td>
+          <td style="font-family:monospace;">${index}</td>
+          <td>${className}</td>
           <td>${course}</td>
-          <td>${title}</td>
-          <td>${date}</td>
+          <td>${week}</td>
           <td>${time}</td>
-          <td>${dist}</td>
+          <td style="font-weight:bold;">${totalDays} Days Present</td>
           <td>${status}</td>
         </tr>
       `;
@@ -629,7 +927,7 @@
       <!DOCTYPE html>
       <html>
       <head>
-        <title>PrepTrack - Official Attendance Register</title>
+        <title>PrepTrack - Official Academic Attendance Register</title>
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; padding: 28px; color: #1e293b; }
           .header { border-bottom: 2px solid #003bf7; padding-bottom: 14px; margin-bottom: 20px; }
@@ -648,8 +946,8 @@
       </head>
       <body>
         <div class="header">
-          <h1>PREPTRACK - OFFICIAL ATTENDANCE REGISTER</h1>
-          <p>Generated on: ${printDate} | System-Verified GPS Attendance Roll</p>
+          <h1>PREPTRACK - OFFICIAL ACADEMIC ATTENDANCE REGISTER</h1>
+          <p>Generated on: ${printDate} | Records: Student, Index, Class Name, Course, Week, Time, Total Days Present</p>
         </div>
 
         <div class="summary-grid">
@@ -662,13 +960,13 @@
           <thead>
             <tr>
               <th style="width: 55px; text-align:center;">Roll #</th>
-              <th>Student Name</th>
-              <th>Index Number</th>
-              <th>Course / Subject</th>
-              <th>Session Title</th>
-              <th>Date</th>
+              <th>Student</th>
+              <th>Index</th>
+              <th>Class Name</th>
+              <th>Course</th>
+              <th>Week</th>
               <th>Time</th>
-              <th>Distance</th>
+              <th>Total Days Present</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -679,7 +977,7 @@
 
         <div class="footer">
           <div>
-            <p>Admin / Instructor In Charge: ___________________________</p>
+            <p>Admin / Class Instructor: ___________________________</p>
             <p>Designation: ___________________________</p>
           </div>
           <div>
@@ -718,6 +1016,7 @@
           const { data } = await window.supaAttendance.getAllAttendanceSubmissions();
           if (data) {
             allRegisterSubmissions = data;
+            recalculateDaysPresent(allRegisterSubmissions);
             populateRegisterFilterOptions();
             filterMasterRegister();
             if (window.showToast) {
@@ -740,13 +1039,13 @@
     const tbody = document.getElementById('sessionsTableBody');
     if (!tbody) return;
 
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Loading sessions...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">Loading sessions...</td></tr>';
 
     try {
       const { data: sessions, error } = await window.supaAttendance.getAttendanceSessions();
       if (error) {
         console.error('Error fetching sessions:', error);
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:red;">Error: ${escapeHtml(error.message)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:red;">Error: ${escapeHtml(error.message)}</td></tr>`;
         return;
       }
 
@@ -755,17 +1054,17 @@
       populateRegisterFilterOptions();
     } catch (err) {
       console.error(err);
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">Failed to load attendance sessions.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:red;">Failed to load attendance sessions.</td></tr>';
     }
   }
 
-  // Render Sessions Table
+  // Render Sessions Table (Includes Title, Class Name, Subject/Course, Week, Date, Times, Radius, Status, Actions)
   function renderSessionsTable(sessions) {
     const tbody = document.getElementById('sessionsTableBody');
     if (!tbody) return;
 
     if (!sessions || sessions.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-light);padding:30px;">No attendance sessions found. Click "+ Create New Session" to get started.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-light);padding:30px;">No attendance sessions found. Click "+ Create New Session" to get started.</td></tr>';
       return;
     }
 
@@ -795,11 +1094,15 @@
       }
 
       const radiusDisplay = session.radius_meters ? `${session.radius_meters}m` : '30m';
+      const className = extractSessionClass(session);
+      const weekName = extractSessionWeek(session);
 
       rowsHtml += `
         <tr>
           <td><strong>${escapeHtml(session.title)}</strong></td>
+          <td><span class="register-class-tag">${escapeHtml(className)}</span></td>
           <td>${escapeHtml(session.subject || 'General')}</td>
+          <td><span class="register-week-tag">${escapeHtml(weekName)}</span></td>
           <td>${escapeHtml(session.session_date || '')}</td>
           <td>${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
           <td>${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
@@ -825,12 +1128,14 @@
     tbody.innerHTML = rowsHtml;
   }
 
-  // Create Session Handler
+  // Create Session Handler (Saves Class Name & Week)
   async function handleCreateSession(e) {
     e.preventDefault();
 
     const title = document.getElementById('sessionTitle').value.trim();
     const subject = document.getElementById('sessionSubject').value;
+    const className = (document.getElementById('sessionClassName')?.value || '').trim() || 'Class A';
+    const week = document.getElementById('sessionWeek')?.value || 'Week 1';
     const sessionDate = document.getElementById('sessionDate').value;
     const startTimeVal = document.getElementById('sessionStartTime').value;
     const endTimeVal = document.getElementById('sessionEndTime').value;
@@ -862,11 +1167,13 @@
     const payload = {
       title,
       subject,
+      class_name: className,
+      week: week,
       session_date: sessionDate,
       start_time: new Date(startTimeVal).toISOString(),
       end_time: new Date(endTimeVal).toISOString(),
       duration_minutes: durationMinutes,
-      instructions: instructions || null,
+      instructions: instructions ? `[Class: ${className}] [Week: ${week}] ${instructions}` : `[Class: ${className}] [Week: ${week}]`,
       status: status || 'scheduled',
       location_name: locationName || null,
       reference_lat: !isNaN(lat) ? lat : null,
@@ -882,9 +1189,9 @@
       }
 
       if (window.showToast) {
-        window.showToast('Attendance session created successfully!', 'success');
+        window.showToast(`Attendance session created for ${className} (${week})!`, 'success');
       } else {
-        alert('Attendance session created successfully!');
+        alert(`Attendance session created for ${className} (${week})!`);
       }
 
       toggleCreateForm();
@@ -950,6 +1257,9 @@
     const sessionLabel = document.getElementById('currentSessionLabel');
     const headerInfo = document.getElementById('sessionInfoHeader');
 
+    const className = extractSessionClass(currentSession);
+    const weekName = extractSessionWeek(currentSession);
+
     if (recordsTabBtn) {
       recordsTabBtn.style.display = 'inline-block';
     }
@@ -960,9 +1270,11 @@
       headerInfo.innerHTML = `
         <h3 style="margin:0 0 4px 0; font-size:1.1rem;">${escapeHtml(currentSession.title)}</h3>
         <p style="margin:0; font-size:0.85rem; color:var(--text-light);">
+          <strong>Class:</strong> ${escapeHtml(className)} | 
           <strong>Subject:</strong> ${escapeHtml(currentSession.subject || 'N/A')} | 
+          <strong>Week:</strong> ${escapeHtml(weekName)} | 
           <strong>Date:</strong> ${escapeHtml(currentSession.session_date || '')} | 
-          <strong>Location:</strong> ${escapeHtml(currentSession.location_name || 'N/A')} (${currentSession.radius_meters || 30}m radius)
+          <strong>Location:</strong> ${escapeHtml(currentSession.location_name || 'N/A')} (${currentSession.radius_meters || 30}m)
         </p>
       `;
     }
@@ -1212,10 +1524,12 @@
 
   // Expose to window for inline HTML handlers
   window.adminAttendance = {
-    // Master Register
+    // Master Register & Views
     loadMasterRegister,
+    switchRegisterView,
     populateRegisterFilterOptions,
     filterMasterRegister,
+    filterByStudent,
     resetMasterFilters,
     refreshMasterRegister,
     toggleMasterSubmissionStatus,
