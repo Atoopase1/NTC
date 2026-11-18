@@ -110,7 +110,7 @@
   left: 0;
   bottom: 0;
   overflow-y: auto;
-  z-index: var(--z-base);
+  z-index: 20;
   transition: transform var(--transition-base);
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;

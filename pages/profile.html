@@ -60,7 +60,8 @@
       display: flex;
       align-items: flex-end;
       gap: 16px;
-      z-index: 10;
+      /* Keep below fixed sidebar (z-index: 1) so avatar doesn't bleed over sidebar */
+      z-index: 0;
     }
 
     .profile-avatar-wrap {
@@ -440,6 +441,7 @@
     .profile-page-content {
       padding: 24px 24px 48px;
       max-width: 860px;
+      position: relative;
     }
 
     @media (max-width: 600px) {
