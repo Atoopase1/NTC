@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -46,13 +46,15 @@
     }
   </style>
   <!-- PWA -->
-  <link rel="manifest" href="/manifest.json">
+  <link rel="manifest" href="../manifest.json">
+  <link rel="icon" type="image/png" href="../icons/logo.PNG">
   <meta name="theme-color" content="#003BF7">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="PrepTrack">
-  <link rel="apple-touch-icon" href="/icons/icon-192.png"></head>
+  <link rel="apple-touch-icon" href="../icons/logo.PNG">
+</head>
 <body>
   <div class="callback-container">
     <div class="spinner"></div>
@@ -109,7 +111,7 @@
             await window.supaAuth.checkAdminAndRedirect(userEmail);
           } else {
             // Fallback: just go to dashboard
-            window.location.href = '/pages/dashboard.html';
+            window.location.href = (window.getAppPageUrl ? window.getAppPageUrl('dashboard.html') : 'dashboard.html');
           }
         }
 

@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // NTC Exam Prep - Admin User Management Logic
 // ============================================
 
@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Protect route: Quick local check first (for performance), then verify with server
   const quickCheck = localStorage.getItem('preptrack_is_admin') || localStorage.getItem('ntc_is_admin');
   if (quickCheck !== 'true') {
-    window.location.href = '/pages/dashboard.html';
+    window.location.href = (window.getAppPageUrl ? window.getAppPageUrl('dashboard.html') : 'dashboard.html');
     return;
   }
   // Server-side verification (non-blocking, runs async)
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!user) {
         localStorage.removeItem('preptrack_is_admin');
         localStorage.removeItem('ntc_is_admin'); localStorage.removeItem('preptrack_is_admin');
-        window.location.href = '/pages/login.html';
+        window.location.href = (window.getAppPageUrl ? window.getAppPageUrl('login.html') : 'login.html');
         return;
       }
       // Super admin is always OK
@@ -30,14 +30,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!profile || profile.role !== 'admin') {
         localStorage.removeItem('preptrack_is_admin');
         localStorage.removeItem('ntc_is_admin'); localStorage.removeItem('preptrack_is_admin');
-        window.location.href = '/pages/dashboard.html';
+        window.location.href = (window.getAppPageUrl ? window.getAppPageUrl('dashboard.html') : 'dashboard.html');
         return;
       }
       // Check not blocked
       if (profile.blocked_until && new Date(profile.blocked_until) > new Date()) {
         localStorage.removeItem('preptrack_is_admin');
         localStorage.removeItem('ntc_is_admin'); localStorage.removeItem('preptrack_is_admin');
-        window.location.href = '/pages/login.html';
+        window.location.href = (window.getAppPageUrl ? window.getAppPageUrl('login.html') : 'login.html');
         return;
       }
     } catch(e) { console.warn('Admin verification error:', e); }

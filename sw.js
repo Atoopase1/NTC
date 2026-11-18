@@ -3,7 +3,7 @@
 // Caches assets for offline use
 // ============================================
 
-const CACHE_NAME = 'preptrack-v42';
+const CACHE_NAME = 'preptrack-v46';
 
 // Core assets to cache on install
 const PRECACHE_ASSETS = [

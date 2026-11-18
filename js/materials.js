@@ -1211,7 +1211,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   window.editPost = (postId) => {
     // Redirect admin to dashboard to edit
-    window.location.href = '/pages/dashboard.html#lessons';
+    window.location.href = (window.getAppPageUrl ? window.getAppPageUrl('dashboard.html#lessons') : 'dashboard.html#lessons');
   };
 
   window.deletePost = async (postId) => {

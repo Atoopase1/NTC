@@ -12,75 +12,102 @@
   <link rel="stylesheet" href="../css/dashboard.css?v=5">
   <link rel="stylesheet" href="../css/responsive.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="manifest" href="/manifest.json">
+  <link rel="manifest" href="../manifest.json">
+  <link rel="icon" type="image/png" href="../icons/logo.PNG">
   <meta name="theme-color" content="#003BF7">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="PrepTrack">
-  <link rel="apple-touch-icon" href="/icons/logo.PNG">
+  <link rel="apple-touch-icon" href="../icons/logo.PNG">
 
   <style>
     /* ─── Profile Page Scoped Styles ─── */
 
-    /* Hero Banner */
+    /* Hero Card: banner on top, identity row in normal flow below (no overflow) */
     .profile-hero {
       position: relative;
-      height: 100px;
+      background: var(--card-bg, #fff);
+      border: 1px solid var(--border, #e5e7eb);
       border-radius: var(--radius-lg, 14px);
-      overflow: visible;
-      margin-bottom: 48px;
-      background: linear-gradient(120deg, #003BF7 0%, #6C47FF 50%, #00C6AE 100%);
-      box-shadow: 0 4px 32px 0 rgba(0,59,247,0.13);
+      overflow: hidden;
+      isolation: isolate;
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 24px rgba(0,59,247,0.08);
     }
 
-    .profile-hero::after {
+    .profile-hero-banner {
+      position: relative;
+      height: 110px;
+      background: linear-gradient(120deg, #003BF7 0%, #6C47FF 50%, #00C6AE 100%);
+    }
+
+    .profile-hero-banner::after {
       content: '';
       position: absolute;
       inset: 0;
-      border-radius: inherit;
-      background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.18) 100%);
+      background: linear-gradient(to bottom, transparent 55%, rgba(0,0,0,0.16) 100%);
       pointer-events: none;
     }
 
-    /* Hero blur edges */
-    .profile-hero-blur {
+    /* Brand mark on the banner */
+    .profile-hero-brand {
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      border-radius: inherit;
-      backdrop-filter: blur(0px);
-      pointer-events: none;
-    }
-
-    /* Avatar cluster */
-    .profile-identity {
-      position: absolute;
-      bottom: -38px;
-      left: 24px;
+      top: 14px;
+      right: 18px;
+      z-index: 1;
       display: flex;
-      align-items: flex-end;
-      gap: 16px;
-      /* Keep below fixed sidebar (z-index: 1) so avatar doesn't bleed over sidebar */
-      z-index: 0;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 12px 5px 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.92);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+    }
+
+    .profile-hero-brand img {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      object-fit: contain;
+    }
+
+    .profile-hero-brand span {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: #003BF7;
+      letter-spacing: -0.2px;
+    }
+
+    /* Identity row: avatar overlaps banner, text sits fully on card surface */
+    .profile-identity {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      padding: 0 24px 20px;
     }
 
     .profile-avatar-wrap {
       position: relative;
-      width: 76px;
-      height: 76px;
+      width: 88px;
+      height: 88px;
       flex-shrink: 0;
+      margin-top: -44px;
     }
 
     .profile-avatar-circle {
-      width: 76px;
-      height: 76px;
+      width: 88px;
+      height: 88px;
       border-radius: 50%;
       background: linear-gradient(135deg, #003BF7 0%, #6C47FF 100%);
-      border: 3px solid var(--card-bg, #fff);
+      border: 4px solid var(--card-bg, #fff);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.75rem;
+      font-size: 2rem;
       font-weight: 700;
       color: #fff;
       letter-spacing: -0.5px;
@@ -112,21 +139,25 @@
     }
 
     .profile-meta {
-      padding-bottom: 6px;
+      flex: 1;
+      min-width: 0;
+      padding-top: 12px;
     }
 
     .profile-display-name {
-      font-size: 1.08rem;
+      font-size: 1.3rem;
       font-weight: 700;
       color: var(--text, #111);
-      line-height: 1.2;
+      line-height: 1.25;
       margin: 0 0 2px;
+      overflow-wrap: anywhere;
     }
 
     .profile-display-email {
-      font-size: 0.78rem;
+      font-size: 0.85rem;
       color: var(--text-light, #666);
-      margin: 0 0 8px;
+      margin: 0 0 12px;
+      overflow-wrap: anywhere;
     }
 
     .profile-stat-chips {
@@ -166,13 +197,23 @@
       .profile-grid {
         grid-template-columns: 1fr;
       }
+      .profile-hero-banner { height: 96px; }
       .profile-identity {
-        left: 16px;
-        gap: 12px;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 8px;
+        padding: 0 16px 20px;
       }
-      .profile-hero {
-        margin-bottom: 52px;
-      }
+      .profile-meta { padding-top: 0; width: 100%; }
+      .profile-stat-chips { justify-content: center; }
+      .profile-display-email { margin-bottom: 10px; }
+      .profile-hero-brand { top: 12px; right: 12px; }
+    }
+
+    @media (max-width: 380px) {
+      .profile-hero-brand span { font-size: 0.78rem; }
+      .profile-display-name { font-size: 1.15rem; }
     }
 
     /* ─── Compact panel card ─── */
@@ -441,7 +482,10 @@
     .profile-page-content {
       padding: 24px 24px 48px;
       max-width: 860px;
+      width: 100%;
+      box-sizing: border-box;
       position: relative;
+      z-index: 0;
     }
 
     @media (max-width: 600px) {
@@ -482,6 +526,106 @@
       opacity: 0.6;
     }
   </style>
+
+  <style id="profile-polish">
+    /* ─── Profile polish: refined surfaces, restrained motion ─── */
+    :root { --pp-ease: cubic-bezier(0.22, 0.61, 0.36, 1); --pp-line: var(--border, #e5e7eb); }
+
+    .profile-page-content { margin: 0; }
+
+    /* Hero: deep brand gradient with a fine grid texture */
+    .profile-hero {
+      border-radius: 16px;
+      box-shadow: 0 1px 2px rgba(16,24,40,.05), 0 8px 24px -8px rgba(16,24,40,.10);
+    }
+    .profile-hero-banner {
+      height: 120px;
+      background:
+        linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px) 0 0 / 28px 28px,
+        linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px) 0 0 / 28px 28px,
+        linear-gradient(115deg, #0B1F5C 0%, #0A3CC9 55%, #1B6BE0 100%);
+    }
+    .profile-hero-brand {
+      background: rgba(255,255,255,.96);
+      box-shadow: 0 1px 2px rgba(0,0,0,.12);
+    }
+    .profile-avatar-circle {
+      background: linear-gradient(145deg, #0A3CC9, #1B6BE0);
+      border-width: 4px;
+      box-shadow: 0 0 0 1px var(--pp-line), 0 6px 16px -4px rgba(10,60,201,.35);
+      transition: transform .25s var(--pp-ease), box-shadow .25s var(--pp-ease);
+    }
+    .profile-avatar-circle:hover { transform: scale(1.03); box-shadow: 0 0 0 1px var(--pp-line), 0 10px 22px -6px rgba(10,60,201,.45); }
+    .avatar-cam-badge { transition: opacity .2s var(--pp-ease); backdrop-filter: blur(1px); }
+    .profile-display-name { font-size: 1.4rem; letter-spacing: -.01em; }
+    .profile-display-name:empty, .profile-display-name.is-loading { min-width: 160px; }
+    .stat-chip { padding: 4px 11px; transition: border-color .2s var(--pp-ease), transform .2s var(--pp-ease); }
+    .stat-chip:hover { border-color: rgba(10,60,201,.45); transform: translateY(-1px); }
+
+    /* Panels */
+    .profile-panel {
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 1px 2px rgba(16,24,40,.04);
+      transition: box-shadow .25s var(--pp-ease), border-color .25s var(--pp-ease);
+    }
+    .profile-panel:hover { box-shadow: 0 6px 20px -8px rgba(16,24,40,.14); border-color: rgba(10,60,201,.22); }
+    .panel-title { letter-spacing: .09em; font-size: .7rem; }
+
+    /* Actions */
+    .action-btn {
+      position: relative;
+      padding: 10px 12px;
+      transition: background .18s var(--pp-ease), border-color .18s var(--pp-ease), color .18s var(--pp-ease), transform .18s var(--pp-ease), box-shadow .18s var(--pp-ease);
+    }
+    .action-btn:hover { transform: translateX(2px); box-shadow: 0 2px 8px -4px rgba(10,60,201,.3); }
+    .action-btn:active { transform: translateX(2px) scale(.985); }
+    .action-btn.danger:hover { box-shadow: none; }
+    .action-btn:focus-visible, .form-panel-close:focus-visible, .profile-avatar-circle:focus-visible {
+      outline: 2px solid #1B6BE0; outline-offset: 2px;
+    }
+    .action-btn-icon { transition: background .18s var(--pp-ease), transform .18s var(--pp-ease); }
+    .action-btn:hover .action-btn-icon { transform: scale(1.06); }
+
+    /* Info rows */
+    .info-row { transition: background .15s var(--pp-ease); border-radius: 8px; }
+    .info-row:hover { background: color-mix(in srgb, var(--surface, #f3f4f6) 70%, transparent); }
+    .info-value:empty::before, .info-value.is-empty { color: var(--text-light, #9aa0aa); }
+
+    /* Skeleton shimmer for loading text */
+    .is-loading {
+      color: transparent !important; border-radius: 6px; user-select: none;
+      background: linear-gradient(90deg, var(--surface, #eef0f3) 25%, color-mix(in srgb, var(--surface, #eef0f3) 55%, #fff) 50%, var(--surface, #eef0f3) 75%);
+      background-size: 200% 100%; animation: pp-shimmer 1.3s linear infinite;
+    }
+    @keyframes pp-shimmer { to { background-position: -200% 0; } }
+
+    /* Entrance: short, staggered fade-up (runs once) */
+    @keyframes pp-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .profile-hero, .profile-grid > .profile-panel, #profileExamHistory {
+      animation: pp-rise .45s var(--pp-ease) both;
+    }
+    .profile-grid > .profile-panel:nth-child(1) { animation-delay: .06s; }
+    .profile-grid > .profile-panel:nth-child(2) { animation-delay: .12s; }
+    #profileExamHistory { animation-delay: .18s; }
+
+    /* Form panels: smoother reveal */
+    .profile-form-panel { transition: max-height .35s var(--pp-ease), opacity .25s var(--pp-ease), margin-top .3s; }
+    .form-input { transition: border-color .15s var(--pp-ease), box-shadow .15s var(--pp-ease); }
+    .form-input:focus { border-color: #1B6BE0; box-shadow: 0 0 0 3px rgba(27,107,224,.16); outline: none; }
+
+    @media (max-width: 700px) {
+      .profile-hero-banner { height: 100px; }
+      .profile-panel { padding: 16px; }
+      .action-btn:hover { transform: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .profile-hero, .profile-grid > .profile-panel, #profileExamHistory, .is-loading { animation: none !important; }
+      .profile-page-content * { transition-duration: .01ms !important; }
+    }
+  </style>
+
 </head>
 
 <body>
@@ -493,7 +637,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         </button>
         <a href="dashboard.html" class="navbar-brand">
-          <div class="brand-icon"><img src="/icons/logo.PNG" alt="PrepTrack Logo"></div>
+          <div class="brand-icon"><img src="../icons/logo.PNG" alt="PrepTrack Logo"></div>
           <span>PrepTrack</span>
         </a>
       </div>
@@ -562,14 +706,19 @@
     </aside>
 
     <!-- MAIN CONTENT -->
-    <main class="main-content">
+    <main class="dashboard-main main-content">
       <div class="profile-page-content">
 
         <!-- ── Hero Banner ── -->
         <div class="profile-hero">
-          <div class="profile-hero-blur"></div>
+          <div class="profile-hero-banner">
+            <div class="profile-hero-brand">
+              <img src="../icons/logo.PNG" alt="" onerror="this.style.display='none'">
+              <span>PrepTrack</span>
+            </div>
+          </div>
 
-          <!-- Identity cluster overlapping banner -->
+          <!-- Identity row (in flow, below banner) -->
           <div class="profile-identity">
             <!-- Avatar -->
             <div class="profile-avatar-wrap">
@@ -774,7 +923,7 @@
   <script src="../js/supabase.js?v=4"></script>
   <script src="../js/app.js?v=6"></script>
   <script src="../js/auth.js?v=12"></script>
-  <script src="../js/profile.js?v=4"></script>
+  <script src="../js/profile.js?v=5"></script>
 
   <!-- Profile page UI glue: slide-in forms + info panel sync -->
   <script>
@@ -881,6 +1030,36 @@
           .catch(function (err) { console.warn('[PrepTrack] SW registration failed:', err); });
       });
     }
+  </script>
+
+  <script>
+    /* Profile polish: skeleton while loading, count-up on stat values */
+    (function () {
+      var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var name = document.getElementById('profileDisplayName');
+      if (name && /^Loading/.test(name.textContent)) {
+        name.classList.add('is-loading');
+        new MutationObserver(function (_, o) {
+          if (!/^Loading/.test(name.textContent)) { name.classList.remove('is-loading'); o.disconnect(); }
+        }).observe(name, { childList: true, characterData: true, subtree: true });
+      }
+      function countUp(el) {
+        var busy = false;
+        new MutationObserver(function () {
+          if (busy) return;
+          var t = el.textContent.trim();
+          if (!/^\d+(\.\d+)?$/.test(t) || reduce) return;
+          var end = parseFloat(t), dec = (t.split('.')[1] || '').length, start = performance.now(), dur = 650;
+          busy = true;
+          (function tick(now) {
+            var p = Math.min((now - start) / dur, 1), e = 1 - Math.pow(1 - p, 3);
+            el.textContent = (end * e).toFixed(dec);
+            if (p < 1) requestAnimationFrame(tick); else { el.textContent = t; setTimeout(function () { busy = false; }, 0); }
+          })(start);
+        }).observe(el, { childList: true, characterData: true, subtree: true });
+      }
+      ['profileExamsCount', 'profileAvgScore'].forEach(function (id) { var el = document.getElementById(id); if (el) countUp(el); });
+    })();
   </script>
 </body>
 </html>

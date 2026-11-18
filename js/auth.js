@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (!isAuthenticated) {
       // Not logged in, redirect to login
-      window.location.href = '/pages/login.html';
+      window.location.href = (window.getAppPageUrl ? window.getAppPageUrl('login.html') : 'login.html');
     } else {
       // Update UI with user info if possible
       updateUserInfo();

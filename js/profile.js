@@ -12,6 +12,36 @@ document.addEventListener('DOMContentLoaded', () => {
   
   initProfile();
 
+  /**
+   * Keep only results for subjects the student selected in "My Courses".
+   * If the preferences table can't be read, the list is left unfiltered
+   * rather than hiding everything.
+   */
+  async function filterToSelectedSubjects(history, userId) {
+    try {
+      const client = window.getSupabaseClient ? window.getSupabaseClient() : window.supabaseClient;
+      if (!client || !history || history.length === 0) return history;
+
+      const { data, error } = await client
+        .from('student_course_preferences')
+        .select('subjects(name)')
+        .eq('user_id', userId);
+      if (error) {
+        console.warn('Could not load selected courses; showing unfiltered history:', error.message);
+        return history;
+      }
+
+      const norm = v => String(v || '').trim().toLowerCase();
+      const selected = new Set(
+        (data || []).map(r => norm(r.subjects && r.subjects.name)).filter(Boolean)
+      );
+      return history.filter(r => selected.has(norm(r.subject)));
+    } catch (e) {
+      console.warn('Selected-subject filter failed:', e);
+      return history;
+    }
+  }
+
   async function initProfile() {
     // ── Load exam history from Supabase ────────────────────────────
     let history = [];
@@ -21,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const user = await window.supaAuth.getCurrentUser();
         if (user) {
           history = await window.supaDB.getExamHistory(user.id);
+          history = await filterToSelectedSubjects(history, user.id);
         }
       } catch(e) {
         console.warn('Could not fetch exam history from Supabase:', e);
@@ -82,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         historyContainer.innerHTML = `
           <div style="text-align: center; padding: var(--space-xl); color: var(--text-light);">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom: 12px; opacity: 0.4;"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/></svg>
-            <p style="margin: 0; font-size: var(--text-sm);">No exams taken yet. Your history will appear here.</p>
+            <p style="margin: 0; font-size: var(--text-sm);">No exams yet for your selected courses. Choose your courses under My Courses, and your results will appear here.</p>
           </div>
         `;
       }

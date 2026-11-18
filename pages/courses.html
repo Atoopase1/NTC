@@ -19,13 +19,14 @@
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- PWA -->
-  <link rel="manifest" href="/manifest.json">
+  <link rel="manifest" href="../manifest.json">
+  <link rel="icon" type="image/png" href="../icons/logo.PNG">
   <meta name="theme-color" content="#003BF7">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="PrepTrack">
-  <link rel="apple-touch-icon" href="/icons/logo.PNG">
+  <link rel="apple-touch-icon" href="../icons/logo.PNG">
 </head>
 <body>
 
@@ -38,7 +39,7 @@
         </button>
 
         <a href="dashboard.html" class="navbar-brand">
-          <div class="brand-icon"><img src="/icons/logo.PNG" alt="PrepTrack Logo"></div>
+          <div class="brand-icon"><img src="../icons/logo.PNG" alt="PrepTrack Logo"></div>
           <span>PrepTrack</span>
         </a>
       </div>
@@ -116,21 +117,71 @@
     <!-- Main Content -->
     <main class="dashboard-main">
       <div class="page-header" style="margin-bottom:24px;">
-        <h1>My Courses</h1>
-        <p>Select the courses you are studying to personalize your experience.</p>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+          <div>
+            <h1 id="coursesPageTitle">My Courses</h1>
+            <p id="coursesPageSubtitle">Select the courses you are studying to personalize your experience.</p>
+          </div>
+          <div id="headerActions" style="display:flex; gap:10px; align-items:center;">
+            <!-- Action buttons dynamically inserted by JS -->
+          </div>
+        </div>
       </div>
 
       <div id="coursesContent">
-        <div class="available-courses-section">
-          <h2>Available Courses</h2>
-          <p>Select the courses relevant to your programme.</p>
-          <div id="availableCoursesGrid" class="courses-grid"><!-- loaded by JS --></div>
-          <button class="btn btn-primary" id="saveCoursesBtn" style="margin-top:20px;">Save My Selections</button>
+        <!-- VIEW MODE: Enrolled Courses List -->
+        <div id="enrolledCoursesSection" style="display:none;">
+          <div class="enrolled-summary-bar">
+            <div class="enrolled-count-info">
+              <span class="enrolled-badge" id="enrolledBadgeCount">0 Enrolled</span>
+              <span style="color:var(--text-light); font-size:14px;">These courses customize your mock exams, attendance, and study materials.</span>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button class="btn btn-outline" id="editSelectionsBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                Change Selections
+              </button>
+              <button class="btn btn-ghost danger-text" id="clearAllEnrolledBtn" title="Clear all enrolled courses">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Clear All Courses
+              </button>
+            </div>
+          </div>
+          <div id="enrolledCoursesGrid" class="courses-grid"><!-- loaded by JS --></div>
         </div>
 
-        <div class="selected-courses-section" style="margin-top:40px;">
-          <h2>My Selected Courses</h2>
-          <div id="selectedCoursesList"><!-- loaded by JS --></div>
+        <!-- EDIT / PICKER MODE: Available Courses to Select -->
+        <div id="pickerSection">
+          <div class="available-courses-section">
+            <div class="picker-toolbar">
+              <div class="picker-search-box">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="courseSearchInput" placeholder="Search available courses..." aria-label="Search courses">
+              </div>
+              <div class="picker-action-buttons">
+                <span class="selection-counter" id="selectionCounter">0 selected</span>
+                <button type="button" class="btn btn-outline danger-text" id="clearSelectionBtn" title="Clear all selected courses">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  Clear All
+                </button>
+                <button type="button" class="btn btn-primary" id="saveCoursesBtn">Save My Selections</button>
+              </div>
+            </div>
+
+            <!-- Available courses grid -->
+            <div id="availableCoursesGrid" class="courses-grid"><!-- loaded by JS --></div>
+          </div>
+
+          <!-- Preview chips of selected courses -->
+          <div class="selected-courses-section" style="margin-top:36px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <h2 style="font-size:18px; font-weight:700; margin:0;">Selected Courses Preview</h2>
+              <button type="button" class="btn-remove-course" id="clearChipsBtn" style="display:none; font-size:13px;">
+                Clear Selection
+              </button>
+            </div>
+            <div id="selectedCoursesList"><!-- loaded by JS --></div>
+          </div>
         </div>
       </div>
 
@@ -141,7 +192,8 @@
           <line x1="9" y1="9" x2="15" y2="9"/>
         </svg>
         <h3>No Courses Available</h3>
-        <p>Your administrator hasn't set up any courses yet.</p>
+        <p>Unable to load courses. Click below to load standard courses.</p>
+        <button class="btn btn-primary" id="reloadCoursesBtn" style="margin-top:16px;">Load Standard Courses</button>
       </div>
     </main>
   </div>

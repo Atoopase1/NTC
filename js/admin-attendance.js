@@ -8,7 +8,7 @@
   // Protect admin route
   const isAdmin = localStorage.getItem('preptrack_is_admin') === 'true' || localStorage.getItem('ntc_is_admin') === 'true';
   if (!isAdmin) {
-    window.location.href = '/pages/dashboard.html';
+    window.location.href = (window.getAppPageUrl ? window.getAppPageUrl('dashboard.html') : 'dashboard.html');
     return;
   }
 

@@ -85,6 +85,18 @@ async function signIn(email, password) {
 }
 
 /**
+ * Helper to resolve page URLs reliably whether the app is hosted
+ * at domain root (e.g. https://example.com/pages/...)
+ * or in a subdirectory (e.g. http://localhost:5500/preptrack/pages/...).
+ */
+function getAppPageUrl(pageFileName) {
+  const cleanPage = pageFileName.replace(/^\/?(pages\/)?/, '');
+  const basePath = window.location.pathname.replace(/\/pages\/.*|\/index\.html.*|\/$/, '');
+  return basePath + '/pages/' + cleanPage;
+}
+window.getAppPageUrl = getAppPageUrl;
+
+/**
  * Logout user
  */
 async function signOut() {
@@ -98,7 +110,7 @@ async function signOut() {
   localStorage.removeItem('ntc_admin_permissions'); localStorage.removeItem('preptrack_admin_permissions');
   localStorage.removeItem('preptrack_view_mode');
   localStorage.removeItem('ntc_view_mode'); localStorage.removeItem('preptrack_view_mode');
-  window.location.href = '/pages/login.html';
+  window.location.href = getAppPageUrl('login.html');
 }
 
 /**
@@ -197,7 +209,7 @@ async function checkAdminAndRedirect(userEmail) {
     localStorage.setItem('ntc_admin_email', userEmail); localStorage.setItem('preptrack_admin_email', userEmail);
     const viewMode = localStorage.getItem('preptrack_view_mode') || localStorage.getItem('ntc_view_mode') || 'admin';
     if (viewMode === 'admin') {
-      window.location.href = '/pages/admin-lessons.html';
+      window.location.href = getAppPageUrl('admin-lessons.html');
       return;
     }
   } else {
@@ -209,7 +221,7 @@ async function checkAdminAndRedirect(userEmail) {
     localStorage.removeItem('ntc_admin_permissions'); localStorage.removeItem('preptrack_admin_permissions');
   }
 
-  window.location.href = '/pages/dashboard.html';
+  window.location.href = getAppPageUrl('dashboard.html');
 }
 
 // --- Database Functions --- //
@@ -451,14 +463,24 @@ async function getSubjects() {
     const localData = localStorage.getItem('preptrack_subjects') || localStorage.getItem('ntc_subjects');
     if (localData) return JSON.parse(localData);
     
-    // Default fallback
+    // Default fallback with valid database UUIDs
     return [
-      { id: '1', name: 'Pedagogy' },
-      { id: '2', name: 'General Knowledge' },
-      { id: '3', name: 'Curriculum Studies' },
-      { id: '4', name: 'Assessment' },
-      { id: '5', name: 'ICT in Education' },
-      { id: '6', name: 'Educational Psychology' }
+      { id: "415718a9-73a2-4b8d-b149-af72ae9f801b", name: "English language" },
+      { id: "70ff49de-ee1a-404e-8026-93e57099dd6c", name: "Mathematics" },
+      { id: "23a159a7-a2a4-484f-b07a-2fd60f43b997", name: "French" },
+      { id: "3f259e90-19c4-4514-827d-0190346bcf08", name: "History" },
+      { id: "b42dea7f-ae1c-44fc-99b8-cd6e62b705be", name: "Geography" },
+      { id: "62eaf060-fe0d-4c13-90f2-d78f23c0f3ca", name: "General Professional Knowledge (GPK)" },
+      { id: "f82c949f-e918-4685-81c5-8fdffee1998c", name: "Grade-Level Specialism Pedagogy" },
+      { id: "25bf9c78-de15-477b-9cfc-f204605406a8", name: "Subject Content Knowledge" },
+      { id: "68848472-e20d-4db5-97ce-14aba703af78", name: "Social studies" },
+      { id: "51b3c836-7c2e-4c7f-8928-b7bbcfe4e86a", name: "Integrated Science" },
+      { id: "93e2b273-ade6-4f4f-ae78-77e2b72c76c3", name: "Physics" },
+      { id: "1fbeb6b5-b745-4599-9a58-4ea38e7668d7", name: "Biology" },
+      { id: "f624d93f-f6d3-46fd-8dea-49317beb87a0", name: "Chemistry" },
+      { id: "495a3ad0-26de-42b6-bca9-718c23d61b63", name: "RME" },
+      { id: "d9eedb28-edc7-4d4d-8191-b951cb86f337", name: "BDT" },
+      { id: "d178ae07-79f0-4060-9d87-61ce8a87b743", name: "ICT" }
     ];
   }
 }
@@ -728,7 +750,8 @@ window.supaAuth = {
   signOut,
   getCurrentUser,
   signInWithGoogle,
-  checkAdminAndRedirect
+  checkAdminAndRedirect,
+  getAppPageUrl
 };
 
 // --- Lesson CRUD & File Upload --- //
