@@ -122,15 +122,126 @@
       
       <!-- Tabs -->
       <div class="admin-tabs">
-        <button class="admin-tab active" data-tab="register-tab">📋 Master Register</button>
-        <button class="admin-tab" data-tab="sessions-tab">📅 Sessions</button>
+        <button class="admin-tab active" data-tab="courses-tab" id="tabBtnCourses">📚 Courses & Rankings</button>
+        <button class="admin-tab" data-tab="sessions-tab" id="tabBtnSessions">📅 Sessions</button>
+        <button class="admin-tab" data-tab="register-tab" id="tabBtnRegister">📋 Historical Register Log</button>
         <button class="admin-tab" data-tab="records-tab" id="recordsTabBtn" style="display:none;">
-          🔴 Session Feed <span id="currentSessionLabel" style="font-size:12px;opacity:0.7;"></span>
+          🔴 Live Session Feed <span id="currentSessionLabel" style="font-size:12px;opacity:0.7;"></span>
         </button>
       </div>
 
-      <!-- Tab Content: Master Register -->
-      <div id="register-tab" class="tab-content active">
+      <!-- Tab Content: Courses & Rankings (Default Landing Dashboard) -->
+      <div id="courses-tab" class="tab-content active">
+        <!-- Sub-view 1: Course Cards Dashboard -->
+        <div id="coursesDashboardView">
+          <div class="courses-dashboard-toolbar">
+            <div class="courses-search-bar">
+              <div class="courses-search-wrap">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="courseSearchInput" placeholder="Search courses..." oninput="window.adminAttendance.filterCoursesDashboard()">
+              </div>
+              <select id="courseSortSelect" class="admin-input" style="width: auto; min-width: 170px;" onchange="window.adminAttendance.sortCoursesDashboard()">
+                <option value="name-asc">Name (A-Z)</option>
+                <option value="name-desc">Name (Z-A)</option>
+                <option value="avg-desc">Highest Class Average</option>
+                <option value="avg-asc">Lowest Class Average</option>
+                <option value="students-desc">Most Students</option>
+                <option value="sessions-desc">Most Sessions Held</option>
+              </select>
+            </div>
+            
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button class="btn btn-primary" id="addCourseBtn" onclick="window.adminAttendance.openAddCourseModal()">
+                + Add Course
+              </button>
+            </div>
+          </div>
+
+          <!-- Courses Grid -->
+          <div class="course-cards-grid" id="coursesGrid">
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-light);">
+              Loading courses...
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub-view 2: Dedicated Course Attendance Ranking View -->
+        <div id="courseRankingView" class="course-ranking-view" style="display: none;">
+          <div class="ranking-header-card">
+            <div class="ranking-top-row">
+              <button type="button" class="ranking-back-btn" onclick="window.adminAttendance.closeCourseRanking()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Back to Courses
+              </button>
+              
+              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="window.adminAttendance.copyRankingToExcel()">
+                  📋 Copy Ranking for Excel
+                </button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="window.adminAttendance.exportRankingCSV()">
+                  📥 Export CSV
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnCreateSessionForCourse" onclick="window.adminAttendance.createSessionForCurrentCourse()">
+                  + New Session
+                </button>
+              </div>
+            </div>
+
+            <div class="ranking-title-group">
+              <h2 id="rankingCourseTitle">Course Name</h2>
+              <p>Student attendance ranking arranged in descending order by attendance percentage.</p>
+            </div>
+
+            <div class="ranking-stats-strip">
+              <div class="ranking-stat-pill">
+                <span>👥 Students Enrolled:</span>
+                <strong id="rankingStatStudents">0</strong>
+              </div>
+              <div class="ranking-stat-pill">
+                <span>📅 Sessions Held:</span>
+                <strong id="rankingStatSessions">0</strong>
+              </div>
+              <div class="ranking-stat-pill">
+                <span>📈 Class Average:</span>
+                <strong id="rankingStatAverage">0%</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Search in Ranking Table -->
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
+            <div style="position: relative; max-width: 360px; width: 100%;">
+              <input type="text" id="rankingSearchInput" class="admin-input" placeholder="Search student name or index number..." oninput="window.adminAttendance.filterRankingTable()" style="padding-left: 36px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-light);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <div id="rankingCountBadge" style="font-size: 13px; font-weight: 600; color: var(--text-light);">
+              0 Students Ranked
+            </div>
+          </div>
+
+          <!-- 2-Column Ranking Table -->
+          <div class="ranking-table-card">
+            <table class="ranking-table">
+              <thead>
+                <tr>
+                  <th>RANK / STUDENT</th>
+                  <th class="th-attendance">ATTENDANCE</th>
+                </tr>
+              </thead>
+              <tbody id="rankingTableBody">
+                <tr>
+                  <td colspan="2" style="text-align: center; padding: 40px; color: var(--text-light);">
+                    Loading student rankings...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content: Master Register Log (Historical records & Excel export) -->
+      <div id="register-tab" class="tab-content">
         <!-- KPI Summary Cards -->
         <div class="register-kpi-grid">
           <div class="register-kpi-card">
@@ -489,6 +600,49 @@
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+
+      <!-- Add Course Modal -->
+      <div id="addCourseModal" class="course-modal-overlay" style="display: none;">
+        <div class="course-modal-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: var(--text);">Add New Course</h3>
+            <button type="button" class="course-card-btn" onclick="window.adminAttendance.closeAddCourseModal()" style="font-size: 20px;">&times;</button>
+          </div>
+          <form onsubmit="window.adminAttendance.handleCreateCourse(event)">
+            <div style="margin-bottom: 16px;">
+              <label class="admin-label" for="newCourseName">Course Name</label>
+              <input type="text" id="newCourseName" class="admin-input" placeholder="e.g. Primary Specialism Pedagogy" required>
+              <p id="courseErrorMsg" style="color: #ef4444; font-size: 12px; margin: 6px 0 0; display: none;"></p>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+              <button type="button" class="btn btn-outline" onclick="window.adminAttendance.closeAddCourseModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary" id="btnSaveCourse">Create Course</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Edit Course Modal -->
+      <div id="editCourseModal" class="course-modal-overlay" style="display: none;">
+        <div class="course-modal-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: var(--text);">Edit Course Name</h3>
+            <button type="button" class="course-card-btn" onclick="window.adminAttendance.closeEditCourseModal()" style="font-size: 20px;">&times;</button>
+          </div>
+          <form onsubmit="window.adminAttendance.handleUpdateCourse(event)">
+            <input type="hidden" id="editCourseId">
+            <div style="margin-bottom: 16px;">
+              <label class="admin-label" for="editCourseName">Course Name</label>
+              <input type="text" id="editCourseName" class="admin-input" required>
+              <p id="editCourseErrorMsg" style="color: #ef4444; font-size: 12px; margin: 6px 0 0; display: none;"></p>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+              <button type="button" class="btn btn-outline" onclick="window.adminAttendance.closeEditCourseModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+          </form>
         </div>
       </div>
 

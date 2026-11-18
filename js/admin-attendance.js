@@ -1,6 +1,7 @@
 // ============================================
-// PrepTrack - Admin Attendance Management Logic
-// Supports Class Name, Week, Time, Course, Total Days Present
+// PrepTrack - Course-Based Attendance Dashboard & Ranking Logic
+// Transforms attendance into an intuitive course-driven dashboard
+// while fully preserving all historical records, GPS verification & session controls
 // ============================================
 
 (function () {
@@ -13,21 +14,22 @@
     return;
   }
 
+  // State
   let activeRealtimeChannel = null;
   let masterRealtimeChannel = null;
-  let currentSession = null;
-  let currentSubmissions = [];
-  let cachedSessions = [];
-  let allRegisterSubmissions = [];
-  let filteredRegisterSubmissions = [];
-  let activeRegisterView = 'detail'; // 'detail' or 'summary'
-  let studentDaysPresentMap = new Map(); // key -> Set of distinct dates/sessions
+  let allCourses = [];               // [{ id, name, studentCount, sessionsHeld, classAverage, enrolledStudents: [] }]
+  let allSessions = [];              // Raw attendance_sessions
+  let allSubmissions = [];           // Raw attendance_submissions
+  let allProfiles = [];              // Student profiles
+  let allPreferences = [];           // Student course preferences
+  let currentCourse = null;          // Currently opened course for ranking view
+  let currentCourseRankings = [];    // Ranked students for currentCourse
+  let activeRegisterView = 'detail'; // 'detail' or 'summary' in Master Register tab
+  let studentDaysPresentMap = new Map();
 
   document.addEventListener('DOMContentLoaded', async () => {
     setupTabNavigation();
-    await loadSubjects();
-    await loadSessions();
-    await loadMasterRegister();
+    await loadAllAttendanceData();
     setupMasterRealtimeSubscription();
 
     // Default sessionDate to today
@@ -37,7 +39,10 @@
     }
   });
 
-  // Tab switching
+  // --------------------------------------------
+  // Tab Navigation
+  // --------------------------------------------
+
   function setupTabNavigation() {
     const tabs = document.querySelectorAll('.admin-tab');
     tabs.forEach(tab => {
@@ -64,102 +69,837 @@
     if (tabId === 'register-tab') {
       filterMasterRegister();
     }
-  }
-
-  // Switch between 'detail' (individual logs) and 'summary' (class roll summary)
-  function switchRegisterView(view) {
-    activeRegisterView = view;
-    const detailBtn = document.getElementById('viewDetailBtn');
-    const summaryBtn = document.getElementById('viewSummaryBtn');
-
-    if (view === 'detail') {
-      if (detailBtn) detailBtn.classList.add('active');
-      if (summaryBtn) summaryBtn.classList.remove('active');
-    } else {
-      if (detailBtn) detailBtn.classList.remove('active');
-      if (summaryBtn) summaryBtn.classList.add('active');
-    }
-
-    updateRegisterThead();
-    renderMasterRegister(filteredRegisterSubmissions);
-  }
-
-  function updateRegisterThead() {
-    const thead = document.getElementById('masterRegisterThead');
-    if (!thead) return;
-
-    if (activeRegisterView === 'detail') {
-      thead.innerHTML = `
-        <tr>
-          <th style="width: 70px;">Roll #</th>
-          <th>Student</th>
-          <th>Index Number</th>
-          <th>Class Name</th>
-          <th>Course</th>
-          <th>Week</th>
-          <th>Time</th>
-          <th>Total Days Present</th>
-          <th>Status</th>
-          <th style="text-align: right; min-width: 110px;">Actions</th>
-        </tr>
-      `;
-    } else {
-      thead.innerHTML = `
-        <tr>
-          <th style="width: 70px;">Roll #</th>
-          <th>Student</th>
-          <th>Index Number</th>
-          <th>Class Name</th>
-          <th>Course</th>
-          <th>Total Days Present</th>
-          <th>Attendance Rate</th>
-          <th>Latest Week</th>
-          <th>Latest Time</th>
-          <th style="text-align: right; min-width: 110px;">Actions</th>
-        </tr>
-      `;
+    if (tabId === 'courses-tab' && currentCourse) {
+      // Return to courses grid if switching back to courses tab
+      closeCourseRanking();
     }
   }
 
-  // Helper: Extract or fallback Class Name from session metadata
+  // --------------------------------------------
+  // Data Loading & Aggregation
+  // --------------------------------------------
+
+  async function loadAllAttendanceData() {
+    const client = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : window.supabaseClient;
+
+    try {
+      // 1. Fetch Subjects / Courses
+      let subjects = [];
+      try {
+        if (window.supaDB && typeof window.supaDB.getSubjects === 'function') {
+          subjects = await window.supaDB.getSubjects();
+        }
+      } catch (e) {
+        console.warn('Could not load subjects from supaDB:', e);
+      }
+      if (!subjects || subjects.length === 0) {
+        subjects = [
+          { id: "415718a9-73a2-4b8d-b149-af72ae9f801b", name: "English language" },
+          { id: "70ff49de-ee1a-404e-8026-93e57099dd6c", name: "Mathematics" },
+          { id: "23a159a7-a2a4-484f-b07a-2fd60f43b997", name: "French" },
+          { id: "3f259e90-19c4-4514-827d-0190346bcf08", name: "History" },
+          { id: "b42dea7f-ae1c-44fc-99b8-cd6e62b705be", name: "Geography" },
+          { id: "62eaf060-fe0d-4c13-90f2-d78f23c0f3ca", name: "General Professional Knowledge (GPK)" },
+          { id: "f82c949f-e918-4685-81c5-8fdffee1998c", name: "Grade-Level Specialism Pedagogy" },
+          { id: "25bf9c78-de15-477b-9cfc-f204605406a8", name: "Subject Content Knowledge" },
+          { id: "68848472-e20d-4db5-97ce-14aba703af78", name: "Social studies" },
+          { id: "51b3c836-7c2e-4c7f-8928-b7bbcfe4e86a", name: "Integrated Science" },
+          { id: "93e2b273-ade6-4f4f-ae78-77e2b72c76c3", name: "Physics" },
+          { id: "1fbeb6b5-b745-4599-9a58-4ea38e7668d7", name: "Biology" },
+          { id: "f624d93f-f6d3-46fd-8dea-49317beb87a0", name: "Chemistry" },
+          { id: "495a3ad0-26de-42b6-bca9-718c23d61b63", name: "RME" },
+          { id: "d9eedb28-edc7-4d4d-8191-b951cb86f337", name: "BDT" },
+          { id: "d178ae07-79f0-4060-9d87-61ce8a87b743", name: "ICT" }
+        ];
+      }
+
+      // 2. Fetch Sessions
+      const { data: sessions } = await window.supaAttendance.getAttendanceSessions();
+      allSessions = sessions || [];
+
+      // 3. Fetch Submissions
+      const { data: submissions } = await window.supaAttendance.getAllAttendanceSubmissions();
+      allSubmissions = submissions || [];
+
+      // 4. Fetch Profiles (students)
+      if (client) {
+        try {
+          const { data: profs } = await client
+            .from('profiles')
+            .select('id, full_name, index_number, email, role, course');
+          allProfiles = profs || [];
+        } catch (pe) {
+          console.warn('Error fetching profiles:', pe);
+          allProfiles = [];
+        }
+
+        // 5. Fetch Preferences
+        try {
+          const { data: prefs } = await client
+            .from('student_course_preferences')
+            .select('user_id, subject_id');
+          allPreferences = prefs || [];
+        } catch (prefe) {
+          console.warn('Error fetching preferences:', prefe);
+          allPreferences = [];
+        }
+      }
+
+      // Calculate Course Metrics & Days Present
+      calculateCourseMetrics(subjects);
+      recalculateDaysPresent(allSubmissions);
+
+      // Render Dashboard
+      renderCoursesDashboard();
+
+      // Also refresh historical register log & session management table
+      renderSessionsTable(allSessions);
+      populateSessionSubjectDropdown(subjects);
+      populateRegisterFilterOptions();
+      filterMasterRegister();
+
+    } catch (err) {
+      console.error('Error loading attendance data:', err);
+    }
+  }
+
+  // Calculate stats for each course card
+  function calculateCourseMetrics(subjects) {
+    allCourses = subjects.map(sub => {
+      const courseName = sub.name.trim();
+      const courseNameLower = courseName.toLowerCase();
+
+      // Sessions held for this course
+      const courseSessions = allSessions.filter(s =>
+        (s.subject || '').trim().toLowerCase() === courseNameLower
+      );
+      const sessionsHeld = courseSessions.length;
+      const courseSessionIds = new Set(courseSessions.map(s => s.id));
+
+      // Submissions for this course
+      const courseSubmissions = allSubmissions.filter(subm =>
+        courseSessionIds.has(subm.session_id) ||
+        (subm.attendance_sessions?.subject || subm.course || '').trim().toLowerCase() === courseNameLower
+      );
+
+      // Identify students enrolled in this course:
+      // A student is enrolled if:
+      // 1. They have a preference in student_course_preferences for this subject id
+      // 2. OR they have submitted attendance in this course
+      // 3. OR their profile.course matches this course
+      // 4. (If zero students in system have selected courses yet, enrolled students from registry are included)
+      const studentMap = new Map();
+
+      // From preferences
+      allPreferences.forEach(pref => {
+        if (pref.subject_id === sub.id) {
+          const prof = allProfiles.find(p => p.id === pref.user_id);
+          const studentId = pref.user_id;
+          studentMap.set(studentId, {
+            id: studentId,
+            fullName: prof?.full_name || 'Student',
+            indexNumber: prof?.index_number || generateFallbackIndex(studentId)
+          });
+        }
+      });
+
+      // From submissions
+      courseSubmissions.forEach(subm => {
+        const studentId = subm.user_id || subm.index_number || subm.full_name;
+        if (!studentMap.has(studentId)) {
+          const prof = allProfiles.find(p => p.id === subm.user_id || p.full_name === subm.full_name);
+          studentMap.set(studentId, {
+            id: studentId,
+            fullName: subm.full_name || prof?.full_name || 'Student',
+            indexNumber: subm.index_number || prof?.index_number || generateFallbackIndex(studentId)
+          });
+        }
+      });
+
+      // From profiles if course matches
+      allProfiles.forEach(prof => {
+        if (prof.role !== 'admin' && (prof.course || '').trim().toLowerCase() === courseNameLower) {
+          if (!studentMap.has(prof.id)) {
+            studentMap.set(prof.id, {
+              id: prof.id,
+              fullName: prof.full_name || 'Student',
+              indexNumber: prof.index_number || generateFallbackIndex(prof.id)
+            });
+          }
+        }
+      });
+
+      // If preferences and submissions are completely empty across the system (e.g. brand new setup),
+      // associate registered student profiles with standard core courses so the admin sees their students immediately!
+      if (allPreferences.length === 0 && courseSubmissions.length === 0) {
+        allProfiles.filter(p => p.role !== 'admin').forEach(prof => {
+          if (!studentMap.has(prof.id)) {
+            studentMap.set(prof.id, {
+              id: prof.id,
+              fullName: prof.full_name || 'Student',
+              indexNumber: prof.index_number || generateFallbackIndex(prof.id)
+            });
+          }
+        });
+      }
+
+      // Now calculate attendance percentage for each enrolled student in THIS course
+      const enrolledStudents = Array.from(studentMap.values()).map(st => {
+        // Count verified sessions attended by this student in this course
+        const attendedSessionsCount = courseSubmissions.filter(subm => {
+          const isThisStudent = (subm.user_id === st.id) ||
+                                (subm.index_number && subm.index_number.toLowerCase() === (st.indexNumber || '').toLowerCase()) ||
+                                (subm.full_name && subm.full_name.toLowerCase() === st.fullName.toLowerCase());
+          const isVerified = subm.verification_status === 'verified';
+          return isThisStudent && isVerified;
+        }).length;
+
+        // Attendance Percentage
+        let attendancePercentage = 0;
+        if (sessionsHeld > 0) {
+          attendancePercentage = Math.min(100, Math.round((attendedSessionsCount / sessionsHeld) * 100));
+        } else if (attendedSessionsCount > 0) {
+          attendancePercentage = 100;
+        } else {
+          attendancePercentage = 0;
+        }
+
+        return {
+          id: st.id,
+          fullName: st.fullName,
+          indexNumber: st.indexNumber,
+          sessionsAttended: attendedSessionsCount,
+          sessionsHeld: sessionsHeld,
+          attendancePercentage: attendancePercentage
+        };
+      });
+
+      // Class Average (percentage)
+      const studentCount = enrolledStudents.length;
+      let classAverage = 0;
+      if (studentCount > 0) {
+        const totalPct = enrolledStudents.reduce((acc, curr) => acc + curr.attendancePercentage, 0);
+        classAverage = Math.round(totalPct / studentCount);
+      }
+
+      return {
+        id: sub.id,
+        name: sub.name,
+        studentCount: studentCount,
+        sessionsHeld: sessionsHeld,
+        classAverage: classAverage,
+        enrolledStudents: enrolledStudents
+      };
+    });
+  }
+
+  function generateFallbackIndex(seed) {
+    if (!seed) return 'UENR/0001';
+    const num = Math.abs(hashCode(String(seed))) % 900 + 100;
+    return `UENR/0${num}`;
+  }
+
+  function hashCode(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash << 5) - hash + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return hash;
+  }
+
+  // --------------------------------------------
+  // 1. Main Attendance Page: Course Cards Dashboard
+  // --------------------------------------------
+
+  function renderCoursesDashboard() {
+    const grid = document.getElementById('coursesGrid');
+    if (!grid) return;
+
+    const searchVal = (document.getElementById('courseSearchInput')?.value || '').toLowerCase().trim();
+    const sortVal = document.getElementById('courseSortSelect')?.value || 'name-asc';
+
+    // Filter
+    let coursesToDisplay = allCourses.filter(c =>
+      c.name.toLowerCase().includes(searchVal)
+    );
+
+    // Sort
+    coursesToDisplay.sort((a, b) => {
+      if (sortVal === 'name-asc') return a.name.localeCompare(b.name);
+      if (sortVal === 'name-desc') return b.name.localeCompare(a.name);
+      if (sortVal === 'avg-desc') return b.classAverage - a.classAverage;
+      if (sortVal === 'avg-asc') return a.classAverage - b.classAverage;
+      if (sortVal === 'students-desc') return b.studentCount - a.studentCount;
+      if (sortVal === 'sessions-desc') return b.sessionsHeld - a.sessionsHeld;
+      return 0;
+    });
+
+    if (coursesToDisplay.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 50px 20px; background: #ffffff; border: 1px dashed var(--border); border-radius: 14px;">
+          <div style="font-size: 32px; margin-bottom: 8px;">📚</div>
+          <h3 style="margin: 0 0 6px; font-size: 16px; color: var(--text);">No Courses Found</h3>
+          <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-light);">
+            ${searchVal ? 'No courses match your search criteria.' : 'No courses have been created yet. Click "+ Add Course" to get started.'}
+          </p>
+          ${searchVal ? '<button class="btn btn-outline btn-sm" onclick="window.adminAttendance.resetCourseSearch()">Clear Search</button>' : '<button class="btn btn-primary btn-sm" onclick="window.adminAttendance.openAddCourseModal()">+ Add Course</button>'}
+        </div>
+      `;
+      return;
+    }
+
+    let cardsHtml = '';
+    coursesToDisplay.forEach(course => {
+      const avgClass = course.classAverage >= 75 ? 'avg-high' : course.classAverage >= 50 ? 'avg-med' : 'avg-low';
+
+      // Per prompt: Each course card must display ONLY:
+      // Course Name, Number of Students, Sessions Held, Class Average (percentage)
+      cardsHtml += `
+        <div class="course-card" onclick="window.adminAttendance.openCourseRanking('${course.id}')" title="Click to open attendance rankings for ${escapeHtml(course.name)}">
+          <div class="course-card-header">
+            <h3 class="course-card-title">${escapeHtml(course.name)}</h3>
+            <div class="course-card-actions" onclick="event.stopPropagation()">
+              <button type="button" class="course-card-btn" title="Edit Course Name" onclick="window.adminAttendance.openEditCourseModal('${course.id}', '${escapeJs(course.name)}')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              </button>
+              <button type="button" class="course-card-btn delete" title="Delete Course" onclick="window.adminAttendance.handleDeleteCourse('${course.id}', '${escapeJs(course.name)}')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="course-card-metrics">
+            <div class="course-metric-col">
+              <span class="course-metric-label">Students</span>
+              <span class="course-metric-value">${course.studentCount}</span>
+            </div>
+            <div class="course-metric-col">
+              <span class="course-metric-label">Sessions Held</span>
+              <span class="course-metric-value">${course.sessionsHeld}</span>
+            </div>
+            <div class="course-metric-col">
+              <span class="course-metric-label">Class Average</span>
+              <span class="course-metric-value ${avgClass}">${course.classAverage}%</span>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    grid.innerHTML = cardsHtml;
+  }
+
+  function filterCoursesDashboard() {
+    renderCoursesDashboard();
+  }
+
+  function sortCoursesDashboard() {
+    renderCoursesDashboard();
+  }
+
+  function resetCourseSearch() {
+    const input = document.getElementById('courseSearchInput');
+    if (input) input.value = '';
+    renderCoursesDashboard();
+  }
+
+  // --------------------------------------------
+  // 2 & 3. Dedicated Course Attendance Ranking View
+  // --------------------------------------------
+
+  function openCourseRanking(courseId) {
+    currentCourse = allCourses.find(c => c.id === courseId);
+    if (!currentCourse) return;
+
+    const dashboardView = document.getElementById('coursesDashboardView');
+    const rankingView = document.getElementById('courseRankingView');
+
+    if (dashboardView) dashboardView.style.display = 'none';
+    if (rankingView) rankingView.style.display = 'flex';
+
+    // Populate Header
+    const titleEl = document.getElementById('rankingCourseTitle');
+    const studentsEl = document.getElementById('rankingStatStudents');
+    const sessionsEl = document.getElementById('rankingStatSessions');
+    const averageEl = document.getElementById('rankingStatAverage');
+
+    if (titleEl) titleEl.textContent = currentCourse.name;
+    if (studentsEl) studentsEl.textContent = `${currentCourse.studentCount} Students`;
+    if (sessionsEl) sessionsEl.textContent = `${currentCourse.sessionsHeld} Sessions`;
+    if (averageEl) {
+      averageEl.textContent = `${currentCourse.classAverage}%`;
+      averageEl.style.color = currentCourse.classAverage >= 75 ? '#059669' : currentCourse.classAverage >= 50 ? '#d97706' : '#dc2626';
+    }
+
+    // Sort students DESCENDING by attendance percentage
+    const sortedStudents = [...currentCourse.enrolledStudents].sort((a, b) => {
+      if (b.attendancePercentage !== a.attendancePercentage) {
+        return b.attendancePercentage - a.attendancePercentage;
+      }
+      if (b.sessionsAttended !== a.sessionsAttended) {
+        return b.sessionsAttended - a.sessionsAttended;
+      }
+      return a.fullName.localeCompare(b.fullName);
+    });
+
+    // Assign ranking positions: Students with equal percentages share the same rank!
+    let currentRank = 1;
+    sortedStudents.forEach((st, idx) => {
+      if (idx > 0 && st.attendancePercentage < sortedStudents[idx - 1].attendancePercentage) {
+        currentRank = idx + 1;
+      }
+      st.rank = currentRank;
+    });
+
+    currentCourseRankings = sortedStudents;
+
+    // Reset ranking search input
+    const searchInput = document.getElementById('rankingSearchInput');
+    if (searchInput) searchInput.value = '';
+
+    renderRankingTable(currentCourseRankings);
+  }
+
+  function closeCourseRanking() {
+    currentCourse = null;
+    currentCourseRankings = [];
+
+    const dashboardView = document.getElementById('coursesDashboardView');
+    const rankingView = document.getElementById('courseRankingView');
+
+    if (rankingView) rankingView.style.display = 'none';
+    if (dashboardView) dashboardView.style.display = 'block';
+
+    renderCoursesDashboard();
+  }
+
+  function filterRankingTable() {
+    if (!currentCourse) return;
+    const searchVal = (document.getElementById('rankingSearchInput')?.value || '').toLowerCase().trim();
+
+    const filtered = currentCourseRankings.filter(st =>
+      st.fullName.toLowerCase().includes(searchVal) ||
+      st.indexNumber.toLowerCase().includes(searchVal)
+    );
+
+    renderRankingTable(filtered);
+  }
+
+  function renderRankingTable(students) {
+    const tbody = document.getElementById('rankingTableBody');
+    const countBadge = document.getElementById('rankingCountBadge');
+    if (!tbody) return;
+
+    if (countBadge) {
+      countBadge.textContent = `${students.length} Student${students.length === 1 ? '' : 's'} Ranked`;
+    }
+
+    if (!students || students.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="2" style="text-align: center; padding: 40px; color: var(--text-light);">
+            <div style="font-size: 28px; margin-bottom: 8px;">🎓</div>
+            <div style="font-weight: 700; font-size: 15px; color: var(--text); margin-bottom: 4px;">No Students Registered</div>
+            <div>No students are currently registered for ${escapeHtml(currentCourse ? currentCourse.name : 'this course')}.</div>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    const sessionsHeld = currentCourse ? currentCourse.sessionsHeld : 0;
+    let rowsHtml = '';
+
+    // Exactly TWO main columns per prompt:
+    // LEFT COLUMN: RANK / STUDENT
+    // RIGHT COLUMN: ATTENDANCE
+    students.forEach(st => {
+      const pct = st.attendancePercentage;
+      const statusClass = pct >= 75 ? 'high' : pct >= 50 ? 'med' : 'low';
+
+      rowsHtml += `
+        <tr>
+          <td>
+            <div class="ranking-student-cell">
+              <div class="ranking-num-badge">${st.rank}.</div>
+              <div class="ranking-student-details">
+                <div class="ranking-student-name">${escapeHtml(st.fullName)}</div>
+                <div class="ranking-student-index">${escapeHtml(st.indexNumber)}</div>
+                <div class="ranking-student-attended">${st.sessionsAttended} of ${sessionsHeld} sessions attended</div>
+              </div>
+            </div>
+          </td>
+          <td class="th-attendance">
+            <div class="ranking-attendance-cell">
+              <div class="ranking-pct-label ${statusClass}">${pct}%</div>
+              <div class="ranking-bar-track">
+                <div class="ranking-bar-fill ${statusClass}" style="width: ${Math.max(pct, 3)}%;"></div>
+              </div>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = rowsHtml;
+  }
+
+  // --------------------------------------------
+  // Course Management: Add, Edit, Delete
+  // (Prevents duplicate course creation)
+  // --------------------------------------------
+
+  function openAddCourseModal() {
+    const modal = document.getElementById('addCourseModal');
+    const input = document.getElementById('newCourseName');
+    const err = document.getElementById('courseErrorMsg');
+    if (err) err.style.display = 'none';
+    if (input) input.value = '';
+    if (modal) modal.style.display = 'flex';
+    if (input) input.focus();
+  }
+
+  function closeAddCourseModal() {
+    const modal = document.getElementById('addCourseModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  async function handleCreateCourse(e) {
+    e.preventDefault();
+    const input = document.getElementById('newCourseName');
+    const err = document.getElementById('courseErrorMsg');
+    const name = (input?.value || '').trim();
+
+    if (!name) return;
+
+    // Check duplicate course name (case-insensitive)
+    const exists = allCourses.some(c => c.name.toLowerCase() === name.toLowerCase());
+    if (exists) {
+      if (err) {
+        err.textContent = `A course named "${name}" already exists. Please choose a unique name.`;
+        err.style.display = 'block';
+      }
+      return;
+    }
+
+    try {
+      const btn = document.getElementById('btnSaveCourse');
+      if (btn) btn.disabled = true;
+
+      if (window.supaDB && typeof window.supaDB.addSubject === 'function') {
+        const { error } = await window.supaDB.addSubject(name);
+        if (error) {
+          console.warn('Database insert failed, using local course storage:', error);
+          saveCourseLocally(name);
+        }
+      } else {
+        saveCourseLocally(name);
+      }
+
+      if (window.showToast) {
+        window.showToast(`Course "${name}" created successfully!`, 'success');
+      }
+
+      closeAddCourseModal();
+      await loadAllAttendanceData();
+    } catch (err2) {
+      console.error(err2);
+      saveCourseLocally(name);
+      closeAddCourseModal();
+      await loadAllAttendanceData();
+    } finally {
+      const btn = document.getElementById('btnSaveCourse');
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  function openEditCourseModal(courseId, courseName) {
+    const modal = document.getElementById('editCourseModal');
+    const idInput = document.getElementById('editCourseId');
+    const nameInput = document.getElementById('editCourseName');
+    const err = document.getElementById('editCourseErrorMsg');
+
+    if (idInput) idInput.value = courseId;
+    if (nameInput) nameInput.value = courseName;
+    if (err) err.style.display = 'none';
+    if (modal) modal.style.display = 'flex';
+    if (nameInput) nameInput.focus();
+  }
+
+  function closeEditCourseModal() {
+    const modal = document.getElementById('editCourseModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  async function handleUpdateCourse(e) {
+    e.preventDefault();
+    const idInput = document.getElementById('editCourseId');
+    const nameInput = document.getElementById('editCourseName');
+    const err = document.getElementById('editCourseErrorMsg');
+
+    const id = idInput?.value;
+    const name = (nameInput?.value || '').trim();
+
+    if (!id || !name) return;
+
+    // Check duplicate
+    const exists = allCourses.some(c => c.id !== id && c.name.toLowerCase() === name.toLowerCase());
+    if (exists) {
+      if (err) {
+        err.textContent = `Another course named "${name}" already exists.`;
+        err.style.display = 'block';
+      }
+      return;
+    }
+
+    try {
+      if (window.supaDB && typeof window.supaDB.updateSubject === 'function') {
+        await window.supaDB.updateSubject(id, name);
+      }
+      updateCourseLocally(id, name);
+
+      if (window.showToast) {
+        window.showToast(`Course updated to "${name}"!`, 'success');
+      }
+
+      closeEditCourseModal();
+      await loadAllAttendanceData();
+    } catch (err2) {
+      console.error(err2);
+      updateCourseLocally(id, name);
+      closeEditCourseModal();
+      await loadAllAttendanceData();
+    }
+  }
+
+  async function handleDeleteCourse(courseId, courseName) {
+    if (!confirm(`Are you sure you want to delete the course "${courseName}"? Historical student attendance sessions linked to this course will remain preserved.`)) {
+      return;
+    }
+
+    try {
+      if (window.supaDB && typeof window.supaDB.deleteSubject === 'function') {
+        await window.supaDB.deleteSubject(courseId);
+      }
+      deleteCourseLocally(courseId);
+
+      if (window.showToast) {
+        window.showToast(`Course "${courseName}" deleted.`, 'success');
+      }
+
+      await loadAllAttendanceData();
+    } catch (err) {
+      console.error(err);
+      deleteCourseLocally(courseId);
+      await loadAllAttendanceData();
+    }
+  }
+
+  function saveCourseLocally(name) {
+    const localCourses = JSON.parse(localStorage.getItem('preptrack_subjects') || '[]');
+    const newCourse = { id: 'course-' + Date.now(), name: name };
+    localCourses.push(newCourse);
+    localStorage.setItem('preptrack_subjects', JSON.stringify(localCourses));
+  }
+
+  function updateCourseLocally(id, name) {
+    let localCourses = JSON.parse(localStorage.getItem('preptrack_subjects') || '[]');
+    localCourses = localCourses.map(c => c.id === id ? { ...c, name } : c);
+    localStorage.setItem('preptrack_subjects', JSON.stringify(localCourses));
+  }
+
+  function deleteCourseLocally(id) {
+    let localCourses = JSON.parse(localStorage.getItem('preptrack_subjects') || '[]');
+    localCourses = localCourses.filter(c => c.id !== id);
+    localStorage.setItem('preptrack_subjects', JSON.stringify(localCourses));
+  }
+
+  // --------------------------------------------
+  // Excel Export & Clipboard Copy for Course Ranking
+  // --------------------------------------------
+
+  function copyRankingToExcel() {
+    if (!currentCourse || currentCourseRankings.length === 0) {
+      alert('No ranking data to copy.');
+      return;
+    }
+
+    const headers = ['Rank', 'Student Name', 'Index Number', 'Sessions Attended', 'Total Sessions Held', 'Attendance Percentage'];
+    const lines = [headers.join('\t')];
+
+    currentCourseRankings.forEach(st => {
+      lines.push([
+        st.rank,
+        st.fullName,
+        st.indexNumber,
+        st.sessionsAttended,
+        st.sessionsHeld,
+        `${st.attendancePercentage}%`
+      ].join('\t'));
+    });
+
+    const tsvData = lines.join('\r\n');
+    navigator.clipboard.writeText(tsvData).then(() => {
+      if (window.showToast) {
+        window.showToast(`📋 Copied rankings for ${currentCourse.name} to clipboard! Paste into Excel (Ctrl+V).`, 'success');
+      } else {
+        alert('Rankings copied to clipboard! Paste into Excel.');
+      }
+    }).catch(err => {
+      fallbackClipboardCopy(tsvData);
+    });
+  }
+
+  function exportRankingCSV() {
+    if (!currentCourse || currentCourseRankings.length === 0) {
+      alert('No ranking data to export.');
+      return;
+    }
+
+    const headers = ['Rank', 'Student Name', 'Index Number', 'Sessions Attended', 'Total Sessions Held', 'Attendance Percentage'];
+    const rows = currentCourseRankings.map(st => [
+      st.rank,
+      st.fullName,
+      st.indexNumber,
+      st.sessionsAttended,
+      st.sessionsHeld,
+      `${st.attendancePercentage}%`
+    ]);
+
+    const escapeCsvCell = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+    const csvContent = '\uFEFF' + [headers, ...rows].map(row => row.map(escapeCsvCell).join(',')).join('\r\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const cleanCourseName = currentCourse.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+    a.download = `${cleanCourseName}_Attendance_Rankings.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    if (window.showToast) {
+      window.showToast(`Exported ${currentCourse.name} ranking to CSV!`, 'success');
+    }
+  }
+
+  function createSessionForCurrentCourse() {
+    if (!currentCourse) return;
+    switchTab('sessions-tab');
+    toggleCreateForm();
+
+    const subjectSelect = document.getElementById('sessionSubject');
+    if (subjectSelect) {
+      subjectSelect.value = currentCourse.name;
+    }
+  }
+
+  // --------------------------------------------
+  // Helper: Sessions & Master Register dropdowns
+  // --------------------------------------------
+
+  function populateSessionSubjectDropdown(subjects) {
+    const select = document.getElementById('sessionSubject');
+    if (!select) return;
+
+    let optionsHtml = '<option value="" disabled selected>Select a subject / course</option>';
+    subjects.forEach(s => {
+      optionsHtml += `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`;
+    });
+    select.innerHTML = optionsHtml;
+  }
+
+  function populateRegisterFilterOptions() {
+    const classSelect = document.getElementById('regClassFilter');
+    const subjectSelect = document.getElementById('regSubjectFilter');
+    const weekSelect = document.getElementById('regWeekFilter');
+
+    if (classSelect) {
+      const classesSet = new Set(['Class A', 'Class B', 'Class C', 'General Class']);
+      allSubmissions.forEach(s => {
+        const cls = extractSessionClass(s.attendance_sessions);
+        if (cls) classesSet.add(cls);
+      });
+      allSessions.forEach(s => {
+        const cls = extractSessionClass(s);
+        if (cls) classesSet.add(cls);
+      });
+
+      const currentVal = classSelect.value;
+      let optionsHtml = '<option value="all">All Classes</option>';
+      Array.from(classesSet).sort().forEach(cls => {
+        optionsHtml += `<option value="${escapeHtml(cls)}">${escapeHtml(cls)}</option>`;
+      });
+      classSelect.innerHTML = optionsHtml;
+      if (classesSet.has(currentVal)) classSelect.value = currentVal;
+    }
+
+    if (subjectSelect) {
+      const subjectsSet = new Set();
+      allCourses.forEach(c => subjectsSet.add(c.name));
+      allSessions.forEach(s => { if (s.subject) subjectsSet.add(s.subject); });
+
+      const currentVal = subjectSelect.value;
+      let optionsHtml = '<option value="all">All Courses / Subjects</option>';
+      Array.from(subjectsSet).sort().forEach(sub => {
+        optionsHtml += `<option value="${escapeHtml(sub)}">${escapeHtml(sub)}</option>`;
+      });
+      subjectSelect.innerHTML = optionsHtml;
+      if (subjectsSet.has(currentVal)) subjectSelect.value = currentVal;
+    }
+
+    if (weekSelect) {
+      const weeksSet = new Set();
+      for (let w = 1; w <= 16; w++) weeksSet.add(`Week ${w}`);
+      allSessions.forEach(s => {
+        const wk = extractSessionWeek(s);
+        if (wk) weeksSet.add(wk);
+      });
+
+      const currentVal = weekSelect.value;
+      let optionsHtml = '<option value="all">All Weeks</option>';
+      Array.from(weeksSet).sort((a, b) => {
+        const numA = parseInt(a.replace(/\D/g, ''), 10) || 0;
+        const numB = parseInt(b.replace(/\D/g, ''), 10) || 0;
+        return numA - numB;
+      }).forEach(wk => {
+        optionsHtml += `<option value="${escapeHtml(wk)}">${escapeHtml(wk)}</option>`;
+      });
+      weekSelect.innerHTML = optionsHtml;
+      if (weeksSet.has(currentVal)) weekSelect.value = currentVal;
+    }
+  }
+
+  // Helper metadata extraction
   function extractSessionClass(session) {
     if (!session) return 'Class A';
     if (session.class_name && session.class_name.trim()) return session.class_name.trim();
-
-    // Check instructions for [Class: ...]
     if (session.instructions) {
       const match = session.instructions.match(/\[Class:\s*([^\]]+)\]/i);
       if (match && match[1]) return match[1].trim();
     }
-
-    // Check title for [Class: ...] or (Class ...)
     if (session.title) {
       const match = session.title.match(/\[(?:Class|Cohort):\s*([^\]]+)\]/i) ||
                     session.title.match(/\((?:Class|Cohort):\s*([^\)]+)\)/i);
       if (match && match[1]) return match[1].trim();
     }
-
     return 'Class A';
   }
 
-  // Helper: Extract or fallback Week Number from session metadata
   function extractSessionWeek(session) {
     if (!session) return 'Week 1';
     if (session.week && session.week.trim()) return session.week.trim();
-
-    // Check instructions for [Week: ...]
     if (session.instructions) {
       const match = session.instructions.match(/\[Week:\s*([^\]]+)\]/i);
       if (match && match[1]) return match[1].trim();
     }
-
-    // Check title for Week X or Wk X
     if (session.title) {
       const match = session.title.match(/\b(Week\s*\d+|Wk\s*\d+)\b/i);
       if (match && match[1]) return match[1].replace(/wk/i, 'Week ').trim();
     }
-
-    // Derive from session date
     if (session.session_date) {
       const d = new Date(session.session_date);
       if (!isNaN(d.getTime())) {
@@ -170,11 +910,9 @@
         return `Week ${academicWeek}`;
       }
     }
-
     return 'Week 1';
   }
 
-  // Helper: Calculate Total Days Present map
   function recalculateDaysPresent(submissions) {
     studentDaysPresentMap.clear();
 
@@ -188,20 +926,17 @@
         const className = extractSessionClass(session).toLowerCase();
         const dateKey = session.session_date || (sub.submitted_at ? sub.submitted_at.split('T')[0] : sub.id);
 
-        // Overall student days
         if (!studentDaysPresentMap.has(studentKey)) {
           studentDaysPresentMap.set(studentKey, new Set());
         }
         studentDaysPresentMap.get(studentKey).add(dateKey);
 
-        // Course-specific student days
         const courseKey = `${studentKey}:::${course}`;
         if (!studentDaysPresentMap.has(courseKey)) {
           studentDaysPresentMap.set(courseKey, new Set());
         }
         studentDaysPresentMap.get(courseKey).add(dateKey);
 
-        // Class & Course specific student days
         const classCourseKey = `${studentKey}:::${className}:::${course}`;
         if (!studentDaysPresentMap.has(classCourseKey)) {
           studentDaysPresentMap.set(classCourseKey, new Set());
@@ -211,7 +946,6 @@
     });
   }
 
-  // Get total days present for a student in context
   function getStudentDaysPresent(sub) {
     const studentKey = (sub.user_id || sub.index_number || sub.full_name || '').trim().toLowerCase();
     if (!studentKey) return 0;
@@ -233,209 +967,9 @@
     return studentDaysPresentMap.get(studentKey)?.size || (sub.verification_status === 'verified' ? 1 : 0);
   }
 
-  // Load subject options for creation form
-  async function loadSubjects() {
-    const select = document.getElementById('sessionSubject');
-    if (!select) return;
-
-    try {
-      if (window.supaDB && typeof window.supaDB.getSubjects === 'function') {
-        const subjects = await window.supaDB.getSubjects();
-        if (subjects && subjects.length > 0) {
-          select.innerHTML = '<option value="" disabled selected>Select a subject / course</option>' +
-            subjects.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`).join('');
-          return;
-        }
-      }
-    } catch (e) {
-      console.warn('Could not load subjects from supaDB:', e);
-    }
-
-    // Default fallback subjects
-    const defaults = ['General Education', 'Numeracy Skills', 'Literacy Skills', 'Essential Skills', 'Pedagogy'];
-    select.innerHTML = '<option value="" disabled selected>Select a subject / course</option>' +
-      defaults.map(s => `<option value="${s}">${s}</option>`).join('');
-  }
-
-  // Toggle create session form visibility
-  function toggleCreateForm() {
-    const formCard = document.getElementById('createSessionForm');
-    const btn = document.getElementById('toggleCreateFormBtn');
-    if (!formCard) return;
-
-    if (formCard.style.display === 'none' || !formCard.style.display) {
-      formCard.style.display = 'block';
-      if (btn) btn.textContent = '✕ Close Form';
-    } else {
-      formCard.style.display = 'none';
-      if (btn) btn.textContent = '+ Create New Session';
-      document.getElementById('sessionForm')?.reset();
-    }
-  }
-
-  // Radius selection change
-  function handleRadiusChange() {
-    const select = document.getElementById('sessionRadius');
-    const customContainer = document.getElementById('customRadiusContainer');
-    if (!select || !customContainer) return;
-
-    if (select.value === 'custom') {
-      customContainer.style.display = 'block';
-    } else {
-      customContainer.style.display = 'none';
-    }
-  }
-
-  // Capture Admin GPS Coordinates
-  function getAdminLocation() {
-    const statusMsg = document.getElementById('locationAccuracyMsg');
-    const latInput = document.getElementById('sessionLat');
-    const lngInput = document.getElementById('sessionLng');
-
-    if (!navigator.geolocation) {
-      if (statusMsg) {
-        statusMsg.style.color = '#dc2626';
-        statusMsg.textContent = 'Geolocation is not supported by your browser.';
-      }
-      return;
-    }
-
-    if (statusMsg) {
-      statusMsg.style.color = 'var(--text-light)';
-      statusMsg.textContent = 'Acquiring GPS location...';
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        const acc = Math.round(pos.coords.accuracy);
-
-        if (latInput) latInput.value = lat.toFixed(6);
-        if (lngInput) lngInput.value = lng.toFixed(6);
-
-        if (statusMsg) {
-          statusMsg.style.color = acc <= 50 ? '#059669' : '#d97706';
-          statusMsg.textContent = `✓ Captured! Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)} (Accuracy: ~${acc}m)`;
-        }
-      },
-      (err) => {
-        console.error('Location error:', err);
-        if (statusMsg) {
-          statusMsg.style.color = '#dc2626';
-          statusMsg.textContent = `Location error: ${err.message}. Please allow location permissions.`;
-        }
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-    );
-  }
-
   // --------------------------------------------
-  // Master Attendance Register Functions
+  // Historical Register Log (Tab 3) Logic
   // --------------------------------------------
-
-  async function loadMasterRegister() {
-    const tbody = document.getElementById('masterRegisterTableBody');
-    if (tbody) {
-      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 30px;">Loading attendance register...</td></tr>';
-    }
-
-    try {
-      const { data, error } = await window.supaAttendance.getAllAttendanceSubmissions();
-      if (error) {
-        console.error('Error fetching all submissions:', error);
-        if (tbody) {
-          tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:#ef4444;padding:30px;">Error loading register: ${escapeHtml(error.message)}</td></tr>`;
-        }
-        return;
-      }
-
-      allRegisterSubmissions = data || [];
-      recalculateDaysPresent(allRegisterSubmissions);
-      populateRegisterFilterOptions();
-      filterMasterRegister();
-    } catch (err) {
-      console.error('Failed to load master register:', err);
-      if (tbody) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#ef4444;padding:30px;">Failed to load attendance register.</td></tr>';
-      }
-    }
-  }
-
-  function populateRegisterFilterOptions() {
-    const classSelect = document.getElementById('regClassFilter');
-    const subjectSelect = document.getElementById('regSubjectFilter');
-    const weekSelect = document.getElementById('regWeekFilter');
-    const sessionSelect = document.getElementById('regSessionFilter');
-
-    // 1. Populate Class Names
-    if (classSelect) {
-      const classesSet = new Set(['Class A', 'Class B', 'Class C', 'General Class']);
-      allRegisterSubmissions.forEach(s => {
-        const cls = extractSessionClass(s.attendance_sessions);
-        if (cls) classesSet.add(cls);
-      });
-      cachedSessions.forEach(s => {
-        const cls = extractSessionClass(s);
-        if (cls) classesSet.add(cls);
-      });
-
-      const currentVal = classSelect.value;
-      let optionsHtml = '<option value="all">All Classes</option>';
-      Array.from(classesSet).sort().forEach(cls => {
-        optionsHtml += `<option value="${escapeHtml(cls)}">${escapeHtml(cls)}</option>`;
-      });
-      classSelect.innerHTML = optionsHtml;
-      if (classesSet.has(currentVal)) classSelect.value = currentVal;
-    }
-
-    // 2. Populate Subjects / Courses
-    if (subjectSelect) {
-      const subjectsSet = new Set();
-      allRegisterSubmissions.forEach(s => {
-        const sub = s.attendance_sessions?.subject || s.course;
-        if (sub) subjectsSet.add(sub);
-      });
-      cachedSessions.forEach(s => {
-        if (s.subject) subjectsSet.add(s.subject);
-      });
-
-      const currentVal = subjectSelect.value;
-      let optionsHtml = '<option value="all">All Courses / Subjects</option>';
-      Array.from(subjectsSet).sort().forEach(sub => {
-        optionsHtml += `<option value="${escapeHtml(sub)}">${escapeHtml(sub)}</option>`;
-      });
-      subjectSelect.innerHTML = optionsHtml;
-      if (subjectsSet.has(currentVal)) subjectSelect.value = currentVal;
-    }
-
-    // 3. Populate Weeks
-    if (weekSelect) {
-      const weeksSet = new Set();
-      // Preload standard Weeks 1-16
-      for (let w = 1; w <= 16; w++) weeksSet.add(`Week ${w}`);
-      allRegisterSubmissions.forEach(s => {
-        const wk = extractSessionWeek(s.attendance_sessions);
-        if (wk) weeksSet.add(wk);
-      });
-      cachedSessions.forEach(s => {
-        const wk = extractSessionWeek(s);
-        if (wk) weeksSet.add(wk);
-      });
-
-      const currentVal = weekSelect.value;
-      let optionsHtml = '<option value="all">All Weeks</option>';
-      Array.from(weeksSet).sort((a, b) => {
-        const numA = parseInt(a.replace(/\D/g, ''), 10) || 0;
-        const numB = parseInt(b.replace(/\D/g, ''), 10) || 0;
-        return numA - numB;
-      }).forEach(wk => {
-        optionsHtml += `<option value="${escapeHtml(wk)}">${escapeHtml(wk)}</option>`;
-      });
-      weekSelect.innerHTML = optionsHtml;
-      if (weeksSet.has(currentVal)) weekSelect.value = currentVal;
-    }
-  }
 
   function filterMasterRegister() {
     const searchVal = (document.getElementById('regSearchInput')?.value || '').toLowerCase().trim();
@@ -445,13 +979,12 @@
     const statusVal = document.getElementById('regStatusFilter')?.value || 'all';
     const dateVal = document.getElementById('regDateFilter')?.value || '';
 
-    filteredRegisterSubmissions = allRegisterSubmissions.filter(s => {
+    const filtered = allSubmissions.filter(s => {
       const session = s.attendance_sessions || {};
       const className = extractSessionClass(session);
       const weekName = extractSessionWeek(session);
       const courseName = session.subject || s.course || 'General';
 
-      // Search match
       if (searchVal) {
         const name = (s.full_name || '').toLowerCase();
         const indexNum = (s.index_number || '').toLowerCase();
@@ -469,29 +1002,16 @@
         }
       }
 
-      // Class match
-      if (classVal !== 'all') {
-        if (className.toLowerCase() !== classVal.toLowerCase()) return false;
-      }
+      if (classVal !== 'all' && className.toLowerCase() !== classVal.toLowerCase()) return false;
+      if (subjectVal !== 'all' && courseName.toLowerCase() !== subjectVal.toLowerCase()) return false;
+      if (weekVal !== 'all' && weekName.toLowerCase() !== weekVal.toLowerCase()) return false;
 
-      // Course / Subject match
-      if (subjectVal !== 'all') {
-        if (courseName.toLowerCase() !== subjectVal.toLowerCase()) return false;
-      }
-
-      // Week match
-      if (weekVal !== 'all') {
-        if (weekName.toLowerCase() !== weekVal.toLowerCase()) return false;
-      }
-
-      // Status match
       if (statusVal !== 'all') {
         const isVerified = s.verification_status === 'verified';
         if (statusVal === 'verified' && !isVerified) return false;
         if (statusVal === 'rejected' && isVerified) return false;
       }
 
-      // Date match
       if (dateVal) {
         const sDate = session.session_date || (s.submitted_at ? s.submitted_at.split('T')[0] : '');
         if (sDate !== dateVal) return false;
@@ -500,8 +1020,8 @@
       return true;
     });
 
-    updateRegisterKpis(filteredRegisterSubmissions);
-    renderMasterRegister(filteredRegisterSubmissions);
+    updateRegisterKpis(filtered);
+    renderMasterRegister(filtered);
   }
 
   function updateRegisterKpis(submissions) {
@@ -534,22 +1054,13 @@
           <td colspan="10" style="text-align:center; padding: 40px 20px; color: var(--text-light);">
             <div style="font-size: 28px; margin-bottom: 8px;">📋</div>
             <div style="font-weight: 600; font-size: 15px; color: var(--text); margin-bottom: 4px;">No Attendance Records Found</div>
-            <div>No student submissions match your current filters. Adjust your search or clear filters above.</div>
+            <div>No student submissions match your current filters.</div>
           </td>
         </tr>
       `;
       return;
     }
 
-    if (activeRegisterView === 'detail') {
-      renderDetailRegister(submissions, tbody);
-    } else {
-      renderSummaryRegister(submissions, tbody);
-    }
-  }
-
-  // Render View 1: Detailed Attendance Logs (Student, Index, Class Name, Course, Week, Time, Total Days Present, Status)
-  function renderDetailRegister(submissions, tbody) {
     let rowsHtml = '';
     submissions.forEach((s, idx) => {
       const rollNum = `#${String(idx + 1).padStart(3, '0')}`;
@@ -602,79 +1113,6 @@
     tbody.innerHTML = rowsHtml;
   }
 
-  // Render View 2: Class Roll Summary (Aggregated by Student per Class & Course)
-  function renderSummaryRegister(submissions, tbody) {
-    const studentSummaryMap = new Map();
-
-    submissions.forEach(s => {
-      const studentKey = (s.user_id || s.index_number || s.full_name || '').trim().toLowerCase();
-      const session = s.attendance_sessions || {};
-      const className = extractSessionClass(session);
-      const courseName = session.subject || s.course || 'General Education';
-      const mapKey = `${studentKey}:::${className}:::${courseName}`;
-
-      if (!studentSummaryMap.has(mapKey)) {
-        studentSummaryMap.set(mapKey, {
-          studentName: s.full_name || 'Student',
-          indexNumber: s.index_number || 'N/A',
-          className: className,
-          courseName: courseName,
-          verifiedDates: new Set(),
-          totalSessionsEncountered: 0,
-          latestWeek: extractSessionWeek(session),
-          latestTime: s.submitted_at ? new Date(s.submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—',
-          latestSubmissionId: s.id,
-          latestStatus: s.verification_status
-        });
-      }
-
-      const entry = studentSummaryMap.get(mapKey);
-      entry.totalSessionsEncountered++;
-      if (s.verification_status === 'verified') {
-        const dateKey = session.session_date || (s.submitted_at ? s.submitted_at.split('T')[0] : s.id);
-        entry.verifiedDates.add(dateKey);
-      }
-    });
-
-    const summaryList = Array.from(studentSummaryMap.values()).sort((a, b) => a.studentName.localeCompare(b.studentName));
-
-    let rowsHtml = '';
-    summaryList.forEach((st, idx) => {
-      const rollNum = `#${String(idx + 1).padStart(3, '0')}`;
-      const daysCount = st.verifiedDates.size;
-      const ratePct = st.totalSessionsEncountered > 0 ? Math.round((daysCount / st.totalSessionsEncountered) * 100) : 100;
-      const rateBadgeColor = ratePct >= 75 ? '#059669' : ratePct >= 50 ? '#d97706' : '#dc2626';
-
-      rowsHtml += `
-        <tr>
-          <td><span class="register-roll-tag">${rollNum}</span></td>
-          <td><strong>${escapeHtml(st.studentName)}</strong></td>
-          <td><span class="register-index-tag">${escapeHtml(st.indexNumber)}</span></td>
-          <td><span class="register-class-tag">${escapeHtml(st.className)}</span></td>
-          <td>${escapeHtml(st.courseName)}</td>
-          <td><span class="register-days-tag">📅 ${daysCount} ${daysCount === 1 ? 'Day' : 'Days'} Present</span></td>
-          <td><span style="font-weight:700; color:${rateBadgeColor};">${ratePct}%</span></td>
-          <td><span class="register-week-tag">${escapeHtml(st.latestWeek)}</span></td>
-          <td>${escapeHtml(st.latestTime)}</td>
-          <td style="text-align: right;">
-            <button class="btn btn-sm btn-outline" onclick="window.adminAttendance.filterByStudent('${escapeHtml(st.indexNumber)}')">
-              View History
-            </button>
-          </td>
-        </tr>
-      `;
-    });
-
-    tbody.innerHTML = rowsHtml;
-  }
-
-  function filterByStudent(indexNum) {
-    const searchInput = document.getElementById('regSearchInput');
-    if (searchInput) searchInput.value = indexNum;
-    switchRegisterView('detail');
-    filterMasterRegister();
-  }
-
   function resetMasterFilters() {
     const searchInput = document.getElementById('regSearchInput');
     const classSelect = document.getElementById('regClassFilter');
@@ -694,8 +1132,8 @@
   }
 
   async function refreshMasterRegister() {
-    if (window.showToast) window.showToast('Refreshing attendance register...', 'info');
-    await loadMasterRegister();
+    if (window.showToast) window.showToast('Refreshing attendance records...', 'info');
+    await loadAllAttendanceData();
     if (window.showToast) window.showToast('Attendance register updated!', 'success');
   }
 
@@ -707,11 +1145,9 @@
         return;
       }
 
-      // Update locally
-      const item = allRegisterSubmissions.find(s => s.id === submissionId);
+      const item = allSubmissions.find(s => s.id === submissionId);
       if (item) item.verification_status = newStatus;
-      recalculateDaysPresent(allRegisterSubmissions);
-      filterMasterRegister();
+      await loadAllAttendanceData();
 
       if (window.showToast) {
         window.showToast(`Updated status to ${newStatus === 'verified' ? 'Verified Present' : 'Flagged'}`, 'success');
@@ -734,9 +1170,8 @@
         return;
       }
 
-      allRegisterSubmissions = allRegisterSubmissions.filter(s => s.id !== submissionId);
-      recalculateDaysPresent(allRegisterSubmissions);
-      filterMasterRegister();
+      allSubmissions = allSubmissions.filter(s => s.id !== submissionId);
+      await loadAllAttendanceData();
 
       if (window.showToast) {
         window.showToast('Attendance record deleted successfully.', 'success');
@@ -747,30 +1182,14 @@
     }
   }
 
-  // --------------------------------------------
-  // Master Register Export & Excel Copy
-  // (student, index, class name, course, week, time, total days present)
-  // --------------------------------------------
-
   function doExportMasterCSV() {
-    if (!filteredRegisterSubmissions || filteredRegisterSubmissions.length === 0) {
+    if (!allSubmissions || allSubmissions.length === 0) {
       alert('No attendance records available to export.');
       return;
     }
 
-    const headers = [
-      'Roll #',
-      'Student',
-      'Index',
-      'Class Name',
-      'Course',
-      'Week',
-      'Time',
-      'Total Days Present',
-      'Status'
-    ];
-
-    const rows = filteredRegisterSubmissions.map((s, idx) => {
+    const headers = ['Roll #', 'Student', 'Index', 'Class Name', 'Course', 'Week', 'Time', 'Total Days Present', 'Status'];
+    const rows = allSubmissions.map((s, idx) => {
       const session = s.attendance_sessions || {};
       const roll = `#${String(idx + 1).padStart(3, '0')}`;
       const student = s.full_name || '';
@@ -805,25 +1224,15 @@
   }
 
   function doCopyMasterToExcel() {
-    if (!filteredRegisterSubmissions || filteredRegisterSubmissions.length === 0) {
+    if (!allSubmissions || allSubmissions.length === 0) {
       alert('No attendance records to copy.');
       return;
     }
 
-    const headers = [
-      'Roll #',
-      'Student',
-      'Index',
-      'Class Name',
-      'Course',
-      'Week',
-      'Time',
-      'Total Days Present',
-      'Status'
-    ];
-
+    const headers = ['Roll #', 'Student', 'Index', 'Class Name', 'Course', 'Week', 'Time', 'Total Days Present', 'Status'];
     const lines = [headers.join('\t')];
-    filteredRegisterSubmissions.forEach((s, idx) => {
+
+    allSubmissions.forEach((s, idx) => {
       const session = s.attendance_sessions || {};
       const roll = `#${String(idx + 1).padStart(3, '0')}`;
       const student = s.full_name || '';
@@ -839,15 +1248,13 @@
     });
 
     const tsvData = lines.join('\r\n');
-
     navigator.clipboard.writeText(tsvData).then(() => {
       if (window.showToast) {
-        window.showToast(`📋 Copied ${filteredRegisterSubmissions.length} records! Ready to paste directly into Excel (Ctrl+V).`, 'success');
+        window.showToast(`📋 Copied ${allSubmissions.length} records! Ready to paste into Excel (Ctrl+V).`, 'success');
       } else {
-        alert(`Copied ${filteredRegisterSubmissions.length} records for Excel!`);
+        alert(`Copied ${allSubmissions.length} records for Excel!`);
       }
     }).catch(err => {
-      console.warn('Clipboard write error, falling back to textarea:', err);
       fallbackClipboardCopy(tsvData);
     });
   }
@@ -861,42 +1268,32 @@
     textarea.select();
     try {
       document.execCommand('copy');
-      if (window.showToast) {
-        window.showToast('📋 Copied records for Excel!', 'success');
-      } else {
-        alert('Copied attendance records! Paste into Excel.');
-      }
+      if (window.showToast) window.showToast('📋 Copied records for Excel!', 'success');
+      else alert('Copied attendance records! Paste into Excel.');
     } catch (e) {
-      alert('Unable to copy automatically. Please use the "Export to Excel (CSV)" button instead.');
+      alert('Unable to copy automatically. Please use Export CSV instead.');
     }
     document.body.removeChild(textarea);
   }
 
   function doPrintMasterRegister() {
-    if (!filteredRegisterSubmissions || filteredRegisterSubmissions.length === 0) {
+    if (!allSubmissions || allSubmissions.length === 0) {
       alert('No records to print.');
       return;
     }
 
     const printWin = window.open('', '_blank');
     if (!printWin) {
-      alert('Please allow popups to open the printable register.');
+      alert('Please allow popups to open printable register.');
       return;
     }
 
     const printDate = new Date().toLocaleDateString(undefined, {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     });
 
-    const total = filteredRegisterSubmissions.length;
-    const verified = filteredRegisterSubmissions.filter(s => s.verification_status === 'verified').length;
-    const flagged = total - verified;
-
     let rowsHtml = '';
-    filteredRegisterSubmissions.forEach((s, idx) => {
+    allSubmissions.forEach((s, idx) => {
       const session = s.attendance_sessions || {};
       const roll = `#${String(idx + 1).padStart(3, '0')}`;
       const student = escapeHtml(s.full_name || 'Student');
@@ -932,16 +1329,11 @@
           body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; padding: 28px; color: #1e293b; }
           .header { border-bottom: 2px solid #003bf7; padding-bottom: 14px; margin-bottom: 20px; }
           .header h1 { font-size: 22px; margin: 0 0 6px; color: #003bf7; }
-          .header p { margin: 0; font-size: 13px; color: #64748b; }
-          .summary-grid { display: flex; gap: 24px; margin-bottom: 20px; font-size: 13px; background: #f8fafc; padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 8px; }
           table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
           th, td { border: 1px solid #cbd5e1; padding: 7px 10px; text-align: left; }
           th { background: #f1f5f9; font-weight: 700; color: #334155; }
           tr:nth-child(even) { background: #fcfcfd; }
           .footer { margin-top: 40px; display: flex; justify-content: space-between; font-size: 13px; }
-          @media print {
-            body { padding: 10px; }
-          }
         </style>
       </head>
       <body>
@@ -949,13 +1341,6 @@
           <h1>PREPTRACK - OFFICIAL ACADEMIC ATTENDANCE REGISTER</h1>
           <p>Generated on: ${printDate} | Records: Student, Index, Class Name, Course, Week, Time, Total Days Present</p>
         </div>
-
-        <div class="summary-grid">
-          <div><strong>Total Records:</strong> ${total}</div>
-          <div><strong style="color:#059669;">Verified Present:</strong> ${verified}</div>
-          <div><strong style="color:#d97706;">Flagged / Out of Range:</strong> ${flagged}</div>
-        </div>
-
         <table>
           <thead>
             <tr>
@@ -970,95 +1355,160 @@
               <th>Status</th>
             </tr>
           </thead>
-          <tbody>
-            ${rowsHtml}
-          </tbody>
+          <tbody>${rowsHtml}</tbody>
         </table>
-
         <div class="footer">
-          <div>
-            <p>Admin / Class Instructor: ___________________________</p>
-            <p>Designation: ___________________________</p>
-          </div>
-          <div>
-            <p>Signature: ___________________________</p>
-            <p>Date: ___________________________</p>
-          </div>
+          <div><p>Admin / Class Instructor: ___________________________</p></div>
+          <div><p>Signature: ___________________________ Date: ____________</p></div>
         </div>
       </body>
       </html>
     `);
-
     printWin.document.close();
     printWin.focus();
-    setTimeout(() => {
-      printWin.print();
-    }, 250);
+    setTimeout(() => { printWin.print(); }, 250);
   }
 
   // --------------------------------------------
-  // Realtime Subscriptions
+  // Session Management (Tab 2) Logic
   // --------------------------------------------
 
-  function setupMasterRealtimeSubscription() {
-    const client = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : window.supabaseClient;
-    if (!client || typeof client.channel !== 'function') return;
+  function toggleCreateForm() {
+    const formCard = document.getElementById('createSessionForm');
+    const btn = document.getElementById('toggleCreateFormBtn');
+    if (!formCard) return;
 
-    try {
-      masterRealtimeChannel = client.channel('master-attendance-submissions')
-        .on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'attendance_submissions'
-        }, async (payload) => {
-          if (!payload || !payload.new) return;
-          // Refresh submissions
-          const { data } = await window.supaAttendance.getAllAttendanceSubmissions();
-          if (data) {
-            allRegisterSubmissions = data;
-            recalculateDaysPresent(allRegisterSubmissions);
-            populateRegisterFilterOptions();
-            filterMasterRegister();
-            if (window.showToast) {
-              window.showToast(`New student check-in: ${payload.new.full_name || 'Student'}`, 'info');
-            }
-          }
-        })
-        .subscribe();
-    } catch (e) {
-      console.warn('Master realtime subscription error:', e);
+    if (formCard.style.display === 'none' || !formCard.style.display) {
+      formCard.style.display = 'block';
+      if (btn) btn.textContent = '✕ Close Form';
+    } else {
+      formCard.style.display = 'none';
+      if (btn) btn.textContent = '+ Create New Session';
+      document.getElementById('sessionForm')?.reset();
     }
   }
 
-  // --------------------------------------------
-  // Sessions Management
-  // --------------------------------------------
+  function handleRadiusChange() {
+    const select = document.getElementById('sessionRadius');
+    const customContainer = document.getElementById('customRadiusContainer');
+    if (!select || !customContainer) return;
+    customContainer.style.display = select.value === 'custom' ? 'block' : 'none';
+  }
 
-  // Load Sessions
-  async function loadSessions() {
-    const tbody = document.getElementById('sessionsTableBody');
-    if (!tbody) return;
+  function getAdminLocation() {
+    const statusMsg = document.getElementById('locationAccuracyMsg');
+    const latInput = document.getElementById('sessionLat');
+    const lngInput = document.getElementById('sessionLng');
 
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">Loading sessions...</td></tr>';
+    if (!navigator.geolocation) {
+      if (statusMsg) {
+        statusMsg.style.color = '#dc2626';
+        statusMsg.textContent = 'Geolocation is not supported by your browser.';
+      }
+      return;
+    }
+
+    if (statusMsg) {
+      statusMsg.style.color = 'var(--text-light)';
+      statusMsg.textContent = 'Acquiring GPS location...';
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const acc = Math.round(pos.coords.accuracy);
+
+        if (latInput) latInput.value = lat.toFixed(6);
+        if (lngInput) lngInput.value = lng.toFixed(6);
+
+        if (statusMsg) {
+          statusMsg.style.color = acc <= 50 ? '#059669' : '#d97706';
+          statusMsg.textContent = `✓ Captured! Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)} (Accuracy: ~${acc}m)`;
+        }
+      },
+      (err) => {
+        console.error('Location error:', err);
+        if (statusMsg) {
+          statusMsg.style.color = '#dc2626';
+          statusMsg.textContent = `Location error: ${err.message}. Please allow location permissions.`;
+        }
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  }
+
+  async function handleCreateSession(e) {
+    e.preventDefault();
+
+    const title = document.getElementById('sessionTitle').value.trim();
+    const subject = document.getElementById('sessionSubject').value;
+    const className = (document.getElementById('sessionClassName')?.value || '').trim() || 'Class A';
+    const week = document.getElementById('sessionWeek')?.value || 'Week 1';
+    const sessionDate = document.getElementById('sessionDate').value;
+    const startTimeVal = document.getElementById('sessionStartTime').value;
+    const endTimeVal = document.getElementById('sessionEndTime').value;
+    const durationMinutes = parseInt(document.getElementById('sessionDuration').value, 10) || 60;
+    const instructions = document.getElementById('sessionInstructions').value.trim();
+    const status = document.getElementById('sessionStatus').value;
+    const locationName = document.getElementById('sessionLocationName').value.trim();
+    const lat = parseFloat(document.getElementById('sessionLat').value);
+    const lng = parseFloat(document.getElementById('sessionLng').value);
+
+    let radius = 30;
+    const radiusSelect = document.getElementById('sessionRadius').value;
+    if (radiusSelect === 'custom') {
+      radius = parseInt(document.getElementById('sessionCustomRadius').value, 10) || 30;
+    } else {
+      radius = parseInt(radiusSelect, 10) || 30;
+    }
+
+    if (!title || !subject || !sessionDate || !startTimeVal || !endTimeVal) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    if (isNaN(lat) || isNaN(lng)) {
+      const proceed = confirm('No reference location coordinates captured. Geofencing verification will fail for students. Do you want to proceed anyway?');
+      if (!proceed) return;
+    }
+
+    const payload = {
+      title,
+      subject,
+      class_name: className,
+      week: week,
+      session_date: sessionDate,
+      start_time: new Date(startTimeVal).toISOString(),
+      end_time: new Date(endTimeVal).toISOString(),
+      duration_minutes: durationMinutes,
+      instructions: instructions ? `[Class: ${className}] [Week: ${week}] ${instructions}` : `[Class: ${className}] [Week: ${week}]`,
+      status: status || 'scheduled',
+      location_name: locationName || null,
+      reference_lat: !isNaN(lat) ? lat : null,
+      reference_lng: !isNaN(lng) ? lng : null,
+      radius_meters: radius
+    };
 
     try {
-      const { data: sessions, error } = await window.supaAttendance.getAttendanceSessions();
+      const { data, error } = await window.supaAttendance.createAttendanceSession(payload);
       if (error) {
-        console.error('Error fetching sessions:', error);
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:red;">Error: ${escapeHtml(error.message)}</td></tr>`;
+        alert('Failed to create session: ' + error.message);
         return;
       }
 
-      cachedSessions = sessions || [];
-      renderSessionsTable(cachedSessions);
-      populateRegisterFilterOptions();
+      if (window.showToast) {
+        window.showToast(`Attendance session created for ${subject} (${week})!`, 'success');
+      }
+
+      toggleCreateForm();
+      await loadAllAttendanceData();
     } catch (err) {
       console.error(err);
-      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:red;">Failed to load attendance sessions.</td></tr>';
+      alert('Error creating session: ' + err.message);
     }
   }
 
-  // Render Sessions Table (Includes Title, Class Name, Subject/Course, Week, Date, Times, Radius, Status, Actions)
   function renderSessionsTable(sessions) {
     const tbody = document.getElementById('sessionsTableBody');
     if (!tbody) return;
@@ -1128,82 +1578,6 @@
     tbody.innerHTML = rowsHtml;
   }
 
-  // Create Session Handler (Saves Class Name & Week)
-  async function handleCreateSession(e) {
-    e.preventDefault();
-
-    const title = document.getElementById('sessionTitle').value.trim();
-    const subject = document.getElementById('sessionSubject').value;
-    const className = (document.getElementById('sessionClassName')?.value || '').trim() || 'Class A';
-    const week = document.getElementById('sessionWeek')?.value || 'Week 1';
-    const sessionDate = document.getElementById('sessionDate').value;
-    const startTimeVal = document.getElementById('sessionStartTime').value;
-    const endTimeVal = document.getElementById('sessionEndTime').value;
-    const durationMinutes = parseInt(document.getElementById('sessionDuration').value, 10) || 60;
-    const instructions = document.getElementById('sessionInstructions').value.trim();
-    const status = document.getElementById('sessionStatus').value;
-    const locationName = document.getElementById('sessionLocationName').value.trim();
-    const lat = parseFloat(document.getElementById('sessionLat').value);
-    const lng = parseFloat(document.getElementById('sessionLng').value);
-
-    let radius = 30;
-    const radiusSelect = document.getElementById('sessionRadius').value;
-    if (radiusSelect === 'custom') {
-      radius = parseInt(document.getElementById('sessionCustomRadius').value, 10) || 30;
-    } else {
-      radius = parseInt(radiusSelect, 10) || 30;
-    }
-
-    if (!title || !subject || !sessionDate || !startTimeVal || !endTimeVal) {
-      alert('Please fill in all required fields.');
-      return;
-    }
-
-    if (isNaN(lat) || isNaN(lng)) {
-      const proceed = confirm('No reference location coordinates captured. Geofencing verification will fail for students. Do you want to proceed anyway?');
-      if (!proceed) return;
-    }
-
-    const payload = {
-      title,
-      subject,
-      class_name: className,
-      week: week,
-      session_date: sessionDate,
-      start_time: new Date(startTimeVal).toISOString(),
-      end_time: new Date(endTimeVal).toISOString(),
-      duration_minutes: durationMinutes,
-      instructions: instructions ? `[Class: ${className}] [Week: ${week}] ${instructions}` : `[Class: ${className}] [Week: ${week}]`,
-      status: status || 'scheduled',
-      location_name: locationName || null,
-      reference_lat: !isNaN(lat) ? lat : null,
-      reference_lng: !isNaN(lng) ? lng : null,
-      radius_meters: radius
-    };
-
-    try {
-      const { data, error } = await window.supaAttendance.createAttendanceSession(payload);
-      if (error) {
-        alert('Failed to create session: ' + error.message);
-        return;
-      }
-
-      if (window.showToast) {
-        window.showToast(`Attendance session created for ${className} (${week})!`, 'success');
-      } else {
-        alert(`Attendance session created for ${className} (${week})!`);
-      }
-
-      toggleCreateForm();
-      await loadSessions();
-      await loadMasterRegister();
-    } catch (err) {
-      console.error(err);
-      alert('Error creating session: ' + err.message);
-    }
-  }
-
-  // Toggle Status: scheduled -> active -> closed -> scheduled
   async function toggleSessionStatus(id, currentStatus) {
     let nextStatus = 'active';
     if (currentStatus === 'scheduled') nextStatus = 'active';
@@ -1216,13 +1590,12 @@
         alert('Failed to update status: ' + error.message);
         return;
       }
-      await loadSessions();
+      await loadAllAttendanceData();
     } catch (err) {
       alert('Error: ' + err.message);
     }
   }
 
-  // Delete Session
   async function deleteSession(id) {
     if (!confirm('Are you sure you want to delete this session and all its attendance records?')) {
       return;
@@ -1234,53 +1607,46 @@
         alert('Failed to delete session: ' + error.message);
         return;
       }
-      await loadSessions();
-      await loadMasterRegister();
+      await loadAllAttendanceData();
     } catch (err) {
       alert('Error: ' + err.message);
     }
   }
 
   // --------------------------------------------
-  // Single Session Feed / Records View
+  // Single Session Feed / Live View
   // --------------------------------------------
 
+  let currentSubmissions = [];
+
   async function viewSessionRecords(sessionId) {
-    currentSession = cachedSessions.find(s => s.id === sessionId);
-    if (!currentSession) {
-      const { data } = await window.supaAttendance.getAttendanceSessions();
-      cachedSessions = data || [];
-      currentSession = cachedSessions.find(s => s.id === sessionId);
-    }
+    const session = allSessions.find(s => s.id === sessionId);
+    if (!session) return;
 
     const recordsTabBtn = document.getElementById('recordsTabBtn');
     const sessionLabel = document.getElementById('currentSessionLabel');
     const headerInfo = document.getElementById('sessionInfoHeader');
 
-    const className = extractSessionClass(currentSession);
-    const weekName = extractSessionWeek(currentSession);
+    const className = extractSessionClass(session);
+    const weekName = extractSessionWeek(session);
 
-    if (recordsTabBtn) {
-      recordsTabBtn.style.display = 'inline-block';
-    }
-    if (sessionLabel && currentSession) {
-      sessionLabel.textContent = `(${currentSession.title})`;
-    }
-    if (headerInfo && currentSession) {
+    if (recordsTabBtn) recordsTabBtn.style.display = 'inline-block';
+    if (sessionLabel) sessionLabel.textContent = `(${session.title})`;
+    if (headerInfo) {
       headerInfo.innerHTML = `
-        <h3 style="margin:0 0 4px 0; font-size:1.1rem;">${escapeHtml(currentSession.title)}</h3>
+        <h3 style="margin:0 0 4px 0; font-size:1.1rem;">${escapeHtml(session.title)}</h3>
         <p style="margin:0; font-size:0.85rem; color:var(--text-light);">
           <strong>Class:</strong> ${escapeHtml(className)} | 
-          <strong>Subject:</strong> ${escapeHtml(currentSession.subject || 'N/A')} | 
+          <strong>Course:</strong> ${escapeHtml(session.subject || 'N/A')} | 
           <strong>Week:</strong> ${escapeHtml(weekName)} | 
-          <strong>Date:</strong> ${escapeHtml(currentSession.session_date || '')} | 
-          <strong>Location:</strong> ${escapeHtml(currentSession.location_name || 'N/A')} (${currentSession.radius_meters || 30}m)
+          <strong>Date:</strong> ${escapeHtml(session.session_date || '')} | 
+          <strong>Location:</strong> ${escapeHtml(session.location_name || 'N/A')} (${session.radius_meters || 30}m)
         </p>
       `;
     }
 
     switchTab('records-tab');
-    await loadSubmissions(sessionId);
+    await loadSingleSessionSubmissions(sessionId);
     setupRealtimeSubscription(sessionId);
   }
 
@@ -1289,7 +1655,7 @@
     switchTab('sessions-tab');
   }
 
-  async function loadSubmissions(sessionId) {
+  async function loadSingleSessionSubmissions(sessionId) {
     const tbody = document.getElementById('recordsTableBody');
     if (!tbody) return;
 
@@ -1302,13 +1668,13 @@
         return;
       }
       currentSubmissions = data || [];
-      renderSubmissionsTable(currentSubmissions);
+      renderSingleSubmissionsTable(currentSubmissions);
     } catch (err) {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Failed to load records.</td></tr>';
     }
   }
 
-  function renderSubmissionsTable(submissions) {
+  function renderSingleSubmissionsTable(submissions) {
     const tbody = document.getElementById('recordsTableBody');
     const totalPresentBadge = document.getElementById('totalPresentBadge');
     if (!tbody) return;
@@ -1344,7 +1710,6 @@
     tbody.innerHTML = rowsHtml;
   }
 
-  // Filter Records in single session view
   function filterRecords() {
     const searchVal = (document.getElementById('recordsSearch')?.value || '').toLowerCase();
     const statusVal = document.getElementById('recordsFilter')?.value || 'all';
@@ -1356,13 +1721,11 @@
       return matchesSearch && matchesStatus;
     });
 
-    renderSubmissionsTable(filtered);
+    renderSingleSubmissionsTable(filtered);
   }
 
-  // Real-time Postgres Changes for single session
   function setupRealtimeSubscription(sessionId) {
     cleanupSubscription();
-
     const client = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : window.supabaseClient;
     if (!client || typeof client.channel !== 'function') return;
 
@@ -1373,22 +1736,20 @@
           schema: 'public',
           table: 'attendance_submissions',
           filter: `session_id=eq.${sessionId}`
-        }, handleNewSubmission)
+        }, (payload) => {
+          if (!payload || !payload.new) return;
+          const exists = currentSubmissions.some(s => s.id === payload.new.id);
+          if (!exists) {
+            currentSubmissions.push(payload.new);
+            filterRecords();
+            if (window.showToast) {
+              window.showToast(`New attendance check-in: ${payload.new.full_name}`, 'info');
+            }
+          }
+        })
         .subscribe();
     } catch (e) {
-      console.warn('Realtime subscription error:', e);
-    }
-  }
-
-  function handleNewSubmission(payload) {
-    if (!payload || !payload.new) return;
-    const exists = currentSubmissions.some(s => s.id === payload.new.id);
-    if (!exists) {
-      currentSubmissions.push(payload.new);
-      filterRecords();
-      if (window.showToast) {
-        window.showToast(`New attendance check-in: ${payload.new.full_name}`, 'info');
-      }
+      console.warn('Realtime error:', e);
     }
   }
 
@@ -1402,50 +1763,28 @@
     }
   }
 
-  // Single session export CSV
-  function exportCSV(submissions, sessionTitle) {
-    const rows = [['Name', 'Index Number', 'Course', 'Time Submitted', 'Distance (m)', 'Status']];
-    submissions.forEach(s => {
-      rows.push([
-        s.full_name,
-        s.index_number,
-        s.course || '',
-        new Date(s.submitted_at).toLocaleString(),
-        s.distance_meters != null ? s.distance_meters.toFixed(1) : 'N/A',
-        s.verification_status
-      ]);
-    });
-
-    const csv = '\uFEFF' + rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = (sessionTitle || 'attendance') + '_attendance.csv';
-    a.click();
-    URL.revokeObjectURL(a.href);
-  }
-
   function doExportCSV() {
     if (!currentSubmissions || currentSubmissions.length === 0) {
       alert('No records to export.');
       return;
     }
-    const title = currentSession ? currentSession.title.replace(/[^a-zA-Z0-9_-]/g, '_') : 'Session';
-    exportCSV(currentSubmissions, title);
-  }
-
-  // Single session copy to clipboard for Excel
-  function copyToClipboard(submissions) {
-    const header = 'Name\tIndex Number\tTime Submitted\tDistance (m)\tStatus';
-    const rows = submissions.map(s =>
-      `${s.full_name}\t${s.index_number}\t${new Date(s.submitted_at).toLocaleString()}\t${s.distance_meters != null ? s.distance_meters.toFixed(1) : 'N/A'}\t${s.verification_status}`
-    );
-    navigator.clipboard.writeText([header, ...rows].join('\n')).then(() => {
-      if (window.showToast) window.showToast('Copied to clipboard!', 'success');
-      else alert('Records copied to clipboard! Paste into Excel.');
-    }).catch(err => {
-      fallbackClipboardCopy([header, ...rows].join('\n'));
+    const rows = [['Name', 'Index Number', 'Time Submitted', 'Distance (m)', 'Status']];
+    currentSubmissions.forEach(s => {
+      rows.push([
+        s.full_name,
+        s.index_number,
+        new Date(s.submitted_at).toLocaleString(),
+        s.distance_meters != null ? s.distance_meters.toFixed(1) : 'N/A',
+        s.verification_status
+      ]);
     });
+    const csv = '\uFEFF' + rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'session_attendance.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
   }
 
   function doCopyToExcel() {
@@ -1453,55 +1792,16 @@
       alert('No records to copy.');
       return;
     }
-    copyToClipboard(currentSubmissions);
-  }
-
-  // Single session print
-  function printAttendance(submissions, session) {
-    const w = window.open('', '_blank');
-    if (!w) {
-      alert('Please allow pop-ups to print attendance sheet.');
-      return;
-    }
-
-    const title = session ? session.title : 'Attendance';
-    const subject = session ? session.subject : '';
-    const dateStr = session ? session.session_date : '';
-    const startStr = session ? new Date(session.start_time).toLocaleTimeString() : '';
-    const endStr = session ? new Date(session.end_time).toLocaleTimeString() : '';
-
-    w.document.write(`<html><head><title>Attendance - ${escapeHtml(title)}</title><style>
-      body{font-family:Arial,sans-serif;padding:24px;color:#1e293b}
-      table{width:100%;border-collapse:collapse;margin-top:16px}
-      th,td{border:1px solid #cbd5e1;padding:8px 12px;text-align:left;font-size:13px}
-      th{background:#f1f5f9;font-weight:bold}
-      h1{font-size:20px;margin-bottom:6px}
-      h2{font-size:14px;color:#64748b;margin-top:0}
-      .footer{margin-top:40px;display:flex;justify-content:space-between}
-      @media print{button{display:none}}
-    </style></head><body>`);
-
-    w.document.write(`<h1>${escapeHtml(title)}</h1>`);
-    w.document.write(`<h2>Subject: ${escapeHtml(subject)} | Date: ${escapeHtml(dateStr)} | Time: ${startStr} - ${endStr}</h2>`);
-    w.document.write(`<p><strong>Total Present:</strong> ${submissions.length}</p>`);
-    w.document.write(`<table><thead><tr><th>#</th><th>Full Name</th><th>Index Number</th><th>Time Submitted</th><th>Distance (m)</th><th>Status</th></tr></thead><tbody>`);
-
-    submissions.forEach((s, i) => {
-      const dist = s.distance_meters != null ? s.distance_meters.toFixed(1) + 'm' : 'N/A';
-      w.document.write(`<tr>
-        <td>${i + 1}</td>
-        <td>${escapeHtml(s.full_name)}</td>
-        <td>${escapeHtml(s.index_number || '')}</td>
-        <td>${new Date(s.submitted_at).toLocaleString()}</td>
-        <td>${dist}</td>
-        <td>${escapeHtml(s.verification_status || 'verified')}</td>
-      </tr>`);
+    const header = 'Name\tIndex Number\tTime Submitted\tDistance (m)\tStatus';
+    const rows = currentSubmissions.map(s =>
+      `${s.full_name}\t${s.index_number}\t${new Date(s.submitted_at).toLocaleString()}\t${s.distance_meters != null ? s.distance_meters.toFixed(1) : 'N/A'}\t${s.verification_status}`
+    );
+    navigator.clipboard.writeText([header, ...rows].join('\n')).then(() => {
+      if (window.showToast) window.showToast('Copied to clipboard!', 'success');
+      else alert('Records copied to clipboard!');
+    }).catch(err => {
+      fallbackClipboardCopy([header, ...rows].join('\n'));
     });
-
-    w.document.write(`</tbody></table>`);
-    w.document.write(`<div class="footer"><p>Admin Signature: _____________________</p><p>Date: _______________</p></div></body></html>`);
-    w.document.close();
-    w.print();
   }
 
   function doPrint() {
@@ -1509,7 +1809,47 @@
       alert('No records to print.');
       return;
     }
-    printAttendance(currentSubmissions, currentSession);
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.write(`<html><head><title>Session Attendance</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left}</style></head><body>`);
+    w.document.write(`<h2>Session Attendance Report</h2>`);
+    w.document.write(`<table><thead><tr><th>#</th><th>Name</th><th>Index</th><th>Time</th><th>Status</th></tr></thead><tbody>`);
+    currentSubmissions.forEach((s, i) => {
+      w.document.write(`<tr><td>${i+1}</td><td>${escapeHtml(s.full_name)}</td><td>${escapeHtml(s.index_number || '')}</td><td>${new Date(s.submitted_at).toLocaleTimeString()}</td><td>${escapeHtml(s.verification_status || 'verified')}</td></tr>`);
+    });
+    w.document.write(`</tbody></table></body></html>`);
+    w.document.close();
+    w.print();
+  }
+
+  // --------------------------------------------
+  // Realtime System Subscription
+  // --------------------------------------------
+
+  function setupMasterRealtimeSubscription() {
+    const client = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : window.supabaseClient;
+    if (!client || typeof client.channel !== 'function') return;
+
+    try {
+      masterRealtimeChannel = client.channel('attendance-master-dashboard-sync')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'attendance_submissions'
+        }, async () => {
+          await loadAllAttendanceData();
+        })
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'attendance_sessions'
+        }, async () => {
+          await loadAllAttendanceData();
+        })
+        .subscribe();
+    } catch (e) {
+      console.warn('Realtime dashboard sync error:', e);
+    }
   }
 
   function escapeHtml(text) {
@@ -1522,23 +1862,35 @@
       .replace(/'/g, '&#039;');
   }
 
-  // Expose to window for inline HTML handlers
-  window.adminAttendance = {
-    // Master Register & Views
-    loadMasterRegister,
-    switchRegisterView,
-    populateRegisterFilterOptions,
-    filterMasterRegister,
-    filterByStudent,
-    resetMasterFilters,
-    refreshMasterRegister,
-    toggleMasterSubmissionStatus,
-    deleteMasterSubmission,
-    doExportMasterCSV,
-    doCopyMasterToExcel,
-    doPrintMasterRegister,
+  function escapeJs(text) {
+    if (!text) return '';
+    return String(text).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+  }
 
-    // Session Management
+  // Expose methods globally for inline HTML handlers
+  window.adminAttendance = {
+    // Course Dashboard
+    renderCoursesDashboard,
+    filterCoursesDashboard,
+    sortCoursesDashboard,
+    resetCourseSearch,
+    openAddCourseModal,
+    closeAddCourseModal,
+    handleCreateCourse,
+    openEditCourseModal,
+    closeEditCourseModal,
+    handleUpdateCourse,
+    handleDeleteCourse,
+
+    // Course Rankings View
+    openCourseRanking,
+    closeCourseRanking,
+    filterRankingTable,
+    copyRankingToExcel,
+    exportRankingCSV,
+    createSessionForCurrentCourse,
+
+    // Session Management (Tab 2)
     toggleCreateForm,
     handleRadiusChange,
     getAdminLocation,
@@ -1546,13 +1898,23 @@
     toggleSessionStatus,
     deleteSession,
 
-    // Individual Session Records Feed
+    // Single Session Feed (Tab 4)
     viewSessionRecords,
     backToSessions,
     filterRecords,
     doExportCSV,
     doCopyToExcel,
-    doPrint
+    doPrint,
+
+    // Historical Register Log (Tab 3)
+    filterMasterRegister,
+    resetMasterFilters,
+    refreshMasterRegister,
+    toggleMasterSubmissionStatus,
+    deleteMasterSubmission,
+    doExportMasterCSV,
+    doCopyMasterToExcel,
+    doPrintMasterRegister
   };
 
 })();
