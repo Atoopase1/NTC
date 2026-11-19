@@ -107,6 +107,42 @@
   }
 
   // --------------------------------------------
+  // Persistent Course Deletion & Tombstone Management
+  // --------------------------------------------
+
+  function getDeletedCourseKeys() {
+    try {
+      const list = JSON.parse(localStorage.getItem('preptrack_deleted_courses') || '[]');
+      return new Set(list.map(k => String(k).trim().toLowerCase()));
+    } catch (e) {
+      return new Set();
+    }
+  }
+
+  function addDeletedCourseKey(id, name) {
+    try {
+      const list = JSON.parse(localStorage.getItem('preptrack_deleted_courses') || '[]');
+      const set = new Set(list.map(k => String(k).trim().toLowerCase()));
+      if (id) set.add(String(id).trim().toLowerCase());
+      if (name) set.add(String(name).trim().toLowerCase());
+      localStorage.setItem('preptrack_deleted_courses', JSON.stringify(Array.from(set)));
+    } catch (e) {}
+  }
+
+  function removeDeletedCourseKey(name, id) {
+    try {
+      const list = JSON.parse(localStorage.getItem('preptrack_deleted_courses') || '[]');
+      const targetName = (name || '').trim().toLowerCase();
+      const targetId = (id || '').toString().trim().toLowerCase();
+      const filtered = list.filter(k => {
+        const lower = String(k).trim().toLowerCase();
+        return lower !== targetName && lower !== targetId;
+      });
+      localStorage.setItem('preptrack_deleted_courses', JSON.stringify(filtered));
+    } catch (e) {}
+  }
+
+  // --------------------------------------------
   // Data Loading & Aggregation
   // --------------------------------------------
 
@@ -114,7 +150,7 @@
     const client = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : window.supabaseClient;
 
     try {
-      // 1. Fetch Subjects / Courses
+      // 1. Fetch Subjects / Courses (Permanent Sync with Deletion Tombstone)
       let subjects = [];
       try {
         if (window.supaDB && typeof window.supaDB.getSubjects === 'function') {
@@ -123,25 +159,39 @@
       } catch (e) {
         console.warn('Could not load subjects from supaDB:', e);
       }
+
+      const deletedKeys = getDeletedCourseKeys();
+
+      // If supaDB returned nothing (offline/empty), use persistent master list
       if (!subjects || subjects.length === 0) {
-        subjects = [
-          { id: "415718a9-73a2-4b8d-b149-af72ae9f801b", name: "English language" },
-          { id: "70ff49de-ee1a-404e-8026-93e57099dd6c", name: "Mathematics" },
-          { id: "23a159a7-a2a4-484f-b07a-2fd60f43b997", name: "French" },
-          { id: "3f259e90-19c4-4514-827d-0190346bcf08", name: "History" },
-          { id: "b42dea7f-ae1c-44fc-99b8-cd6e62b705be", name: "Geography" },
-          { id: "62eaf060-fe0d-4c13-90f2-d78f23c0f3ca", name: "General Professional Knowledge (GPK)" },
-          { id: "f82c949f-e918-4685-81c5-8fdffee1998c", name: "Grade-Level Specialism Pedagogy" },
-          { id: "25bf9c78-de15-477b-9cfc-f204605406a8", name: "Subject Content Knowledge" },
-          { id: "68848472-e20d-4db5-97ce-14aba703af78", name: "Social studies" },
-          { id: "51b3c836-7c2e-4c7f-8928-b7bbcfe4e86a", name: "Integrated Science" },
-          { id: "93e2b273-ade6-4f4f-ae78-77e2b72c76c3", name: "Physics" },
-          { id: "1fbeb6b5-b745-4599-9a58-4ea38e7668d7", name: "Biology" },
-          { id: "f624d93f-f6d3-46fd-8dea-49317beb87a0", name: "Chemistry" },
-          { id: "495a3ad0-26de-42b6-bca9-718c23d61b63", name: "RME" },
-          { id: "d9eedb28-edc7-4d4d-8191-b951cb86f337", name: "BDT" },
-          { id: "d178ae07-79f0-4060-9d87-61ce8a87b743", name: "ICT" }
-        ];
+        try {
+          const master = JSON.parse(localStorage.getItem('preptrack_master_courses') || 'null');
+          if (Array.isArray(master) && master.length > 0) {
+            subjects = master;
+          } else {
+            const defaults = [
+              { id: "415718a9-73a2-4b8d-b149-af72ae9f801b", name: "English language" },
+              { id: "70ff49de-ee1a-404e-8026-93e57099dd6c", name: "Mathematics" },
+              { id: "23a159a7-a2a4-484f-b07a-2fd60f43b997", name: "French" },
+              { id: "3f259e90-19c4-4514-827d-0190346bcf08", name: "History" },
+              { id: "b42dea7f-ae1c-44fc-99b8-cd6e62b705be", name: "Geography" },
+              { id: "62eaf060-fe0d-4c13-90f2-d78f23c0f3ca", name: "General Professional Knowledge (GPK)" },
+              { id: "f82c949f-e918-4685-81c5-8fdffee1998c", name: "Grade-Level Specialism Pedagogy" },
+              { id: "25bf9c78-de15-477b-9cfc-f204605406a8", name: "Subject Content Knowledge" },
+              { id: "68848472-e20d-4db5-97ce-14aba703af78", name: "Social studies" },
+              { id: "51b3c836-7c2e-4c7f-8928-b7bbcfe4e86a", name: "Integrated Science" },
+              { id: "93e2b273-ade6-4f4f-ae78-77e2b72c76c3", name: "Physics" },
+              { id: "1fbeb6b5-b745-4599-9a58-4ea38e7668d7", name: "Biology" },
+              { id: "f624d93f-f6d3-46fd-8dea-49317beb87a0", name: "Chemistry" },
+              { id: "495a3ad0-26de-42b6-bca9-718c23d61b63", name: "RME" },
+              { id: "d9eedb28-edc7-4d4d-8191-b951cb86f337", name: "BDT" },
+              { id: "d178ae07-79f0-4060-9d87-61ce8a87b743", name: "ICT" }
+            ];
+            subjects = defaults;
+          }
+        } catch (e) {
+          subjects = [];
+        }
       }
 
       // Merge locally created courses if present in localStorage
@@ -155,6 +205,20 @@
       } catch (le) {
         console.warn('Error reading local subjects:', le);
       }
+
+      // CRITICAL: Filter out any course that has been deleted so it NEVER returns after restart
+      subjects = subjects.filter(s => {
+        if (!s || !s.name) return false;
+        const nameKey = s.name.trim().toLowerCase();
+        const idKey = (s.id || '').toString().trim().toLowerCase();
+        return !deletedKeys.has(nameKey) && !deletedKeys.has(idKey);
+      });
+
+      // Persist the clean master list
+      try {
+        localStorage.setItem('preptrack_master_courses', JSON.stringify(subjects));
+        localStorage.setItem('preptrack_subjects_cache', JSON.stringify(subjects));
+      } catch (e) {}
 
       // 2. Fetch Sessions
       const { data: sessions } = await window.supaAttendance.getAttendanceSessions();
@@ -638,11 +702,15 @@
 
     if (!name) return;
 
-    // Check duplicate course name (case-insensitive) against memory and local courses
+    // Check duplicate course name (case-insensitive) against memory, master and local courses
     let localCourses = [];
     try { localCourses = JSON.parse(localStorage.getItem('preptrack_subjects') || '[]'); } catch (e) {}
+    let masterCourses = [];
+    try { masterCourses = JSON.parse(localStorage.getItem('preptrack_master_courses') || '[]'); } catch (e) {}
+
     const exists = allCourses.some(c => (c.name || '').toLowerCase() === name.toLowerCase()) ||
-                   localCourses.some(c => (c.name || '').toLowerCase() === name.toLowerCase());
+                   localCourses.some(c => (c.name || '').toLowerCase() === name.toLowerCase()) ||
+                   masterCourses.some(c => (c.name || '').toLowerCase() === name.toLowerCase());
     if (exists) {
       if (err) {
         err.textContent = `A course named "${name}" already exists. Please choose a unique name.`;
@@ -651,19 +719,23 @@
       return;
     }
 
+    // Remove from deleted tombstone in case it was previously deleted
+    removeDeletedCourseKey(name);
+
     try {
       const btn = document.getElementById('btnSaveCourse');
       if (btn) btn.disabled = true;
 
+      let createdSubject = null;
       if (window.supaDB && typeof window.supaDB.addSubject === 'function') {
-        const { error } = await window.supaDB.addSubject(name);
-        if (error) {
-          console.warn('Database insert failed, using local course storage:', error);
-          saveCourseLocally(name);
+        const res = await window.supaDB.addSubject(name);
+        if (res && res.data) {
+          createdSubject = res.data;
         }
-      } else {
-        saveCourseLocally(name);
       }
+
+      // Always save to persistent local stores for guaranteed durability across restarts
+      saveCourseLocally(name, createdSubject?.id);
 
       if (window.showToast) {
         window.showToast(`Course "${name}" created successfully!`, 'success');
@@ -749,41 +821,88 @@
       return;
     }
 
+    // 1. Immediately register in permanent tombstone so it NEVER returns from Supabase or fallback
+    addDeletedCourseKey(courseId, courseName);
+
+    // 2. Remove permanently from local stores
+    deleteCourseLocally(courseId, courseName);
+
+    // 3. Immediately filter from active memory array
+    allCourses = allCourses.filter(c => {
+      const matchId = courseId && String(c.id).toLowerCase() === String(courseId).toLowerCase();
+      const matchName = courseName && String(c.name).toLowerCase() === String(courseName).toLowerCase();
+      return !matchId && !matchName;
+    });
+
     try {
+      // 4. Delete from Supabase
       if (window.supaDB && typeof window.supaDB.deleteSubject === 'function') {
-        await window.supaDB.deleteSubject(courseId);
+        await window.supaDB.deleteSubject(courseId, courseName);
       }
-      deleteCourseLocally(courseId);
 
       if (window.showToast) {
-        window.showToast(`Course "${courseName}" deleted.`, 'success');
+        window.showToast(`Course "${courseName}" permanently deleted.`, 'success');
       }
 
       await loadAllAttendanceData();
     } catch (err) {
       console.error(err);
-      deleteCourseLocally(courseId);
       await loadAllAttendanceData();
     }
   }
 
-  function saveCourseLocally(name) {
-    const localCourses = JSON.parse(localStorage.getItem('preptrack_subjects') || '[]');
-    const newCourse = { id: 'course-' + Date.now(), name: name };
-    localCourses.push(newCourse);
-    localStorage.setItem('preptrack_subjects', JSON.stringify(localCourses));
+  function saveCourseLocally(name, existingId) {
+    const cleanName = (name || '').trim();
+    const courseId = existingId || ('course-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7));
+    const newCourse = { id: courseId, name: cleanName };
+
+    // Update preptrack_subjects
+    let localCourses = JSON.parse(localStorage.getItem('preptrack_subjects') || '[]');
+    if (!localCourses.some(c => c.name.toLowerCase() === cleanName.toLowerCase())) {
+      localCourses.push(newCourse);
+      localStorage.setItem('preptrack_subjects', JSON.stringify(localCourses));
+    }
+
+    // Update preptrack_master_courses
+    let masterCourses = JSON.parse(localStorage.getItem('preptrack_master_courses') || '[]');
+    if (!masterCourses.some(c => c.name.toLowerCase() === cleanName.toLowerCase())) {
+      masterCourses.push(newCourse);
+      localStorage.setItem('preptrack_master_courses', JSON.stringify(masterCourses));
+    }
+
+    return newCourse;
   }
 
   function updateCourseLocally(id, name) {
+    const cleanName = (name || '').trim();
     let localCourses = JSON.parse(localStorage.getItem('preptrack_subjects') || '[]');
-    localCourses = localCourses.map(c => c.id === id ? { ...c, name } : c);
+    localCourses = localCourses.map(c => c.id === id ? { ...c, name: cleanName } : c);
     localStorage.setItem('preptrack_subjects', JSON.stringify(localCourses));
+
+    let masterCourses = JSON.parse(localStorage.getItem('preptrack_master_courses') || '[]');
+    masterCourses = masterCourses.map(c => c.id === id ? { ...c, name: cleanName } : c);
+    localStorage.setItem('preptrack_master_courses', JSON.stringify(masterCourses));
   }
 
-  function deleteCourseLocally(id) {
+  function deleteCourseLocally(id, name) {
+    const targetId = id ? String(id).toLowerCase() : '';
+    const targetName = name ? String(name).toLowerCase() : '';
+
     let localCourses = JSON.parse(localStorage.getItem('preptrack_subjects') || '[]');
-    localCourses = localCourses.filter(c => c.id !== id);
+    localCourses = localCourses.filter(c => {
+      const matchId = targetId && String(c.id).toLowerCase() === targetId;
+      const matchName = targetName && String(c.name).toLowerCase() === targetName;
+      return !matchId && !matchName;
+    });
     localStorage.setItem('preptrack_subjects', JSON.stringify(localCourses));
+
+    let masterCourses = JSON.parse(localStorage.getItem('preptrack_master_courses') || '[]');
+    masterCourses = masterCourses.filter(c => {
+      const matchId = targetId && String(c.id).toLowerCase() === targetId;
+      const matchName = targetName && String(c.name).toLowerCase() === targetName;
+      return !matchId && !matchName;
+    });
+    localStorage.setItem('preptrack_master_courses', JSON.stringify(masterCourses));
   }
 
   // --------------------------------------------

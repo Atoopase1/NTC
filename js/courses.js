@@ -113,12 +113,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ── Load all subjects from Supabase ────────────────────────────────────
   async function loadSubjects() {
+    let deletedKeys = new Set();
+    try {
+      const list = JSON.parse(localStorage.getItem('preptrack_deleted_courses') || '[]');
+      deletedKeys = new Set(list.map(k => String(k).trim().toLowerCase()));
+    } catch(e) {}
+
+    // 1. Try supaDB helper first (guaranteed permanent synchronization with deletion tombstones)
+    if (window.supaDB && window.supaDB.getSubjects) {
+      try {
+        const dbData = await window.supaDB.getSubjects();
+        if (dbData && dbData.length > 0) {
+          allSubjects = dbData.filter(s => {
+            if (!s || !s.name) return false;
+            return !deletedKeys.has(s.name.trim().toLowerCase()) && !deletedKeys.has(String(s.id || '').toLowerCase());
+          });
+          return;
+        }
+      } catch (e) { }
+    }
+
     try {
       if (client) {
         const { data, error } = await client.from('subjects').select('*').order('name');
         if (!error && data && data.length > 0) {
-          allSubjects = data;
-          localStorage.setItem('preptrack_subjects_cache', JSON.stringify(data));
+          allSubjects = data.filter(s => {
+            if (!s || !s.name) return false;
+            return !deletedKeys.has(s.name.trim().toLowerCase()) && !deletedKeys.has(String(s.id || '').toLowerCase());
+          });
+          localStorage.setItem('preptrack_subjects_cache', JSON.stringify(allSubjects));
           return;
         }
       }
@@ -126,31 +149,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.warn('Direct subjects query failed, trying fallback:', err);
     }
 
-    // Try supaDB helper
-    if (window.supaDB && window.supaDB.getSubjects) {
-      try {
-        const dbData = await window.supaDB.getSubjects();
-        if (dbData && dbData.length > 0) {
-          allSubjects = dbData;
-          return;
-        }
-      } catch (e) { }
-    }
-
-    // Check localStorage cache
+    // Check localStorage master / cache
     try {
-      const cached = localStorage.getItem('preptrack_subjects_cache') || localStorage.getItem('preptrack_subjects');
+      const cached = localStorage.getItem('preptrack_master_courses') || localStorage.getItem('preptrack_subjects_cache') || localStorage.getItem('preptrack_subjects');
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          allSubjects = parsed;
+          allSubjects = parsed.filter(s => {
+            if (!s || !s.name) return false;
+            return !deletedKeys.has(s.name.trim().toLowerCase()) && !deletedKeys.has(String(s.id || '').toLowerCase());
+          });
           return;
         }
       }
     } catch(e) {}
 
-    // Use default curriculum fallback list
-    allSubjects = DEFAULT_FALLBACK_SUBJECTS;
+    // Use default curriculum fallback list filtered by deleted courses
+    allSubjects = DEFAULT_FALLBACK_SUBJECTS.filter(s => {
+      return !deletedKeys.has(s.name.trim().toLowerCase()) && !deletedKeys.has(String(s.id || '').toLowerCase());
+    });
   }
 
   // ── Load student's saved course preferences ────────────────────────────

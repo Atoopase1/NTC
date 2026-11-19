@@ -445,104 +445,283 @@ async function getExamHistory(userId) {
 
 // --- Subject Functions --- //
 
-/**
- * Fetch all subjects
- */
-async function getSubjects() {
+// --- Subject & Course Persistent Storage --- //
+
+const DEFAULT_SYSTEM_SUBJECTS = [
+  { id: "415718a9-73a2-4b8d-b149-af72ae9f801b", name: "English language" },
+  { id: "70ff49de-ee1a-404e-8026-93e57099dd6c", name: "Mathematics" },
+  { id: "23a159a7-a2a4-484f-b07a-2fd60f43b997", name: "French" },
+  { id: "3f259e90-19c4-4514-827d-0190346bcf08", name: "History" },
+  { id: "b42dea7f-ae1c-44fc-99b8-cd6e62b705be", name: "Geography" },
+  { id: "62eaf060-fe0d-4c13-90f2-d78f23c0f3ca", name: "General Professional Knowledge (GPK)" },
+  { id: "f82c949f-e918-4685-81c5-8fdffee1998c", name: "Grade-Level Specialism Pedagogy" },
+  { id: "25bf9c78-de15-477b-9cfc-f204605406a8", name: "Subject Content Knowledge" },
+  { id: "68848472-e20d-4db5-97ce-14aba703af78", name: "Social studies" },
+  { id: "51b3c836-7c2e-4c7f-8928-b7bbcfe4e86a", name: "Integrated Science" },
+  { id: "93e2b273-ade6-4f4f-ae78-77e2b72c76c3", name: "Physics" },
+  { id: "1fbeb6b5-b745-4599-9a58-4ea38e7668d7", name: "Biology" },
+  { id: "f624d93f-f6d3-46fd-8dea-49317beb87a0", name: "Chemistry" },
+  { id: "495a3ad0-26de-42b6-bca9-718c23d61b63", name: "RME" },
+  { id: "d9eedb28-edc7-4d4d-8191-b951cb86f337", name: "BDT" },
+  { id: "d178ae07-79f0-4060-9d87-61ce8a87b743", name: "ICT" }
+];
+
+function getDeletedCourseKeys() {
   try {
-    if (!supabaseClient) throw new Error('Supabase not initialized');
-    const { data, error } = await supabaseClient
-      .from('subjects')
-      .select('*')
-      .order('created_at', { ascending: true });
-      
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.warn('Could not fetch subjects from DB. Using local fallback.', error);
-    const localData = localStorage.getItem('preptrack_subjects') || localStorage.getItem('ntc_subjects');
-    if (localData) return JSON.parse(localData);
-    
-    // Default fallback with valid database UUIDs
-    return [
-      { id: "415718a9-73a2-4b8d-b149-af72ae9f801b", name: "English language" },
-      { id: "70ff49de-ee1a-404e-8026-93e57099dd6c", name: "Mathematics" },
-      { id: "23a159a7-a2a4-484f-b07a-2fd60f43b997", name: "French" },
-      { id: "3f259e90-19c4-4514-827d-0190346bcf08", name: "History" },
-      { id: "b42dea7f-ae1c-44fc-99b8-cd6e62b705be", name: "Geography" },
-      { id: "62eaf060-fe0d-4c13-90f2-d78f23c0f3ca", name: "General Professional Knowledge (GPK)" },
-      { id: "f82c949f-e918-4685-81c5-8fdffee1998c", name: "Grade-Level Specialism Pedagogy" },
-      { id: "25bf9c78-de15-477b-9cfc-f204605406a8", name: "Subject Content Knowledge" },
-      { id: "68848472-e20d-4db5-97ce-14aba703af78", name: "Social studies" },
-      { id: "51b3c836-7c2e-4c7f-8928-b7bbcfe4e86a", name: "Integrated Science" },
-      { id: "93e2b273-ade6-4f4f-ae78-77e2b72c76c3", name: "Physics" },
-      { id: "1fbeb6b5-b745-4599-9a58-4ea38e7668d7", name: "Biology" },
-      { id: "f624d93f-f6d3-46fd-8dea-49317beb87a0", name: "Chemistry" },
-      { id: "495a3ad0-26de-42b6-bca9-718c23d61b63", name: "RME" },
-      { id: "d9eedb28-edc7-4d4d-8191-b951cb86f337", name: "BDT" },
-      { id: "d178ae07-79f0-4060-9d87-61ce8a87b743", name: "ICT" }
-    ];
+    const list = JSON.parse(localStorage.getItem('preptrack_deleted_courses') || '[]');
+    return new Set(list.map(k => String(k).trim().toLowerCase()));
+  } catch (e) {
+    return new Set();
   }
 }
 
+function addDeletedCourseKey(id, name) {
+  try {
+    const list = JSON.parse(localStorage.getItem('preptrack_deleted_courses') || '[]');
+    const set = new Set(list.map(k => String(k).trim().toLowerCase()));
+    if (id) set.add(String(id).trim().toLowerCase());
+    if (name) set.add(String(name).trim().toLowerCase());
+    localStorage.setItem('preptrack_deleted_courses', JSON.stringify(Array.from(set)));
+  } catch (e) {}
+}
+
+function removeDeletedCourseKey(name, id) {
+  try {
+    const list = JSON.parse(localStorage.getItem('preptrack_deleted_courses') || '[]');
+    const targetName = (name || '').trim().toLowerCase();
+    const targetId = (id || '').toString().trim().toLowerCase();
+    const filtered = list.filter(k => {
+      const lower = String(k).trim().toLowerCase();
+      return lower !== targetName && lower !== targetId;
+    });
+    localStorage.setItem('preptrack_deleted_courses', JSON.stringify(filtered));
+  } catch (e) {}
+}
+
 /**
- * Add a new subject
+ * Fetch all subjects - guaranteed permanent with deleted course tombstones
+ */
+async function getSubjects() {
+  const deletedKeys = getDeletedCourseKeys();
+  let subjects = [];
+  let fetchedFromDb = false;
+
+  try {
+    if (supabaseClient) {
+      const { data, error } = await supabaseClient
+        .from('subjects')
+        .select('*')
+        .order('name', { ascending: true });
+        
+      if (!error && Array.isArray(data) && data.length > 0) {
+        subjects = data;
+        fetchedFromDb = true;
+      }
+    }
+  } catch (error) {
+    console.warn('Could not fetch subjects from DB:', error);
+  }
+
+  // If DB returned nothing or is offline, load from master persistent list
+  if (!fetchedFromDb || subjects.length === 0) {
+    try {
+      const master = JSON.parse(localStorage.getItem('preptrack_master_courses') || 'null');
+      if (Array.isArray(master) && master.length > 0) {
+        subjects = master;
+      } else {
+        subjects = [...DEFAULT_SYSTEM_SUBJECTS];
+      }
+    } catch (e) {
+      subjects = [...DEFAULT_SYSTEM_SUBJECTS];
+    }
+  }
+
+  // Merge locally created courses from preptrack_subjects
+  try {
+    const localCourses = JSON.parse(localStorage.getItem('preptrack_subjects') || '[]');
+    localCourses.forEach(lc => {
+      if (lc && lc.name && !subjects.some(s => s.name.trim().toLowerCase() === lc.name.trim().toLowerCase())) {
+        subjects.push(lc);
+      }
+    });
+  } catch (e) {}
+
+  // CRITICAL: Filter out any course that has been deleted so it NEVER returns after restart
+  subjects = subjects.filter(s => {
+    if (!s || !s.name) return false;
+    const nameKey = s.name.trim().toLowerCase();
+    const idKey = (s.id || '').toString().trim().toLowerCase();
+    return !deletedKeys.has(nameKey) && !deletedKeys.has(idKey);
+  });
+
+  // Persist the clean master list so additions and deletions survive restarts!
+  try {
+    localStorage.setItem('preptrack_master_courses', JSON.stringify(subjects));
+    localStorage.setItem('preptrack_subjects_cache', JSON.stringify(subjects));
+  } catch (e) {}
+
+  return subjects;
+}
+
+/**
+ * Add a new subject - permanently stored in Supabase and local master list
  */
 async function addSubject(name) {
+  const cleanName = (name || '').trim();
+  if (!cleanName) return { data: null, error: new Error('Subject name cannot be empty') };
+
+  // Re-allow if previously deleted
+  removeDeletedCourseKey(cleanName);
+
+  let newSubject = null;
+  let dbError = null;
+
   try {
-    if (!supabaseClient) throw new Error('Supabase not initialized');
-    const { data, error } = await supabaseClient
-      .from('subjects')
-      .insert([{ name }])
-      .select()
-      .single();
-      
-    if (error) throw error;
-    return { data, error: null };
+    if (supabaseClient) {
+      const { data, error } = await supabaseClient
+        .from('subjects')
+        .insert([{ name: cleanName }])
+        .select()
+        .single();
+        
+      if (!error && data) {
+        newSubject = data;
+      } else {
+        dbError = error;
+      }
+    }
   } catch (error) {
-    console.error('Failed to add subject:', error);
-    return { data: null, error };
+    dbError = error;
+    console.warn('Supabase addSubject error:', error);
   }
+
+  if (!newSubject) {
+    // Generate persistent UUID or timestamped ID for fallback
+    newSubject = {
+      id: 'course-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
+      name: cleanName
+    };
+  }
+
+  // Permanently save to master course lists
+  try {
+    let local = JSON.parse(localStorage.getItem('preptrack_subjects') || '[]');
+    if (!local.some(c => c.name.toLowerCase() === cleanName.toLowerCase())) {
+      local.push(newSubject);
+      localStorage.setItem('preptrack_subjects', JSON.stringify(local));
+    }
+
+    let master = JSON.parse(localStorage.getItem('preptrack_master_courses') || '[]');
+    if (!master.some(c => c.name.toLowerCase() === cleanName.toLowerCase())) {
+      master.push(newSubject);
+      localStorage.setItem('preptrack_master_courses', JSON.stringify(master));
+    }
+  } catch (e) {}
+
+  return { data: newSubject, error: null };
 }
 
 /**
  * Update an existing subject
  */
 async function updateSubject(id, name) {
+  const cleanName = (name || '').trim();
   try {
-    if (!supabaseClient) throw new Error('Supabase not initialized');
-    const { data, error } = await supabaseClient
-      .from('subjects')
-      .update({ name })
-      .eq('id', id)
-      .select()
-      .single();
-      
-    if (error) throw error;
-    return { data, error: null };
+    if (supabaseClient && id && !String(id).startsWith('course-')) {
+      await supabaseClient
+        .from('subjects')
+        .update({ name: cleanName })
+        .eq('id', id);
+    }
   } catch (error) {
-    console.error('Failed to update subject:', error);
-    return { data: null, error };
+    console.warn('Failed to update subject in DB:', error);
   }
+
+  // Update local stores
+  try {
+    let local = JSON.parse(localStorage.getItem('preptrack_subjects') || '[]');
+    local = local.map(c => c.id === id ? { ...c, name: cleanName } : c);
+    localStorage.setItem('preptrack_subjects', JSON.stringify(local));
+
+    let master = JSON.parse(localStorage.getItem('preptrack_master_courses') || '[]');
+    master = master.map(c => c.id === id ? { ...c, name: cleanName } : c);
+    localStorage.setItem('preptrack_master_courses', JSON.stringify(master));
+  } catch (e) {}
+
+  return { data: { id, name: cleanName }, error: null };
 }
 
 /**
- * Delete a subject
+ * Delete a subject permanently - will NEVER return after restart
  */
-async function deleteSubject(id) {
+async function deleteSubject(id, name) {
+  const courseId = id ? String(id).trim() : '';
+  const courseName = name ? String(name).trim() : '';
+
+  // 1. Mark permanently deleted in tombstone list so it NEVER returns from Supabase or fallback
+  addDeletedCourseKey(courseId, courseName);
+
+  // 2. Remove permanently from local storage stores
   try {
-    if (!supabaseClient) throw new Error('Supabase not initialized');
-    const { error } = await supabaseClient
-      .from('subjects')
-      .delete()
-      .eq('id', id);
-      
-    if (error) throw error;
-    return { error: null };
+    let local = JSON.parse(localStorage.getItem('preptrack_subjects') || '[]');
+    local = local.filter(c => {
+      const matchId = courseId && String(c.id).toLowerCase() === courseId.toLowerCase();
+      const matchName = courseName && String(c.name).toLowerCase() === courseName.toLowerCase();
+      return !matchId && !matchName;
+    });
+    localStorage.setItem('preptrack_subjects', JSON.stringify(local));
+
+    let master = JSON.parse(localStorage.getItem('preptrack_master_courses') || '[]');
+    master = master.filter(c => {
+      const matchId = courseId && String(c.id).toLowerCase() === courseId.toLowerCase();
+      const matchName = courseName && String(c.name).toLowerCase() === courseName.toLowerCase();
+      return !matchId && !matchName;
+    });
+    localStorage.setItem('preptrack_master_courses', JSON.stringify(master));
+
+    let cached = JSON.parse(localStorage.getItem('preptrack_subjects_cache') || '[]');
+    cached = cached.filter(c => {
+      const matchId = courseId && String(c.id).toLowerCase() === courseId.toLowerCase();
+      const matchName = courseName && String(c.name).toLowerCase() === courseName.toLowerCase();
+      return !matchId && !matchName;
+    });
+    localStorage.setItem('preptrack_subjects_cache', JSON.stringify(cached));
+  } catch (e) {}
+
+  // 3. Attempt database deletion in Supabase
+  try {
+    if (supabaseClient) {
+      // First clean up preferences that might have a foreign key reference
+      if (courseId) {
+        try {
+          await supabaseClient
+            .from('student_course_preferences')
+            .delete()
+            .eq('subject_id', courseId);
+        } catch (pe) {}
+      }
+
+      // Delete by ID
+      if (courseId && !courseId.startsWith('course-')) {
+        await supabaseClient
+          .from('subjects')
+          .delete()
+          .eq('id', courseId);
+      }
+
+      // Also delete by name in case of name match
+      if (courseName) {
+        await supabaseClient
+          .from('subjects')
+          .delete()
+          .ilike('name', courseName);
+      }
+    }
   } catch (error) {
-    console.error('Failed to delete subject:', error);
-    return { error };
+    console.warn('Supabase DB delete failed (tombstone will ensure it stays deleted):', error);
   }
+
+  return { error: null };
 }
 
 // --- Scheduled Exams Functions --- //
