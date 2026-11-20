@@ -1899,6 +1899,17 @@
     }
   }
 
+  let activeSessionActionsId = null;
+
+  function toggleSessionRowActions(sessionId) {
+    if (!sessionId || activeSessionActionsId === sessionId) {
+      activeSessionActionsId = null;
+    } else {
+      activeSessionActionsId = sessionId;
+    }
+    renderSessionsTable(allSessions);
+  }
+
   function renderSessionsTable(sessions) {
     const tbody = document.getElementById('sessionsTableBody');
     if (!tbody) return;
@@ -1934,9 +1945,12 @@
       }
 
       const radiusDisplay = session.radius_meters ? `${session.radius_meters}m` : '30m';
+      const isSelected = String(session.id) === String(activeSessionActionsId);
 
       rowsHtml += `
-        <tr>
+        <tr class="session-table-row ${isSelected ? 'selected' : ''}"
+            onclick="window.adminAttendance.toggleSessionRowActions('${session.id}')"
+            title="Click row to view session actions (Records, Edit, Toggle Status, Delete)">
           <td><strong>${escapeHtml(session.title)}</strong></td>
           <td>${escapeHtml(session.subject || 'General')}</td>
           <td>${escapeHtml(session.session_date || '')}</td>
@@ -1944,23 +1958,50 @@
           <td>${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
           <td><span style="font-size:12px;font-weight:600;">${radiusDisplay}</span></td>
           <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-          <td>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
-              <button class="btn btn-sm btn-primary" onclick="window.adminAttendance.viewSessionRecords('${session.id}')">
-                Records
+          <td style="text-align: right;">
+            ${isSelected ? `
+              <div style="display:inline-flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
+                <button class="btn btn-sm btn-primary" style="padding:4px 8px;font-size:11px;" onclick="event.stopPropagation(); window.adminAttendance.viewSessionRecords('${session.id}')" title="View Records">Records</button>
+                <button class="btn btn-sm btn-outline" style="padding:4px 8px;font-size:11px;" onclick="event.stopPropagation(); window.adminAttendance.openEditSessionModal('${session.id}')" title="Edit Session">Edit</button>
+                <button class="btn btn-sm btn-outline" style="padding:4px 8px;font-size:11px;" onclick="event.stopPropagation(); window.adminAttendance.toggleSessionStatus('${session.id}', '${session.status}')" title="Toggle Status">Toggle Status</button>
+                <button class="btn btn-sm btn-outline" style="color:#ef4444;border-color:#ef4444;padding:4px 8px;font-size:11px;" onclick="event.stopPropagation(); window.adminAttendance.deleteSession('${session.id}')" title="Delete Session">Delete</button>
+              </div>
+            ` : `
+              <button type="button" class="btn btn-sm btn-outline" style="font-size:11px;padding:3px 8px;border-radius:6px;color:var(--text-light);" onclick="event.stopPropagation(); window.adminAttendance.toggleSessionRowActions('${session.id}')">
+                Actions ▾
               </button>
-              <button class="btn btn-sm btn-outline" onclick="window.adminAttendance.openEditSessionModal('${session.id}')">
-                Edit
-              </button>
-              <button class="btn btn-sm btn-outline" onclick="window.adminAttendance.toggleSessionStatus('${session.id}', '${session.status}')">
-                Toggle Status
-              </button>
-              <button class="btn btn-sm btn-outline" style="color:#ef4444;border-color:#ef4444;" onclick="window.adminAttendance.deleteSession('${session.id}')">
-                Delete
-              </button>
-            </div>
+            `}
           </td>
         </tr>
+        ${isSelected ? `
+          <tr class="session-actions-subrow" style="background:#f8fafc; border-bottom:2px solid #cbd5e1;">
+            <td colspan="8" style="padding:10px 16px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:#334155;">
+                  <span>Session: <strong style="color:#0f172a;">${escapeHtml(session.title)}</strong></span>
+                  <span class="status-badge ${statusClass}" style="font-size:10px; padding:2px 6px;">${statusText}</span>
+                </div>
+                <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                  <button class="btn btn-sm btn-primary" style="padding:5px 12px; font-size:12px; font-weight:600;" onclick="event.stopPropagation(); window.adminAttendance.viewSessionRecords('${session.id}')">
+                    📋 Records
+                  </button>
+                  <button class="btn btn-sm btn-outline" style="padding:5px 12px; font-size:12px;" onclick="event.stopPropagation(); window.adminAttendance.openEditSessionModal('${session.id}')">
+                    ✏️ Edit
+                  </button>
+                  <button class="btn btn-sm btn-outline" style="padding:5px 12px; font-size:12px;" onclick="event.stopPropagation(); window.adminAttendance.toggleSessionStatus('${session.id}', '${session.status}')">
+                    🔄 Toggle Status
+                  </button>
+                  <button class="btn btn-sm btn-outline" style="color:#ef4444; border-color:#ef4444; padding:5px 12px; font-size:12px;" onclick="event.stopPropagation(); window.adminAttendance.deleteSession('${session.id}')">
+                    🗑️ Delete
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline" style="color:#64748b; border-color:#cbd5e1; padding:4px 8px; font-size:11px;" onclick="event.stopPropagation(); window.adminAttendance.toggleSessionRowActions(null)" title="Close actions">
+                    ✕ Close
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        ` : ''}
       `;
     });
 
@@ -2112,6 +2153,9 @@
       if (error) {
         alert('Failed to delete session: ' + error.message);
         return;
+      }
+      if (activeSessionActionsId === id) {
+        activeSessionActionsId = null;
       }
       await loadAllAttendanceData();
     } catch (err) {
@@ -2603,6 +2647,7 @@
     handleUpdateSession,
     toggleSessionStatus,
     deleteSession,
+    toggleSessionRowActions,
 
     // Single Session Feed (Tab 4)
     viewSessionRecords,

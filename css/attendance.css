@@ -1170,4 +1170,34 @@
   line-height: 1.45;
 }
 
+/* Sessions Table Row Selection & Actions Subrow */
+.session-table-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.session-table-row:hover {
+  background: #f8fafc;
+}
+
+.session-table-row.selected {
+  background: #eff6ff !important;
+  border-left: 3px solid var(--primary, #003bf7);
+}
+
+.session-actions-subrow {
+  animation: sessionFadeIn 0.18s ease-in-out;
+}
+
+@keyframes sessionFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 

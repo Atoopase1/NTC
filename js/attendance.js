@@ -23,8 +23,8 @@
     const Δφ = (lat2 - lat1) * Math.PI / 180;
     const Δλ = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+      Math.cos(φ1) * Math.cos(φ2) *
+      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
@@ -290,7 +290,7 @@
     }
 
     if (studentWatchId !== null) {
-      try { navigator.geolocation.clearWatch(studentWatchId); } catch (e) {}
+      try { navigator.geolocation.clearWatch(studentWatchId); } catch (e) { }
       studentWatchId = null;
     }
 
@@ -365,7 +365,7 @@
         onErr,
         { enableHighAccuracy: true, maximumAge: 0, timeout: 12000 }
       );
-    } catch (e) {}
+    } catch (e) { }
 
     // Auto-lock best fix after 5.5 seconds so students are not delayed
     setTimeout(() => {
@@ -378,7 +378,7 @@
   function lockLocationAndEnableSubmission(coords) {
     isLocationLocked = true;
     if (studentWatchId !== null) {
-      try { navigator.geolocation.clearWatch(studentWatchId); } catch (e) {}
+      try { navigator.geolocation.clearWatch(studentWatchId); } catch (e) { }
       studentWatchId = null;
     }
 
@@ -546,7 +546,7 @@
     const modal = document.getElementById('submitModal');
     if (modal) modal.style.display = 'none';
     if (studentWatchId !== null) {
-      try { navigator.geolocation.clearWatch(studentWatchId); } catch (e) {}
+      try { navigator.geolocation.clearWatch(studentWatchId); } catch (e) { }
       studentWatchId = null;
     }
     currentActiveSession = null;
