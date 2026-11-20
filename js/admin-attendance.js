@@ -318,7 +318,7 @@
       // 4. (If zero students in system have selected courses yet, enrolled students from registry are included)
       const studentMap = new Map();
 
-      // From preferences
+      // From preferences (initial entry — profile data as baseline)
       allPreferences.forEach(pref => {
         if (pref.subject_id === sub.id) {
           const prof = allProfiles.find(p => p.id === pref.user_id);
@@ -331,15 +331,28 @@
         }
       });
 
-      // From submissions
+      // From submissions — add new students AND update existing ones with
+      // what they actually typed at submission time (name + index number).
+      // This ensures the submitted name/index always wins over profile data.
       courseSubmissions.forEach(subm => {
         const studentId = subm.user_id || subm.index_number || subm.full_name;
-        if (!studentMap.has(studentId)) {
+        const submName = (subm.full_name || '').trim();
+        const submIndex = (subm.index_number || '').trim();
+        if (studentMap.has(studentId)) {
+          // Student already in map (from preferences/profiles) — override
+          // name and index with what they typed when submitting, if provided
+          const existing = studentMap.get(studentId);
+          studentMap.set(studentId, {
+            ...existing,
+            fullName: submName || existing.fullName,
+            indexNumber: submIndex || existing.indexNumber
+          });
+        } else {
           const prof = allProfiles.find(p => p.id === subm.user_id || p.full_name === subm.full_name);
           studentMap.set(studentId, {
             id: studentId,
-            fullName: subm.full_name || prof?.full_name || 'Student',
-            indexNumber: subm.index_number || prof?.index_number || generateFallbackIndex(studentId)
+            fullName: submName || prof?.full_name || 'Student',
+            indexNumber: submIndex || prof?.index_number || generateFallbackIndex(studentId)
           });
         }
       });
