@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => {
       const input = btn.previousElementSibling;
       const icon = btn.querySelector('svg');
-      
+
       if (input.type === 'password') {
         input.type = 'text';
         // Eye-off icon
@@ -36,22 +36,22 @@ document.addEventListener('DOMContentLoaded', () => {
       const val = e.target.value;
       const segments = document.querySelectorAll('.password-strength-segment');
       const text = document.querySelector('.password-strength-text');
-      
+
       // Reset
       segments.forEach(s => {
         s.className = 'password-strength-segment';
       });
-      
+
       if (val.length === 0) {
         text.textContent = 'Password strength';
         return;
       }
-      
+
       let strength = 0;
       if (val.length >= 6) strength += 1;
       if (val.match(/[A-Z]/) && val.match(/[0-9]/)) strength += 1;
       if (val.match(/[^A-Za-z0-9]/) && val.length >= 8) strength += 1;
-      
+
       if (strength === 1) {
         segments[0].classList.add('active', 'weak');
         text.textContent = 'Weak';
@@ -75,25 +75,25 @@ document.addEventListener('DOMContentLoaded', () => {
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
       const btn = loginForm.querySelector('button[type="submit"]');
-      
+
       if (!email || !password) {
         window.showToast('Please enter both email and password', 'error');
         return;
       }
-      
+
       // UI Loading state
       const originalText = btn.textContent;
       btn.classList.add('btn-loading');
       btn.disabled = true;
-      
+
       try {
         if (window.supaAuth) {
           const { data, error } = await window.supaAuth.signIn(email, password);
-          
+
           if (error) {
             window.showToast(error.message || 'Login failed', 'error');
             btn.classList.remove('btn-loading');
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (registerForm) {
     registerForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       const fullName = document.getElementById('fullName').value;
       const email = document.getElementById('email').value;
       const phone = document.getElementById('phone').value;
@@ -143,36 +143,36 @@ document.addEventListener('DOMContentLoaded', () => {
       const confirmPassword = document.getElementById('confirmPassword').value;
       const terms = document.getElementById('terms').checked;
       const btn = registerForm.querySelector('button[type="submit"]');
-      
+
       // Validation
       if (!fullName || !email || !phone || !password || !confirmPassword) {
         window.showToast('Please fill all fields', 'error');
         return;
       }
-      
+
       if (password !== confirmPassword) {
         window.showToast('Passwords do not match', 'error');
         return;
       }
-      
+
       if (password.length < 6) {
         window.showToast('Password must be at least 6 characters', 'error');
         return;
       }
-      
+
       if (!terms) {
         window.showToast('You must agree to the Terms & Conditions', 'error');
         return;
       }
-      
+
       // UI Loading state
       btn.classList.add('btn-loading');
       btn.disabled = true;
-      
+
       try {
         if (window.supaAuth) {
           const { data, error } = await window.supaAuth.signUp(email, password, fullName, phone);
-          
+
           if (error) {
             window.showToast(error.message || 'Registration failed', 'error');
             btn.classList.remove('btn-loading');
@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Authentication Guard for protected pages
-  const isProtectedPage = 
+  const isProtectedPage =
     window.location.pathname.includes('dashboard') ||
     window.location.pathname.includes('exam') ||
     window.location.pathname.includes('results') ||
@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function checkAuth() {
     let isAuthenticated = false;
-    
+
     if (window.supaAuth) {
       const user = await window.supaAuth.getCurrentUser();
       isAuthenticated = !!user;
@@ -235,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Check demo storage
       isAuthenticated = !!(localStorage.getItem('preptrack_user') || localStorage.getItem('ntc_user'));
     }
-    
+
     if (!isAuthenticated) {
       // Not logged in, redirect to login
       window.location.href = (window.getAppPageUrl ? window.getAppPageUrl('login.html') : 'login.html');
@@ -248,12 +248,12 @@ document.addEventListener('DOMContentLoaded', () => {
   async function updateUserInfo() {
     const userNames = document.querySelectorAll('.user-name');
     const userAvatars = document.querySelectorAll('.user-avatar-initials, .user-avatar');
-    
+
     if (userNames.length === 0 && userAvatars.length === 0) return;
-    
+
     let displayName = 'Student User';
     let avatarUrl = null;
-    
+
     if (window.supaAuth && window.supaDB) {
       const user = await window.supaAuth.getCurrentUser();
       if (user) {
@@ -274,8 +274,8 @@ document.addEventListener('DOMContentLoaded', () => {
             displayName = user.email.split('@')[0];
           }
         } catch (e) {
-           // profile fetch failed
-           if (displayName === 'Student User') displayName = user.email.split('@')[0];
+          // profile fetch failed
+          if (displayName === 'Student User') displayName = user.email.split('@')[0];
         }
       }
     } else {
@@ -284,9 +284,9 @@ document.addEventListener('DOMContentLoaded', () => {
         displayName = storedUser.email.split('@')[0];
       }
     }
-    
+
     const isMobile = window.innerWidth <= 1023;
-    
+
     userNames.forEach(el => {
       // Remove chevron arrow SVG from parent (user-profile-btn or user-dropdown-toggle) globally
       const parent = el.closest('.user-profile-btn') || el.closest('.user-dropdown-toggle');
@@ -336,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
   logoutBtns.forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.preventDefault();
-      
+
       if (window.supaAuth) {
         await window.supaAuth.signOut();
       } else {

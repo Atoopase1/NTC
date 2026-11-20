@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // === Theme Management ===
   const themeToggle = document.getElementById('themeToggle');
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-  
+
   // Initialize theme
   function initTheme() {
     const savedTheme = localStorage.getItem('ntc-theme');
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateThemeIcon(false);
     }
   }
-  
+
   // Toggle theme
   function toggleTheme() {
     const isDark = document.body.hasAttribute('data-theme');
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateThemeIcon(true);
     }
   }
-  
+
   // Update icon based on theme
   function updateThemeIcon(isDark) {
     if (themeToggle) {
@@ -44,13 +44,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   }
-  
+
   if (themeToggle) {
     themeToggle.addEventListener('click', toggleTheme);
   }
-  
+
   initTheme();
-  
+
   // Listen for system theme changes
   prefersDark.addEventListener('change', (e) => {
     if (!localStorage.getItem('ntc-theme')) {
@@ -63,11 +63,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
-  
+
   // === Mobile Navigation ===
   const navbarToggle = document.getElementById('navbarToggle');
   const navbarNav = document.getElementById('navbarNav');
-  
+
   if (navbarToggle && navbarNav) {
     navbarToggle.addEventListener('click', () => {
       navbarToggle.classList.toggle('active');
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.style.overflow = navbarNav.classList.contains('open') ? 'hidden' : '';
     });
   }
-  
+
   // Close mobile nav when clicking outside
   document.addEventListener('click', (e) => {
     if (navbarNav && navbarNav.classList.contains('open') && !e.target.closest('.navbar')) {
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.style.overflow = '';
     }
   });
-  
+
   // === Navbar Scroll Effect ===
   const navbar = document.querySelector('.navbar');
   if (navbar) {
@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-  
+
   // === Scroll To Top ===
   const scrollTopBtn = document.getElementById('scrollTop');
   if (scrollTopBtn) {
@@ -107,47 +107,47 @@ document.addEventListener('DOMContentLoaded', () => {
         scrollTopBtn.classList.remove('visible');
       }
     });
-    
+
     scrollTopBtn.addEventListener('click', () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
-  
+
   // === Accordions (FAQs) ===
   const accordions = document.querySelectorAll('.accordion-header');
   accordions.forEach(acc => {
-    acc.addEventListener('click', function() {
+    acc.addEventListener('click', function () {
       const item = this.parentElement;
       const isActive = item.classList.contains('active');
-      
+
       // Close all accordions
       document.querySelectorAll('.accordion-item').forEach(el => {
         el.classList.remove('active');
       });
-      
+
       // Open clicked one if it wasn't already open
       if (!isActive) {
         item.classList.add('active');
       }
     });
   });
-  
+
   // === Tabs ===
   const tabBtns = document.querySelectorAll('.tab-btn');
   tabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const tabId = btn.getAttribute('data-tab');
-      
+
       // Remove active class from all buttons and content
       btn.parentElement.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      
+
       // Add active class to current button and target content
       btn.classList.add('active');
       document.getElementById(tabId).classList.add('active');
     });
   });
-  
+
   // === User Dropdown ===
   const userDropdown = document.querySelector('.user-dropdown');
   if (userDropdown) {
@@ -156,17 +156,17 @@ document.addEventListener('DOMContentLoaded', () => {
       e.stopPropagation();
       window.location.href = 'profile.html';
     });
-    
+
     document.addEventListener('click', () => {
       userDropdown.classList.remove('active');
     });
   }
-  
+
   // === Sidebar Toggle (Dashboard) ===
   const sidebarToggle = document.getElementById('sidebarToggle');
   const sidebar = document.getElementById('sidebar');
   const sidebarOverlay = document.getElementById('sidebarOverlay');
-  
+
   if (sidebarToggle && sidebar && sidebarOverlay) {
     sidebarToggle.addEventListener('click', () => {
       if (window.innerWidth >= 1024) {
@@ -177,14 +177,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.style.overflow = 'hidden';
       }
     });
-    
+
     sidebarOverlay.addEventListener('click', () => {
       sidebar.classList.remove('open');
       sidebarOverlay.classList.remove('active');
       document.body.style.overflow = '';
     });
   }
-  
+
   // === Admin View Switching ===
   const isAdmin = (localStorage.getItem('preptrack_is_admin') || localStorage.getItem('ntc_is_admin')) === 'true';
   const isAdminSidebar = document.querySelector('.admin-sidebar');
@@ -240,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (sidebarNav) {
       const sections = sidebarNav.querySelectorAll('.sidebar-section');
       const lastSection = sections[sections.length - 1];
-      
+
       if (isAdminSidebar && lastSection) {
         const studentLink = document.createElement('a');
         studentLink.href = 'dashboard.html';
@@ -286,12 +286,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // === Intersection Observer for scroll animations ===
   const revealElements = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
-  
+
   const revealOptions = {
     threshold: 0.1,
     rootMargin: "0px 0px -50px 0px"
   };
-  
+
   const revealObserver = new IntersectionObserver((entries, observer) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -300,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }, revealOptions);
-  
+
   revealElements.forEach(el => {
     revealObserver.observe(el);
   });
@@ -322,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'ict': svgPath = '<rect width="18" height="12" x="3" y="4" rx="2" ry="2"/><line x1="2" x2="22" y1="20" y2="20"/>'; break;
             case 'psychology': svgPath = '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.9 1.2 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>'; break;
           }
-          
+
           html += `
             <div class="subject-card reveal delay-${(idx % 6) + 1}">
               <div class="subject-icon ${iconClass}">
@@ -344,7 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
           `;
         });
         homeSubjectsGrid.innerHTML = html;
-        
+
         // Re-trigger intersection observer for newly added elements.
         // Use requestAnimationFrame so the browser has painted the new elements
         // before we check their positions — this prevents the flash-and-vanish
@@ -368,9 +368,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // === Toast Notification System ===
-window.showToast = function(message, type = 'info') {
+window.showToast = function (message, type = 'info') {
   let container = document.getElementById('toastContainer');
-  
+
   // Create container if it doesn't exist
   if (!container) {
     container = document.createElement('div');
@@ -378,10 +378,10 @@ window.showToast = function(message, type = 'info') {
     container.className = 'toast-container';
     document.body.appendChild(container);
   }
-  
+
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
-  
+
   // Set icon based on type
   let iconSvg = '';
   switch (type) {
@@ -397,7 +397,7 @@ window.showToast = function(message, type = 'info') {
     default: // info
       iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
   }
-  
+
   toast.innerHTML = `
     <div class="toast-icon">${iconSvg}</div>
     <div class="toast-content">
@@ -408,22 +408,22 @@ window.showToast = function(message, type = 'info') {
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
     </button>
   `;
-  
+
   container.appendChild(toast);
-  
+
   // Close button functionality
   const closeBtn = toast.querySelector('.toast-close');
   closeBtn.addEventListener('click', () => {
     removeToast(toast);
   });
-  
+
   // Auto remove after 5 seconds
   setTimeout(() => {
     if (toast.parentElement) {
       removeToast(toast);
     }
   }, 5000);
-  
+
   function removeToast(toastElement) {
     toastElement.classList.add('toast-leaving');
     setTimeout(() => {
@@ -435,7 +435,7 @@ window.showToast = function(message, type = 'info') {
 };
 
 // === Modal System ===
-window.openModal = function(modalId) {
+window.openModal = function (modalId) {
   const modal = document.getElementById(modalId);
   if (modal) {
     modal.classList.add('active');
@@ -443,7 +443,7 @@ window.openModal = function(modalId) {
   }
 };
 
-window.closeModal = function(modalId) {
+window.closeModal = function (modalId) {
   const modal = document.getElementById(modalId);
   if (modal) {
     modal.classList.remove('active');
@@ -461,7 +461,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
-  
+
   document.querySelectorAll('.modal-close, [data-close-modal]').forEach(btn => {
     btn.addEventListener('click', () => {
       const modal = btn.closest('.modal-overlay');
@@ -540,7 +540,7 @@ document.addEventListener('DOMContentLoaded', () => {
     notificationBtn.addEventListener('click', async () => {
       notificationPanel.classList.add('active');
       loadNotifications();
-      
+
       // Check if admin to show new announcement form
       const newForm = document.getElementById('newAnnouncementForm');
       if (newForm && window.supaAuth) {
@@ -563,7 +563,7 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       const input = document.getElementById('newAnnouncementInput');
       if (!input.value.trim()) return;
-      
+
       const client = window.getSupabaseClient ? window.getSupabaseClient() : supabaseClient;
       if (!client) { window.showToast('No database connection', 'error'); return; }
 
@@ -584,11 +584,11 @@ document.addEventListener('DOMContentLoaded', () => {
           });
 
         if (error) throw error;
-        
+
         input.value = '';
         window.showToast('Announcement posted!', 'success');
         loadNotifications();
-        
+
       } catch (err) {
         console.error('Post error:', err);
         window.showToast(`Failed to post: ${err.message || 'Unknown error'}`, 'error');
@@ -649,7 +649,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const uReaction = allReactions.find(r => r.message_id === msgId && r.user_id === currentUserId);
           if (uReaction) userReaction = uReaction.is_like ? 'like' : 'dislike';
         }
-        
+
         return `
           <div class="msg-reactions">
             <button class="reaction-btn ${userReaction === 'like' ? 'active like' : ''}" onclick="window.handleReaction('${msgId}', true)">
@@ -706,7 +706,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const timeStr = new Date(ann.created_at).toLocaleString();
         const senderName = ann.sender_name || 'Admin';
         const avatar = senderName.charAt(0);
-        
+
         let repliesHtml = '';
         if (replies && replies.length > 0) {
           repliesHtml = replies.map(r => {
@@ -875,12 +875,12 @@ document.addEventListener('DOMContentLoaded', () => {
           });
 
         if (error) throw error;
-        
+
         replyInput.value = '';
         notificationFooter.style.display = 'none';
         currentAnnouncementId = null;
         loadNotifications();
-        
+
       } catch (err) {
         console.error('Reply error:', err);
         window.showToast('Failed to post reply', 'error');
@@ -920,7 +920,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const cachedUser = JSON.parse(localStorage.getItem('preptrack_user') || localStorage.getItem('ntc_user') || '{}');
       if (!avatarUrl && cachedUser.avatar_url) avatarUrl = cachedUser.avatar_url;
       if (cachedUser.full_name) displayName = cachedUser.full_name;
-    } catch (e) {}
+    } catch (e) { }
 
     const cachedAdminName = localStorage.getItem('preptrack_admin_name');
     if (!displayName && cachedAdminName) displayName = cachedAdminName;
@@ -1001,7 +1001,7 @@ document.addEventListener('DOMContentLoaded', () => {
               if (displayName) cachedUser.full_name = displayName;
               localStorage.setItem('preptrack_user', JSON.stringify(cachedUser));
               localStorage.setItem('ntc_user', JSON.stringify(cachedUser));
-            } catch (e) {}
+            } catch (e) { }
           }
           if (displayName) {
             localStorage.setItem('preptrack_admin_name', displayName);

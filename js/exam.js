@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
               
               let statusLabel;
               if (alreadySubmitted) {
-                statusLabel = `<p style="font-size: var(--text-xs); margin-top: 8px; color: var(--success); font-weight: 600;">✓ Already Submitted</p>`;
+                statusLabel = `<p style="font-size: var(--text-xs); margin-top: 8px; color: var(--success); font-weight: 600;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><polyline points="20 6 9 17 4 12"/></svg>Already Submitted</p>`;
               } else if (isActive) {
                 statusLabel = `<p style="font-size: var(--text-xs); margin-top: 8px; color: var(--success); font-weight: 500;">Active Now. Ends ${endTime.toLocaleTimeString()}</p>`;
               } else {
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const emptyStateHtml = `
               <div style="grid-column: 1/-1; text-align: center; padding: var(--space-xl); background: var(--surface-2); border-radius: var(--radius-lg);">
-                <div style="font-size: 3rem; margin-bottom: var(--space-sm);">📚</div>
+                <div style="margin-bottom: var(--space-sm); color: var(--text-light);"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><line x1="12" y1="6" x2="12" y2="12"/><line x1="9" y1="9" x2="15" y2="9"/></svg></div>
                 <h3 style="margin-bottom: var(--space-xs); color: var(--text);">No exams available right now</h3>
                 <p style="color: var(--text-light); margin-bottom: var(--space-lg);">There are no live exams scheduled for you to take at this time.</p>
                 <a href="resources.html" class="btn btn-primary">Continue Studying</a>
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
           } else {
             const emptyStateHtml = `
               <div style="grid-column: 1/-1; text-align: center; padding: var(--space-xl); background: var(--surface-2); border-radius: var(--radius-lg);">
-                <div style="font-size: 3rem; margin-bottom: var(--space-sm);">📚</div>
+                <div style="margin-bottom: var(--space-sm); color: var(--text-light);"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><line x1="12" y1="6" x2="12" y2="12"/><line x1="9" y1="9" x2="15" y2="9"/></svg></div>
                 <h3 style="margin-bottom: var(--space-xs); color: var(--text);">No exams available right now</h3>
                 <p style="color: var(--text-light); margin-bottom: var(--space-lg);">There are no live exams scheduled for you to take at this time.</p>
                 <a href="resources.html" class="btn btn-primary">Continue Studying</a>

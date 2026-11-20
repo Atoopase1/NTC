@@ -95,9 +95,9 @@ document.addEventListener('DOMContentLoaded', () => {
                   <h4 style="margin:0; font-size: var(--text-base);">${escapeHtml(exam.title || exam.subject)}</h4>
                 </div>
                 <div style="font-size: var(--text-xs); color: var(--text-light); display: flex; gap: 16px; flex-wrap: wrap;">
-                  <span>📚 ${escapeHtml(exam.subject || '—')}</span>
-                  <span>📅 ${date}</span>
-                  <span>🏆 Score: <strong>${exam.score}/${exam.total}</strong> (${exam.percentage}%)</span>
+                  <span>${escapeHtml(exam.subject || '—')}</span>
+                  <span>${date}</span>
+                  <span>Score: <strong>${exam.score}/${exam.total}</strong> (${exam.percentage}%)</span>
                 </div>
               </div>
             </div>

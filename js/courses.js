@@ -273,7 +273,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (headerActions) {
       headerActions.innerHTML = `
         <button class="btn btn-outline" id="headerChangeBtn" style="font-size:13px; padding:8px 16px;">
-          ✏️ Change Selections
+          Change Selections
         </button>
       `;
       document.getElementById('headerChangeBtn')?.addEventListener('click', () => {

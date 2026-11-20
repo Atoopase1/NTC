@@ -501,7 +501,7 @@
     if (coursesToDisplay.length === 0) {
       grid.innerHTML = `
         <div style="grid-column: 1 / -1; text-align: center; padding: 50px 20px; background: #ffffff; border: 1px dashed var(--border); border-radius: 14px;">
-          <div style="font-size: 32px; margin-bottom: 8px;">📚</div>
+          <div style="margin-bottom: 8px; color: var(--text-light);"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><line x1="12" y1="6" x2="12" y2="12"/><line x1="9" y1="9" x2="15" y2="9"/></svg></div>
           <h3 style="margin: 0 0 6px; font-size: 16px; color: var(--text);">No Courses Found</h3>
           <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-light);">
             ${searchVal ? 'No courses match your search criteria.' : 'No courses have been created yet. Click "+ Add Course" to get started.'}
@@ -660,7 +660,7 @@
       tbody.innerHTML = `
         <tr>
           <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-light);">
-            <div style="font-size: 28px; margin-bottom: 8px;">🎓</div>
+            <div style="margin-bottom: 8px; color: var(--text-light);"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
             <div style="font-weight: 700; font-size: 15px; color: var(--text); margin-bottom: 4px;">No Students Registered</div>
             <div>No students are currently registered for ${escapeHtml(currentCourse ? currentCourse.name : 'this course')}.</div>
           </td>
@@ -1001,7 +1001,7 @@
     const tsvData = lines.join('\r\n');
     navigator.clipboard.writeText(tsvData).then(() => {
       if (window.showToast) {
-        window.showToast(`📋 Copied rankings for ${currentCourse.name} to clipboard! Paste into Excel (Ctrl+V).`, 'success');
+        window.showToast(`Copied rankings for ${currentCourse.name} to clipboard! Paste into Excel (Ctrl+V).`, 'success');
       } else {
         alert('Rankings copied to clipboard! Paste into Excel.');
       }
@@ -1312,7 +1312,7 @@
       tbody.innerHTML = `
         <tr>
           <td colspan="10" style="text-align:center; padding: 40px 20px; color: var(--text-light);">
-            <div style="font-size: 28px; margin-bottom: 8px;">📋</div>
+            <div style="margin-bottom: 8px; color: var(--text-light);"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
             <div style="font-weight: 600; font-size: 15px; color: var(--text); margin-bottom: 4px;">No Attendance Records Found</div>
             <div>No student submissions match your current filters.</div>
           </td>
@@ -1354,7 +1354,7 @@
           <td>${courseName}</td>
           <td><span class="register-week-tag">${weekName}</span></td>
           <td>${timeStr}</td>
-          <td><span class="register-days-tag">📅 ${totalDays} ${totalDays === 1 ? 'Day' : 'Days'} Present</span></td>
+          <td><span class="register-days-tag">${totalDays} ${totalDays === 1 ? 'Day' : 'Days'} Present</span></td>
           <td>${statusBadge}</td>
           <td style="text-align: right;">
             <div style="display: inline-flex; gap: 6px; align-items: center; justify-content: flex-end;">
@@ -1510,7 +1510,7 @@
     const tsvData = lines.join('\r\n');
     navigator.clipboard.writeText(tsvData).then(() => {
       if (window.showToast) {
-        window.showToast(`📋 Copied ${allSubmissions.length} records! Ready to paste into Excel (Ctrl+V).`, 'success');
+        window.showToast(`Copied ${allSubmissions.length} records! Ready to paste into Excel (Ctrl+V).`, 'success');
       } else {
         alert(`Copied ${allSubmissions.length} records for Excel!`);
       }
@@ -1528,7 +1528,7 @@
     textarea.select();
     try {
       document.execCommand('copy');
-      if (window.showToast) window.showToast('📋 Copied records for Excel!', 'success');
+      if (window.showToast) window.showToast('Copied records for Excel!', 'success');
       else alert('Copied attendance records! Paste into Excel.');
     } catch (e) {
       alert('Unable to copy automatically. Please use Export CSV instead.');
@@ -1640,7 +1640,7 @@
 
     if (formCard.style.display === 'none' || !formCard.style.display) {
       formCard.style.display = 'block';
-      if (btn) btn.textContent = '✕ Close Form';
+      if (btn) btn.textContent = 'Close Form';
 
       // Automatically pre-fill starting and ending date & time to now and now + 60 mins
       const startInput = document.getElementById('sessionStartTime');
@@ -1697,7 +1697,7 @@
       statusBox.style.display = 'flex';
       statusBox.className = 'maps-gps-container calibrating';
     }
-    if (titleEl) titleEl.textContent = '🛰️ Triggering Google Maps GPS...';
+    if (titleEl) titleEl.textContent = 'Triggering Google Maps GPS...';
     if (descEl) descEl.textContent = 'Please tap "Allow" if browser prompts for location permission. Calibrating true venue...';
     if (pillEl) pillEl.textContent = 'Satellite search...';
     if (btnEl) {
@@ -1744,16 +1744,16 @@
       if (statusBox) {
         statusBox.className = 'maps-gps-container verified';
       }
-      if (titleEl) titleEl.textContent = '✔ True Lecture Venue Locked!';
+      if (titleEl) titleEl.textContent = 'True Lecture Venue Locked';
       if (descEl) descEl.textContent = `High-accuracy GPS reference captured: ${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`;
       if (pillEl) pillEl.textContent = `±${coords.accuracy}m accuracy (Verified True Fix)`;
       if (btnEl) {
         btnEl.disabled = false;
-        btnEl.innerHTML = `✔ Venue Locked (±${coords.accuracy}m)`;
+        btnEl.innerHTML = `Venue Locked (±${coords.accuracy}m)`;
       }
       if (statusMsg) {
         statusMsg.style.color = '#059669';
-        statusMsg.textContent = `✓ True Lecture Location Locked! Lat: ${coords.lat.toFixed(6)}, Lng: ${coords.lng.toFixed(6)} (Accuracy: ~${coords.accuracy}m)`;
+        statusMsg.textContent = `True Lecture Location Locked! Lat: ${coords.lat.toFixed(6)}, Lng: ${coords.lng.toFixed(6)} (Accuracy: ~${coords.accuracy}m)`;
       }
     }
 
@@ -1764,11 +1764,11 @@
       if (err.code === 1) {
         // PERMISSION_DENIED
         if (statusBox) statusBox.className = 'maps-gps-container error';
-        if (titleEl) titleEl.textContent = '🔒 Location Permission Denied';
-        if (descEl) descEl.innerHTML = 'Location access is blocked. Click the lock / settings icon (🔒) in your browser URL bar, change Location to <strong>Allow</strong>, and try again.';
+        if (titleEl) titleEl.textContent = 'Location Permission Denied';
+        if (descEl) descEl.innerHTML = 'Location access is blocked. Click the lock or site settings icon in your browser URL bar, change Location to <strong>Allow</strong>, and try again.';
         if (btnEl) {
           btnEl.disabled = false;
-          btnEl.innerHTML = '🔄 Retry Venue Location';
+          btnEl.innerHTML = 'Retry Venue Location';
         }
         if (statusMsg) {
           statusMsg.style.color = '#dc2626';
@@ -1786,11 +1786,11 @@
           (err2) => {
             if (isLocked) return;
             if (statusBox) statusBox.className = 'maps-gps-container error';
-            if (titleEl) titleEl.textContent = '⚠️ Weak GPS Satellite Signal';
+            if (titleEl) titleEl.textContent = 'Weak GPS Satellite Signal';
             if (descEl) descEl.textContent = 'Could not acquire satellite fix. You can enter venue coordinates manually or click retry.';
             if (btnEl) {
               btnEl.disabled = false;
-              btnEl.innerHTML = '🔄 Retry Venue Location';
+              btnEl.innerHTML = 'Retry Venue Location';
             }
             if (statusMsg) {
               statusMsg.style.color = '#d97706';
@@ -1983,19 +1983,19 @@
                 </div>
                 <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
                   <button class="btn btn-sm btn-primary" style="padding:5px 12px; font-size:12px; font-weight:600;" onclick="event.stopPropagation(); window.adminAttendance.viewSessionRecords('${session.id}')">
-                    📋 Records
+                    Records
                   </button>
                   <button class="btn btn-sm btn-outline" style="padding:5px 12px; font-size:12px;" onclick="event.stopPropagation(); window.adminAttendance.openEditSessionModal('${session.id}')">
-                    ✏️ Edit
+                    Edit
                   </button>
                   <button class="btn btn-sm btn-outline" style="padding:5px 12px; font-size:12px;" onclick="event.stopPropagation(); window.adminAttendance.toggleSessionStatus('${session.id}', '${session.status}')">
-                    🔄 Toggle Status
+                    Toggle Status
                   </button>
                   <button class="btn btn-sm btn-outline" style="color:#ef4444; border-color:#ef4444; padding:5px 12px; font-size:12px;" onclick="event.stopPropagation(); window.adminAttendance.deleteSession('${session.id}')">
-                    🗑️ Delete
+                    Delete
                   </button>
                   <button type="button" class="btn btn-sm btn-outline" style="color:#64748b; border-color:#cbd5e1; padding:4px 8px; font-size:11px;" onclick="event.stopPropagation(); window.adminAttendance.toggleSessionRowActions(null)" title="Close actions">
-                    ✕ Close
+                    Close
                   </button>
                 </div>
               </div>
@@ -2253,17 +2253,17 @@
       const isVerified = s.verification_status === 'verified';
 
       const statusBadge = isVerified
-        ? `<span class="status-badge verified">✔ Verified</span>`
-        : `<span class="status-badge rejected" style="background:#fef3c7; color:#b45309; border:1px solid #fde68a;">⚠️ Flagged (${distStr})</span>`;
+        ? `<span class="status-badge verified">Verified</span>`
+        : `<span class="status-badge rejected" style="background:#fef3c7; color:#b45309; border:1px solid #fde68a;">Flagged (${distStr})</span>`;
 
       const actionButtons = isVerified
         ? `
-          <button type="button" class="btn btn-sm btn-outline" style="color:#b45309; border-color:#f59e0b; padding:4px 8px; font-size:12px;" onclick="window.adminAttendance.flagSubmission('${s.id}')" title="Flag as Out of Range">⚠️ Flag</button>
-          <button type="button" class="btn btn-sm btn-outline" style="color:#ef4444; border-color:#ef4444; padding:4px 8px; font-size:12px;" onclick="window.adminAttendance.deleteSubmissionRecord('${s.id}')" title="Delete record">🗑 Delete</button>
+          <button type="button" class="btn btn-sm btn-outline" style="color:#b45309; border-color:#f59e0b; padding:4px 8px; font-size:12px;" onclick="window.adminAttendance.flagSubmission('${s.id}')" title="Flag as Out of Range">Flag</button>
+          <button type="button" class="btn btn-sm btn-outline" style="color:#ef4444; border-color:#ef4444; padding:4px 8px; font-size:12px;" onclick="window.adminAttendance.deleteSubmissionRecord('${s.id}')" title="Delete record">Delete</button>
         `
         : `
-          <button type="button" class="btn btn-sm btn-primary" style="padding:4px 10px; font-size:12px; font-weight:600;" onclick="window.adminAttendance.confirmSubmission('${s.id}')" title="Tap to confirm this student as Present">✔ Confirm</button>
-          <button type="button" class="btn btn-sm btn-outline" style="color:#ef4444; border-color:#ef4444; padding:4px 8px; font-size:12px;" onclick="window.adminAttendance.deleteSubmissionRecord('${s.id}')" title="Delete record">🗑 Delete</button>
+          <button type="button" class="btn btn-sm btn-primary" style="padding:4px 10px; font-size:12px; font-weight:600;" onclick="window.adminAttendance.confirmSubmission('${s.id}')" title="Tap to confirm this student as Present">Confirm</button>
+          <button type="button" class="btn btn-sm btn-outline" style="color:#ef4444; border-color:#ef4444; padding:4px 8px; font-size:12px;" onclick="window.adminAttendance.deleteSubmissionRecord('${s.id}')" title="Delete record">Delete</button>
         `;
 
       const rowBg = !isVerified ? 'background: #fffbeb;' : '';
@@ -2311,7 +2311,7 @@
       updateRegisterKpis(allSubmissions);
 
       if (window.showToast) {
-        window.showToast(`✔ ${item?.index_number || 'Student'} confirmed as Verified Present!`, 'success');
+        window.showToast(`${item?.index_number || 'Student'} confirmed as Verified Present!`, 'success');
       }
     } catch (err) {
       console.error(err);
@@ -2338,7 +2338,7 @@
       updateRegisterKpis(allSubmissions);
 
       if (window.showToast) {
-        window.showToast(`⚠️ Submission flagged as Out of Range.`, 'warning');
+        window.showToast(`Submission flagged as Out of Range.`, 'warning');
       }
     } catch (err) {
       console.error(err);
@@ -2403,7 +2403,7 @@
     updateRegisterKpis(allSubmissions);
 
     if (window.showToast) {
-      window.showToast(`✔ Successfully confirmed ${successCount} student(s) as Verified Present!`, 'success');
+      window.showToast(`Successfully confirmed ${successCount} student(s) as Verified Present!`, 'success');
     }
   }
 
@@ -2419,7 +2419,7 @@
     if (deleteBtn) {
       if (checked.length > 0) {
         deleteBtn.style.display = 'inline-block';
-        deleteBtn.textContent = `🗑 Delete Selected (${checked.length})`;
+        deleteBtn.textContent = `Delete Selected (${checked.length})`;
       } else {
         deleteBtn.style.display = 'none';
       }

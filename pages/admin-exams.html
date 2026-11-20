@@ -1,21 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Exam Management | Admin | PrepTrack</title>
-  
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
+
   <!-- CSS -->
   <link rel="stylesheet" href="../css/style.css?v=6">
   <link rel="stylesheet" href="../css/dashboard.css?v=5">
   <link rel="stylesheet" href="../css/responsive.css">
   <link rel="stylesheet" href="../css/admin.css">
-  
+
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- PWA -->
@@ -29,45 +30,69 @@
   <link rel="apple-touch-icon" href="../icons/logo.PNG">
   <style>
     @media (min-width: 768px) {
-      #sidebar.admin-sidebar { transform: translateX(0) !important; z-index: 10 !important; }
-      .dashboard-main { margin-left: 260px !important; }
+      #sidebar.admin-sidebar {
+        transform: translateX(0) !important;
+        z-index: 10 !important;
+      }
+
+      .dashboard-main {
+        margin-left: 260px !important;
+      }
     }
   </style>
 </head>
+
 <body>
-  
+
   <!-- Navigation -->
   <nav class="navbar">
     <div class="container" style="max-width: 100%;">
       <div style="display: flex; align-items: center; gap: var(--space-md);">
         <button class="sidebar-toggle-btn" id="sidebarToggle" aria-label="Toggle Sidebar">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
         </button>
-        
+
         <a href="../index.html" class="navbar-brand">
           <div class="brand-icon"><img src="../icons/logo.PNG" alt="PrepTrack Logo"></div>
           <span>Admin Portal</span>
         </a>
       </div>
-      
+
       <div class="navbar-actions">
         <button class="theme-toggle" id="themeToggle" aria-label="Toggle Dark Mode"></button>
-        
+
         <div class="user-dropdown">
           <div class="user-dropdown-toggle">
             <div class="avatar avatar-sm user-avatar-initials" id="adminNavAvatar" style="background: #f43f5e;">A</div>
             <span class="user-name">Administrator</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
           </div>
-          
+
           <div class="user-dropdown-menu" id="userDropdownMenu">
             <a href="profile.html" class="dropdown-item">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
               My Profile
             </a>
             <div class="dropdown-divider"></div>
             <a href="#" class="dropdown-item danger" id="logoutBtn">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
               Log Out
             </a>
           </div>
@@ -78,38 +103,77 @@
 
   <div class="dashboard-layout">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    
+
     <!-- Admin Sidebar -->
     <aside class="sidebar admin-sidebar" id="sidebar">
       <div class="sidebar-nav">
         <div class="sidebar-section">
           <div class="sidebar-section-title">Admin Controls</div>
           <a href="#" class="sidebar-link">
-            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg></span>
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <line x1="18" x2="18" y1="20" y2="10" />
+                <line x1="12" x2="12" y1="20" y2="4" />
+                <line x1="6" x2="6" y1="20" y2="14" />
+              </svg></span>
             Overview
           </a>
           <a href="admin-users.html" class="sidebar-link">
-            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg></span>
             Manage Students
           </a>
           <a href="admin-lessons.html" class="sidebar-link">
-            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span>
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+              </svg></span>
             Lesson Materials
           </a>
           <a href="admin-exams.html" class="sidebar-link active">
-            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span>
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" x2="8" y1="13" y2="13" />
+                <line x1="16" x2="8" y1="17" y2="17" />
+                <line x1="10" x2="8" y1="9" y2="9" />
+              </svg></span>
             Scheduled Exams
           </a>
-                    <a href="admin-attendance.html" class="sidebar-link">
-            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+          <a href="admin-attendance.html" class="sidebar-link">
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg></span>
             Attendance
           </a>
           <a href="admin-admins.html" class="sidebar-link" id="superAdminLink" style="display:none;">
-            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg></span>
             Manage Admins
           </a>
           <a href="#" class="sidebar-link">
-            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+            <span class="sidebar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg></span>
             Question Bank
           </a>
         </div>
@@ -127,10 +191,10 @@
             alert('You do not have permission to manage exams.');
             window.location.href = 'dashboard.html';
           }
-        } catch(e) {}
+        } catch (e) { }
       }
     </script>
-    
+
     <!-- Main Content -->
     <main class="dashboard-main">
       <div class="admin-header">
@@ -139,7 +203,7 @@
           <p>Create and manage live examinations with strict start and end times.</p>
         </div>
       </div>
-      
+
       <!-- Tabs -->
       <div class="admin-tabs">
         <button class="admin-tab active" data-tab="manage-exams">Manage Exams</button>
@@ -176,13 +240,13 @@
       <div id="create-exam" class="tab-content">
         <div class="admin-card">
           <form id="scheduleExamForm">
-            
+
             <div class="admin-form-row">
               <div>
                 <label class="admin-label" for="examTitle">Exam Title</label>
                 <input type="text" id="examTitle" class="admin-input" placeholder="e.g. Midterm Pedagogy Exam" required>
               </div>
-              
+
               <div>
                 <label class="admin-label" for="examSubject">Subject</label>
                 <select id="examSubject" class="admin-input" required>
@@ -196,7 +260,7 @@
                 <label class="admin-label" for="examStartTime">Start Time</label>
                 <input type="datetime-local" id="examStartTime" class="admin-input" required>
               </div>
-              
+
               <div>
                 <label class="admin-label" for="examEndTime">End Time</label>
                 <input type="datetime-local" id="examEndTime" class="admin-input" required>
@@ -210,32 +274,39 @@
 
             <div style="margin-bottom: var(--space-md);">
               <label class="admin-label" for="examQuestionsText">Questions (Plain Text)</label>
-              <textarea id="examQuestionsText" class="admin-input admin-textarea" rows="10" placeholder="1. What is the capital of Ghana?&#10;A. Accra&#10;B. Kumasi&#10;C. Tema&#10;D. Ho&#10;&#10;2. Next question..." required></textarea>
-              <p style="font-size: var(--text-xs); color: var(--text-light); margin-top: var(--space-xs);">Format: Questions must start with a number (1., 2.). Options must start with a letter (A., B., C., D.).</p>
+              <textarea id="examQuestionsText" class="admin-input admin-textarea" rows="10"
+                placeholder="1. What is the capital of Ghana?&#10;A. Accra&#10;B. Kumasi&#10;C. Tema&#10;D. Ho&#10;&#10;2. Next question..."
+                required></textarea>
+              <p style="font-size: var(--text-xs); color: var(--text-light); margin-top: var(--space-xs);">Format:
+                Questions must start with a number (1., 2.). Options must start with a letter (A., B., C., D.).</p>
             </div>
 
             <div style="margin-bottom: var(--space-xl);">
               <label class="admin-label" for="examAnswerKey">Answer Key</label>
               <input type="text" id="examAnswerKey" class="admin-input" placeholder="e.g. A, B, C, D, A" required>
-              <p style="font-size: var(--text-xs); color: var(--text-light); margin-top: var(--space-xs);">Provide a comma-separated list of letters representing the correct answers in order.</p>
+              <p style="font-size: var(--text-xs); color: var(--text-light); margin-top: var(--space-xs);">Provide a
+                comma-separated list of letters representing the correct answers in order.</p>
             </div>
 
             <div id="saveAsNewContainer" style="display: none; margin-bottom: var(--space-md);">
               <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text);">
-                <input type="checkbox" id="saveAsNewCheckbox" style="width: 16px; height: 16px; accent-color: var(--primary);">
-                <span style="font-size: var(--text-sm); font-weight: 500;">Post as a completely new exam (keep the original)</span>
+                <input type="checkbox" id="saveAsNewCheckbox"
+                  style="width: 16px; height: 16px; accent-color: var(--primary);">
+                <span style="font-size: var(--text-sm); font-weight: 500;">Post as a completely new exam (keep the
+                  original)</span>
               </label>
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 12px;">
-              <button type="button" class="btn btn-outline" onclick="document.getElementById('scheduleExamForm').reset()">Clear Form</button>
+              <button type="button" class="btn btn-outline"
+                onclick="document.getElementById('scheduleExamForm').reset()">Clear Form</button>
               <button type="submit" class="btn btn-primary">Schedule Exam</button>
             </div>
-            
+
           </form>
         </div>
       </div>
-      
+
     </main>
   </div>
 
@@ -251,6 +322,7 @@
           .catch(err => console.warn('[NTC] SW registration failed:', err));
       });
     }
-  </script></body>
-</html>
+  </script>
+</body>
 
+</html>

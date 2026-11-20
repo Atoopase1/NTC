@@ -301,7 +301,7 @@
 
     renderStudentMapsWidget(
       'calibrating',
-      '🛰️ Acquiring True Location (Maps GPS)...',
+      'Acquiring True Location (Maps GPS)...',
       'Please tap <strong>"Allow"</strong> if your browser prompts for location permission. Calibrating true coordinates...',
       'Satellite search...'
     );
@@ -330,7 +330,7 @@
         const distStr = hasReference ? ` | ~${Math.round(dist)}m from venue` : '';
         renderStudentMapsWidget(
           'calibrating',
-          '🛰️ Calibrating High-Precision GPS...',
+          'Calibrating High-Precision GPS...',
           `Acquired ${gpsSamplesCount} satellite fix${gpsSamplesCount > 1 ? 'es' : ''}. Refined coordinate: ${bestGpsFix.lat.toFixed(5)}, ${bestGpsFix.lng.toFixed(5)}${distStr}`,
           `±${bestGpsFix.accuracy}m accuracy`
         );
@@ -405,27 +405,27 @@
       // IN RANGE: Verified
       renderStudentMapsWidget(
         'verified',
-        '✔ Location Verified (Within Venue Radius)',
+        'Location Verified (Within Venue Radius)',
         `You are ~<strong>${Math.round(distance)}m</strong> from the lecture venue (allowed radius: <strong>${allowedRadius}m</strong>). Satellite GPS confirmed.`,
         `±${coords.accuracy}m accuracy (Verified In-Range)`
       );
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.className = 'btn btn-primary';
-        submitBtn.innerHTML = '✔ Submit Attendance';
+        submitBtn.innerHTML = 'Submit Attendance';
       }
     } else {
       // REQUIREMENT 2: OUT OF RANGE / FAR LOCATION: Allowed to submit, but FLAGGED!
       renderStudentMapsWidget(
         'flagged',
-        `⚠️ Outside Venue Range (~${Math.round(distance)}m away)`,
+        `Outside Venue Range (~${Math.round(distance)}m away)`,
         `The lecture venue radius is <strong>${allowedRadius}m</strong>. You are in a far location (~${Math.round(distance)}m away), but <strong>you are permitted to submit your attendance</strong>. Your submission will be recorded with your exact GPS location and <strong>flagged as Out of Range</strong> for instructor review.`,
-        `⚠️ Out of Range: ~${Math.round(distance)}m (Venue: ${allowedRadius}m)`
+        `Out of Range: ~${Math.round(distance)}m (Venue: ${allowedRadius}m)`
       );
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.className = 'btn btn-warning-submit';
-        submitBtn.innerHTML = '⚠️ Submit Attendance (Flagged Out of Range)';
+        submitBtn.innerHTML = 'Submit Attendance (Flagged Out of Range)';
       }
     }
   }
@@ -437,17 +437,17 @@
       // User blocked permission
       renderStudentMapsWidget(
         'error',
-        '🔒 Location Permission Blocked',
-        'Location access is blocked by your browser. To allow: click the lock / settings icon (🔒) in your address bar, set Location to <strong>Allow</strong>, and click Retry.',
+        'Location Permission Blocked',
+        'Location access is blocked by your browser. To allow: click the lock or site settings icon in your address bar, set Location to <strong>Allow</strong>, and click Retry.',
         'Permission Denied',
-        `<button type="button" class="btn btn-primary btn-sm" onclick="window.studentAttendance._retryLocation()">🔄 Retry Location</button>
-         <button type="button" class="btn btn-outline btn-sm" onclick="window.studentAttendance.submitWithoutGps()" style="color:#d97706;border-color:#d97706;">⚠️ Submit as Flagged (No GPS)</button>`
+        `<button type="button" class="btn btn-primary btn-sm" onclick="window.studentAttendance._retryLocation()">Retry Location</button>
+         <button type="button" class="btn btn-outline btn-sm" onclick="window.studentAttendance.submitWithoutGps()" style="color:#d97706;border-color:#d97706;">Submit as Flagged (No GPS)</button>`
       );
       const submitBtn = document.getElementById('btnSubmitAttendance');
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.className = 'btn btn-warning-submit';
-        submitBtn.innerHTML = '⚠️ Submit Attendance (Flagged)';
+        submitBtn.innerHTML = 'Submit Attendance (Flagged)';
       }
       return;
     }
@@ -469,10 +469,10 @@
         // Even if completely failed: allow submission with Flagged status so student is NEVER blocked!
         renderStudentMapsWidget(
           'flagged',
-          '⚠️ GPS Satellite Signal Weak Indoors',
+          'GPS Satellite Signal Weak Indoors',
           'Could not lock precision satellite GPS. You can still submit your attendance — it will be recorded and <strong>flagged for instructor review</strong>.',
           'Signal Weak / Indoor Coarse',
-          `<button type="button" class="btn btn-primary btn-sm" onclick="window.studentAttendance._retryLocation()">🔄 Retry GPS</button>`
+          `<button type="button" class="btn btn-primary btn-sm" onclick="window.studentAttendance._retryLocation()">Retry GPS</button>`
         );
         verifiedPosition = {
           latitude: 0,
@@ -485,7 +485,7 @@
         if (submitBtn) {
           submitBtn.disabled = false;
           submitBtn.className = 'btn btn-warning-submit';
-          submitBtn.innerHTML = '⚠️ Submit Attendance (Flagged)';
+          submitBtn.innerHTML = 'Submit Attendance (Flagged)';
         }
       },
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
@@ -502,7 +502,7 @@
     };
     renderStudentMapsWidget(
       'flagged',
-      '⚠️ Submitting without GPS Verification',
+      'Submitting without GPS Verification',
       'Your attendance will be submitted and <strong>flagged as Out of Range / Unverified</strong> for your instructor.',
       'Flagged Submission'
     );
@@ -510,7 +510,7 @@
     if (submitBtn) {
       submitBtn.disabled = false;
       submitBtn.className = 'btn btn-warning-submit';
-      submitBtn.innerHTML = '⚠️ Submit Attendance (Flagged)';
+      submitBtn.innerHTML = 'Submit Attendance (Flagged)';
     }
   }
 
@@ -663,9 +663,9 @@
     }
 
     if (isWithinRadius) {
-      showSubmittingStatus(`✔ Attendance verified & submitted! (${Math.round(distance)}m from lecture venue)`, 'success');
+      showSubmittingStatus(`Attendance verified & submitted! (${Math.round(distance)}m from lecture venue)`, 'success');
     } else {
-      showSubmittingStatus(`⚠️ Attendance submitted & flagged as Out of Range (${Math.round(distance)}m from venue).`, 'warning');
+      showSubmittingStatus(`Attendance submitted and flagged as Out of Range (${Math.round(distance)}m from venue).`, 'warning');
     }
 
     if (userProfile) {

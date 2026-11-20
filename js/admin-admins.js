@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Admin Admins Script - Manage PrepTrack Admins
  * Only accessible by atoopase@gmail.com (Super Admin)
  */

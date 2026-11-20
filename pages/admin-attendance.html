@@ -224,10 +224,10 @@
 
       <!-- Tabs -->
       <div class="admin-tabs">
-        <button class="admin-tab active" data-tab="courses-tab" id="tabBtnCourses">📚 Courses & Rankings</button>
-        <button class="admin-tab" data-tab="sessions-tab" id="tabBtnSessions">📅 Sessions</button>
+        <button class="admin-tab active" data-tab="courses-tab" id="tabBtnCourses">Courses & Rankings</button>
+        <button class="admin-tab" data-tab="sessions-tab" id="tabBtnSessions">Sessions</button>
         <button class="admin-tab" data-tab="records-tab" id="recordsTabBtn" style="display:none;">
-          🔴 Live Session Feed <span id="currentSessionLabel" style="font-size:12px;opacity:0.7;"></span>
+          Live Session Feed <span id="currentSessionLabel" style="font-size:12px;opacity:0.7;"></span>
         </button>
       </div>
 
@@ -360,11 +360,11 @@
               <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                 <button type="button" class="btn btn-outline btn-sm"
                   onclick="window.adminAttendance.copyRankingToExcel()">
-                  📋 Copy Ranking for Excel
+                  Copy Ranking for Excel
                 </button>
                 <button type="button" class="btn btn-outline btn-sm"
                   onclick="window.adminAttendance.exportRankingCSV()">
-                  📥 Export CSV
+                  Export CSV
                 </button>
                 <button type="button" class="btn btn-primary btn-sm" id="btnCreateSessionForCourse"
                   onclick="window.adminAttendance.createSessionForCurrentCourse()">
@@ -380,15 +380,15 @@
 
             <div class="ranking-stats-strip">
               <div class="ranking-stat-pill">
-                <span>👥 Students Enrolled:</span>
+                <span>Students Enrolled:</span>
                 <strong id="rankingStatStudents">0</strong>
               </div>
               <div class="ranking-stat-pill">
-                <span>📅 Sessions Held:</span>
+                <span>Sessions Held:</span>
                 <strong id="rankingStatSessions">0</strong>
               </div>
               <div class="ranking-stat-pill">
-                <span>📈 Class Average:</span>
+                <span>Class Average:</span>
                 <strong id="rankingStatAverage">0%</strong>
               </div>
             </div>
@@ -501,14 +501,15 @@
                 <div
                   style="display:flex; justify-content:space-between; align-items:center; margin-bottom: var(--space-sm); flex-wrap:wrap; gap:8px;">
                   <h4 style="margin:0; font-size: var(--text-md); display:flex; align-items:center; gap:6px;">
-                    <span>📍 Lecture Venue Location</span>
-                    <span class="status-badge" style="background:#e0f2fe; color:#0369a1; font-size:11px;">Google Maps
-                      GPS</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary);"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <span>Lecture Venue Location</span>
+                    <span class="status-badge" style="background:#e0f2fe; color:#0369a1; font-size:11px;">Google Maps GPS</span>
                   </h4>
                   <button type="button" class="btn btn-primary btn-sm" id="btnAdminGetLocation"
                     onclick="window.adminAttendance.getAdminLocation()"
                     style="display:inline-flex; align-items:center; gap:6px;">
-                    <span>📡 Detect True Venue Location</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                    <span>Detect True Venue Location</span>
                   </button>
                 </div>
 
@@ -519,7 +520,7 @@
                     <div class="maps-radar-dot"></div>
                   </div>
                   <div class="maps-gps-content">
-                    <div class="maps-gps-title" id="adminMapsTitle">🛰️ Calibrating high-precision GPS...</div>
+                    <div class="maps-gps-title" id="adminMapsTitle">Calibrating high-precision GPS...</div>
                     <div class="maps-gps-desc" id="adminMapsDesc">Requesting browser location permission...</div>
                     <div class="maps-gps-meta" id="adminMapsMeta">
                       <span class="maps-accuracy-pill" id="adminMapsAccuracyPill">±--m accuracy</span>
@@ -629,21 +630,19 @@
               </select>
               <button type="button" class="btn btn-sm" id="btnConfirmAllFlagged" onclick="window.adminAttendance.confirmAllFlagged()"
                 style="background:#10b981; color:#ffffff; border:none; display:none; font-weight:600; padding:6px 12px; border-radius:6px;">
-                ✔ Confirm All Flagged (<span id="flaggedCount">0</span>)
+                Confirm All Flagged (<span id="flaggedCount">0</span>)
               </button>
               <button type="button" class="btn btn-sm btn-outline" id="btnDeleteSelectedSubmissions" onclick="window.adminAttendance.deleteSelectedSubmissions()"
                 style="color:#ef4444; border-color:#ef4444; display:none; padding:6px 12px; border-radius:6px;">
-                🗑 Delete Selected
+                Delete Selected
               </button>
             </div>
             <div style="display:flex; gap:var(--space-sm); align-items:center; flex-wrap:wrap;">
               <span id="totalPresentBadge"
                 style="font-size:var(--text-sm); font-weight:600; color:var(--success);">Total Present: 0</span>
-              <button class="btn btn-outline btn-sm" onclick="window.adminAttendance.doExportCSV()">📥 Export
-                CSV</button>
-              <button class="btn btn-outline btn-sm" onclick="window.adminAttendance.doCopyToExcel()">📋 Copy to
-                Excel</button>
-              <button class="btn btn-outline btn-sm" onclick="window.adminAttendance.doPrint()">🖨 Print</button>
+              <button class="btn btn-outline btn-sm" onclick="window.adminAttendance.doExportCSV()">Export CSV</button>
+              <button class="btn btn-outline btn-sm" onclick="window.adminAttendance.doCopyToExcel()">Copy to Excel</button>
+              <button class="btn btn-outline btn-sm" onclick="window.adminAttendance.doPrint()">Print</button>
             </div>
           </div>
         </div>
