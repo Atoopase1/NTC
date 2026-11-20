@@ -128,12 +128,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       const avatarInitial = admin.full_name ? admin.full_name.charAt(0).toUpperCase() : '?';
+      const avatarHtml = admin.avatar_url
+        ? `<img src="${admin.avatar_url}" alt="Avatar" style="width:36px;height:36px;border-radius:50%;object-fit:cover;display:block;">`
+        : `<div class="user-avatar" style="width:36px;height:36px;border-radius:50%;background:rgba(0,59,247,0.1);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;">${avatarInitial}</div>`;
 
       return `
         <tr data-name="${(admin.full_name || '').toLowerCase()}" data-email="${(admin.email || '').toLowerCase()}">
           <td>
             <div style="display:flex;align-items:center;gap:12px;">
-              <div class="user-avatar" style="width:36px;height:36px;border-radius:50%;background:rgba(0,59,247,0.1);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;">${avatarInitial}</div>
+              ${avatarHtml}
               <div>
                 <div style="font-weight:600;color:var(--text);">${admin.full_name || 'No Name'}</div>
                 ${admin.index_number ? `<div style="font-size:11px;color:var(--text-light);">${admin.index_number}</div>` : ''}
@@ -201,7 +204,16 @@ document.addEventListener('DOMContentLoaded', async () => {
           foundUserBox.style.display = 'block';
           if (foundUserName) foundUserName.textContent = searchedUser.full_name || 'No Name';
           if (foundUserEmail) foundUserEmail.textContent = searchedUser.email || '';
-          if (foundUserAvatar) foundUserAvatar.textContent = (searchedUser.full_name || '?').charAt(0).toUpperCase();
+          if (foundUserAvatar) {
+            if (searchedUser.avatar_url) {
+              foundUserAvatar.innerHTML = `<img src="${searchedUser.avatar_url}" alt="Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">`;
+              foundUserAvatar.style.background = 'transparent';
+              foundUserAvatar.style.padding = '0';
+              foundUserAvatar.style.overflow = 'hidden';
+            } else {
+              foundUserAvatar.textContent = (searchedUser.full_name || '?').charAt(0).toUpperCase();
+            }
+          }
           if (foundUserRoleBadge) {
             foundUserRoleBadge.textContent = 'Role: ' + (searchedUser.role || 'student');
             foundUserRoleBadge.style.background = searchedUser.role === 'admin' ? 'rgba(0,59,247,0.1)' : 'var(--surface-hover)';

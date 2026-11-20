@@ -338,6 +338,9 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           
           if (newUrl) {
+            localStorage.setItem('preptrack_admin_avatar', newUrl);
+            localStorage.setItem('preptrack_user_avatar', newUrl);
+
             // Update profile page avatar
             initials.style.display = 'none';
             avatarContainer.style.backgroundImage = `url('${newUrl}')`;
@@ -346,18 +349,24 @@ document.addEventListener('DOMContentLoaded', () => {
             avatarContainer.style.border = '2px solid var(--primary)';
             
             // Update all navbar avatars
-            const allAvatars = document.querySelectorAll('.avatar');
+            const allAvatars = document.querySelectorAll('.avatar, .user-avatar, #userAvatar');
             allAvatars.forEach(av => {
               if (av !== avatarContainer && !av.closest('.user-dropdown-menu')) {
-                const initSpan = av.querySelector('span') || av;
-                if (initSpan.tagName === 'SPAN' || initSpan.classList.contains('user-avatar-initials')) {
-                  initSpan.textContent = '';
+                if (av.tagName === 'IMG') {
+                  av.src = newUrl;
+                  av.style.display = 'inline-block';
+                } else {
+                  av.innerHTML = `<img src="${newUrl}" alt="Profile" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">`;
+                  av.style.background = 'transparent';
+                  av.style.border = 'none';
+                  av.style.overflow = 'hidden';
                 }
-                av.style.backgroundImage = `url('${newUrl}')`;
-                av.style.backgroundSize = 'cover';
-                av.style.backgroundPosition = 'center';
               }
             });
+
+            if (window.syncUserAndAdminAvatar) {
+              window.syncUserAndAdminAvatar();
+            }
             
             window.showToast('Profile photo updated', 'success');
           }

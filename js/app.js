@@ -891,7 +891,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Initial badge load
-  const _client = window.getSupabaseClient ? window.getSupabaseClient() : supabaseClient;
+  const _client = window.getSupabaseClient ? window.getSupabaseClient() : (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
   if (_client) {
     _client.from('messages').select('id', { count: 'exact', head: true }).is('parent_id', null).then(({ count }) => {
       if (count > 0 && document.getElementById('notificationBadge')) {
@@ -900,4 +900,121 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // === Global Avatar & Name Sync (Replaces 'A' placeholder with actual photo) ===
+  async function syncUserAndAdminAvatar() {
+    const avatarEls = document.querySelectorAll(
+      '.avatar.user-avatar-initials, .user-avatar-initials, .user-avatar, #userAvatar, #adminNavAvatar, #adminAvatar'
+    );
+    const nameEls = document.querySelectorAll('.user-name');
+    if (avatarEls.length === 0 && nameEls.length === 0) return;
+
+    let avatarUrl = null;
+    let displayName = null;
+
+    // 1. Instant local cache lookup (prevents flicker of 'A')
+    try {
+      const cachedAdminAvatar = localStorage.getItem('preptrack_admin_avatar') || localStorage.getItem('preptrack_user_avatar');
+      if (cachedAdminAvatar) avatarUrl = cachedAdminAvatar;
+
+      const cachedUser = JSON.parse(localStorage.getItem('preptrack_user') || localStorage.getItem('ntc_user') || '{}');
+      if (!avatarUrl && cachedUser.avatar_url) avatarUrl = cachedUser.avatar_url;
+      if (cachedUser.full_name) displayName = cachedUser.full_name;
+    } catch (e) {}
+
+    const cachedAdminName = localStorage.getItem('preptrack_admin_name');
+    if (!displayName && cachedAdminName) displayName = cachedAdminName;
+
+    function applyAvatar(url, name) {
+      if (name) {
+        nameEls.forEach(el => {
+          if (el.textContent === 'Administrator' || el.textContent === 'Student' || el.textContent === 'Student User') {
+            if (name && name !== 'Student User' && name !== 'Unknown') {
+              el.textContent = name;
+            }
+          }
+        });
+      }
+
+      if (url) {
+        avatarEls.forEach(el => {
+          if (el.tagName === 'IMG') {
+            el.src = url;
+            el.style.display = 'inline-block';
+          } else {
+            // Replace text content (e.g. 'A') with photo
+            el.innerHTML = `<img src="${url}" alt="Profile" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">`;
+            el.style.background = 'transparent';
+            el.style.backgroundColor = 'transparent';
+            el.style.border = 'none';
+            el.style.padding = '0';
+            el.style.overflow = 'hidden';
+            el.classList.remove('user-avatar-initials');
+            if (!el.classList.contains('user-avatar')) el.classList.add('user-avatar');
+          }
+        });
+      } else if (name) {
+        const initial = name.trim().charAt(0).toUpperCase();
+        avatarEls.forEach(el => {
+          if (el.tagName !== 'IMG' && !el.querySelector('img')) {
+            el.textContent = initial;
+          }
+        });
+      }
+    }
+
+    // Apply from cache immediately
+    if (avatarUrl || displayName) {
+      applyAvatar(avatarUrl, displayName);
+    }
+
+    // 2. Query Supabase for latest profile photo
+    try {
+      const client = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : (window.supabaseClient || _client);
+      if (client && client.auth) {
+        const { data: { user } } = await client.auth.getUser();
+        if (user) {
+          if (user.user_metadata && user.user_metadata.avatar_url) {
+            avatarUrl = user.user_metadata.avatar_url;
+          }
+          if (user.user_metadata && user.user_metadata.full_name) {
+            displayName = user.user_metadata.full_name;
+          }
+
+          const { data: profile } = await client
+            .from('profiles')
+            .select('full_name, avatar_url, role')
+            .eq('id', user.id)
+            .maybeSingle();
+
+          if (profile) {
+            if (profile.avatar_url) avatarUrl = profile.avatar_url;
+            if (profile.full_name) displayName = profile.full_name;
+          }
+
+          if (avatarUrl) {
+            localStorage.setItem('preptrack_admin_avatar', avatarUrl);
+            localStorage.setItem('preptrack_user_avatar', avatarUrl);
+            try {
+              const cachedUser = JSON.parse(localStorage.getItem('preptrack_user') || localStorage.getItem('ntc_user') || '{}');
+              cachedUser.avatar_url = avatarUrl;
+              if (displayName) cachedUser.full_name = displayName;
+              localStorage.setItem('preptrack_user', JSON.stringify(cachedUser));
+              localStorage.setItem('ntc_user', JSON.stringify(cachedUser));
+            } catch (e) {}
+          }
+          if (displayName) {
+            localStorage.setItem('preptrack_admin_name', displayName);
+          }
+
+          applyAvatar(avatarUrl, displayName);
+        }
+      }
+    } catch (err) {
+      console.warn('[app.js] Error syncing user/admin avatar:', err);
+    }
+  }
+
+  syncUserAndAdminAvatar();
+  window.syncUserAndAdminAvatar = syncUserAndAdminAvatar;
 });

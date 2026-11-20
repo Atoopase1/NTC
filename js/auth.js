@@ -306,20 +306,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     userAvatars.forEach(el => {
       if (avatarUrl) {
-        // Change from initials to actual image
+        localStorage.setItem('preptrack_admin_avatar', avatarUrl);
+        localStorage.setItem('preptrack_user_avatar', avatarUrl);
+        // Change from initials (like 'A') to actual photo
         el.textContent = '';
         if (el.tagName === 'IMG') {
           el.src = avatarUrl;
+          el.style.display = 'inline-block';
         } else {
-          el.style.backgroundImage = `url(${avatarUrl})`;
-          el.style.backgroundSize = 'cover';
-          el.style.backgroundPosition = 'center';
+          el.innerHTML = `<img src="${avatarUrl}" alt="Profile" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">`;
+          el.style.background = 'transparent';
+          el.style.backgroundColor = 'transparent';
+          el.style.border = 'none';
+          el.style.overflow = 'hidden';
         }
         // Remove initials classes if any, add general avatar class
         el.classList.remove('user-avatar-initials');
         if (!el.classList.contains('user-avatar')) el.classList.add('user-avatar');
       } else {
-        if (el.tagName !== 'IMG') {
+        if (el.tagName !== 'IMG' && !el.querySelector('img')) {
           el.textContent = displayName.charAt(0).toUpperCase();
         }
       }
