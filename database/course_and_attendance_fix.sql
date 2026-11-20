@@ -79,7 +79,7 @@ ALTER TABLE public.attendance_submissions
   ADD COLUMN IF NOT EXISTS class_name TEXT,
   ADD COLUMN IF NOT EXISTS week TEXT;
 
--- 4. Ensure admin can update attendance submission verification status (Verify / Flag)
+-- 4. Ensure admin can update and delete attendance submissions (Verify / Flag / Delete)
 DROP POLICY IF EXISTS "Admins can update all attendance submissions" ON public.attendance_submissions;
 CREATE POLICY "Admins can update all attendance submissions" 
   ON public.attendance_submissions FOR UPDATE 
@@ -89,7 +89,16 @@ CREATE POLICY "Admins can update all attendance submissions"
     OR auth.uid() = user_id
   );
 
+DROP POLICY IF EXISTS "Admins can delete attendance submissions" ON public.attendance_submissions;
+CREATE POLICY "Admins can delete attendance submissions" 
+  ON public.attendance_submissions FOR DELETE 
+  USING (
+    (auth.jwt() ->> 'email') = 'atoopase@gmail.com' 
+    OR (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+    OR (auth.role() = 'service_role')
+  );
+
 -- 5. Performance Indexes
 CREATE INDEX IF NOT EXISTS idx_subjects_name ON public.subjects(name);
-CREATE INDEX IF NOT EXISTS idx_attendance_sessions_class_week ON public.attendance_sessions(class_name, week);
+CREATE INDEX IF NOT EXISTS idx_attendance_sessions_date ON public.attendance_sessions(session_date);
 CREATE INDEX IF NOT EXISTS idx_attendance_submissions_status ON public.attendance_submissions(verification_status);

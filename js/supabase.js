@@ -529,10 +529,10 @@ async function getSubjects() {
       if (Array.isArray(master) && master.length > 0) {
         subjects = master;
       } else {
-        subjects = [...DEFAULT_SYSTEM_SUBJECTS];
+        subjects = DEFAULT_SYSTEM_SUBJECTS.filter(s => !deletedKeys.has(s.name.trim().toLowerCase()) && !deletedKeys.has(s.id.trim().toLowerCase()));
       }
     } catch (e) {
-      subjects = [...DEFAULT_SYSTEM_SUBJECTS];
+      subjects = DEFAULT_SYSTEM_SUBJECTS.filter(s => !deletedKeys.has(s.name.trim().toLowerCase()) && !deletedKeys.has(s.id.trim().toLowerCase()));
     }
   }
 
@@ -663,29 +663,29 @@ async function deleteSubject(id, name) {
 
   // 2. Remove permanently from local storage stores
   try {
-    let local = JSON.parse(localStorage.getItem('preptrack_subjects') || '[]');
-    local = local.filter(c => {
-      const matchId = courseId && String(c.id).toLowerCase() === courseId.toLowerCase();
-      const matchName = courseName && String(c.name).toLowerCase() === courseName.toLowerCase();
-      return !matchId && !matchName;
-    });
-    localStorage.setItem('preptrack_subjects', JSON.stringify(local));
+    const scrub = (key) => {
+      try {
+        let items = JSON.parse(localStorage.getItem(key) || '[]');
+        if (Array.isArray(items)) {
+          items = items.filter(c => {
+            if (!c) return false;
+            if (typeof c === 'string') {
+              const str = c.trim().toLowerCase();
+              return str !== courseName.toLowerCase() && str !== courseId.toLowerCase();
+            }
+            const matchId = courseId && String(c.id || '').trim().toLowerCase() === courseId.toLowerCase();
+            const matchName = courseName && String(c.name || '').trim().toLowerCase() === courseName.toLowerCase();
+            return !matchId && !matchName;
+          });
+          localStorage.setItem(key, JSON.stringify(items));
+        }
+      } catch (e) {}
+    };
 
-    let master = JSON.parse(localStorage.getItem('preptrack_master_courses') || '[]');
-    master = master.filter(c => {
-      const matchId = courseId && String(c.id).toLowerCase() === courseId.toLowerCase();
-      const matchName = courseName && String(c.name).toLowerCase() === courseName.toLowerCase();
-      return !matchId && !matchName;
-    });
-    localStorage.setItem('preptrack_master_courses', JSON.stringify(master));
-
-    let cached = JSON.parse(localStorage.getItem('preptrack_subjects_cache') || '[]');
-    cached = cached.filter(c => {
-      const matchId = courseId && String(c.id).toLowerCase() === courseId.toLowerCase();
-      const matchName = courseName && String(c.name).toLowerCase() === courseName.toLowerCase();
-      return !matchId && !matchName;
-    });
-    localStorage.setItem('preptrack_subjects_cache', JSON.stringify(cached));
+    scrub('preptrack_subjects');
+    scrub('preptrack_master_courses');
+    scrub('preptrack_subjects_cache');
+    scrub('preptrack_selected_courses');
   } catch (e) {}
 
   // 3. Attempt database deletion in Supabase
@@ -711,6 +711,11 @@ async function deleteSubject(id, name) {
 
       // Also delete by name in case of name match
       if (courseName) {
+        await supabaseClient
+          .from('subjects')
+          .delete()
+          .eq('name', courseName);
+
         await supabaseClient
           .from('subjects')
           .delete()

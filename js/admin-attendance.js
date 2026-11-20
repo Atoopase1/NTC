@@ -126,7 +126,7 @@
       if (id) set.add(String(id).trim().toLowerCase());
       if (name) set.add(String(name).trim().toLowerCase());
       localStorage.setItem('preptrack_deleted_courses', JSON.stringify(Array.from(set)));
-    } catch (e) {}
+    } catch (e) { }
   }
 
   function removeDeletedCourseKey(name, id) {
@@ -139,7 +139,7 @@
         return lower !== targetName && lower !== targetId;
       });
       localStorage.setItem('preptrack_deleted_courses', JSON.stringify(filtered));
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // --------------------------------------------
@@ -186,7 +186,7 @@
               { id: "495a3ad0-26de-42b6-bca9-718c23d61b63", name: "RME" },
               { id: "d9eedb28-edc7-4d4d-8191-b951cb86f337", name: "BDT" },
               { id: "d178ae07-79f0-4060-9d87-61ce8a87b743", name: "ICT" }
-            ];
+            ].filter(d => !deletedKeys.has(d.name.trim().toLowerCase()) && !deletedKeys.has(d.id.trim().toLowerCase()));
             subjects = defaults;
           }
         } catch (e) {
@@ -218,15 +218,29 @@
       try {
         localStorage.setItem('preptrack_master_courses', JSON.stringify(subjects));
         localStorage.setItem('preptrack_subjects_cache', JSON.stringify(subjects));
-      } catch (e) {}
+      } catch (e) { }
 
-      // 2. Fetch Sessions
-      const { data: sessions } = await window.supaAttendance.getAttendanceSessions();
-      allSessions = sessions || [];
+      // 2. Fetch Sessions (Safely wrapped)
+      allSessions = [];
+      try {
+        if (window.supaAttendance && typeof window.supaAttendance.getAttendanceSessions === 'function') {
+          const { data: sessions } = await window.supaAttendance.getAttendanceSessions();
+          allSessions = sessions || [];
+        }
+      } catch (se) {
+        console.warn('Could not fetch sessions:', se);
+      }
 
-      // 3. Fetch Submissions
-      const { data: submissions } = await window.supaAttendance.getAllAttendanceSubmissions();
-      allSubmissions = submissions || [];
+      // 3. Fetch Submissions (Safely wrapped)
+      allSubmissions = [];
+      try {
+        if (window.supaAttendance && typeof window.supaAttendance.getAllAttendanceSubmissions === 'function') {
+          const { data: submissions } = await window.supaAttendance.getAllAttendanceSubmissions();
+          allSubmissions = submissions || [];
+        }
+      } catch (sube) {
+        console.warn('Could not fetch submissions:', sube);
+      }
 
       // 4. Fetch Profiles (students)
       if (client) {
@@ -271,7 +285,15 @@
 
   // Calculate stats for each course card
   function calculateCourseMetrics(subjects) {
-    allCourses = subjects.map(sub => {
+    const deletedKeys = getDeletedCourseKeys();
+    const cleanSubjects = (subjects || []).filter(sub => {
+      if (!sub || !sub.name) return false;
+      const subName = String(sub.name).trim().toLowerCase();
+      const subId = String(sub.id || '').trim().toLowerCase();
+      return !deletedKeys.has(subName) && !deletedKeys.has(subId);
+    });
+
+    allCourses = cleanSubjects.map(sub => {
       const courseName = sub.name.trim();
       const courseNameLower = courseName.toLowerCase();
 
@@ -376,8 +398,8 @@
         // Count verified sessions attended by this student in this course
         const attendedSessionsCount = courseSubmissions.filter(subm => {
           const isThisStudent = (subm.user_id === st.id) ||
-                                (subm.index_number && subm.index_number.toLowerCase() === (uniqueIndex || '').toLowerCase()) ||
-                                (subm.full_name && subm.full_name.toLowerCase() === st.fullName.toLowerCase());
+            (subm.index_number && subm.index_number.toLowerCase() === (uniqueIndex || '').toLowerCase()) ||
+            (subm.full_name && subm.full_name.toLowerCase() === st.fullName.toLowerCase());
           const isVerified = subm.verification_status === 'verified';
           return isThisStudent && isVerified;
         }).length;
@@ -484,14 +506,14 @@
       // Per prompt: Each course card must display ONLY:
       // Course Name, Number of Students, Sessions Held, Class Average (percentage)
       cardsHtml += `
-        <div class="course-card" onclick="window.adminAttendance.openCourseRanking('${course.id}')" title="Click to open attendance rankings for ${escapeHtml(course.name)}">
+        <div class="course-card" data-course-id="${escapeHtml(course.id)}" data-course-name="${escapeHtml(course.name)}" onclick="window.adminAttendance.openCourseRanking('${course.id}')" title="Click to open attendance rankings for ${escapeHtml(course.name)}">
           <div class="course-card-header">
             <h3 class="course-card-title">${escapeHtml(course.name)}</h3>
             <div class="course-card-actions" onclick="event.stopPropagation()">
               <button type="button" class="course-card-btn" title="Edit Course Name" onclick="window.adminAttendance.openEditCourseModal('${course.id}', '${escapeJs(course.name)}')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
               </button>
-              <button type="button" class="course-card-btn delete" title="Delete Course" onclick="window.adminAttendance.handleDeleteCourse('${course.id}', '${escapeJs(course.name)}')">
+              <button type="button" class="course-card-btn delete" title="Delete Course" onclick="window.adminAttendance.handleDeleteCourse('${course.id}', '${escapeJs(course.name)}', this)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               </button>
             </div>
@@ -704,13 +726,13 @@
 
     // Check duplicate course name (case-insensitive) against memory, master and local courses
     let localCourses = [];
-    try { localCourses = JSON.parse(localStorage.getItem('preptrack_subjects') || '[]'); } catch (e) {}
+    try { localCourses = JSON.parse(localStorage.getItem('preptrack_subjects') || '[]'); } catch (e) { }
     let masterCourses = [];
-    try { masterCourses = JSON.parse(localStorage.getItem('preptrack_master_courses') || '[]'); } catch (e) {}
+    try { masterCourses = JSON.parse(localStorage.getItem('preptrack_master_courses') || '[]'); } catch (e) { }
 
     const exists = allCourses.some(c => (c.name || '').toLowerCase() === name.toLowerCase()) ||
-                   localCourses.some(c => (c.name || '').toLowerCase() === name.toLowerCase()) ||
-                   masterCourses.some(c => (c.name || '').toLowerCase() === name.toLowerCase());
+      localCourses.some(c => (c.name || '').toLowerCase() === name.toLowerCase()) ||
+      masterCourses.some(c => (c.name || '').toLowerCase() === name.toLowerCase());
     if (exists) {
       if (err) {
         err.textContent = `A course named "${name}" already exists. Please choose a unique name.`;
@@ -816,38 +838,62 @@
     }
   }
 
-  async function handleDeleteCourse(courseId, courseName) {
-    if (!confirm(`Are you sure you want to delete the course "${courseName}"? Historical student attendance sessions linked to this course will remain preserved.`)) {
+  async function handleDeleteCourse(courseId, courseName, btnEl) {
+    const cleanId = String(courseId || '').trim();
+    const cleanName = String(courseName || '').trim();
+
+    if (!cleanName && !cleanId) return;
+
+    if (!confirm(`Are you sure you want to delete the course "${cleanName}"? Historical student attendance sessions linked to this course will remain preserved.`)) {
       return;
     }
 
-    // 1. Immediately register in permanent tombstone so it NEVER returns from Supabase or fallback
-    addDeletedCourseKey(courseId, courseName);
-
-    // 2. Remove permanently from local stores
-    deleteCourseLocally(courseId, courseName);
-
-    // 3. Immediately filter from active memory array
-    allCourses = allCourses.filter(c => {
-      const matchId = courseId && String(c.id).toLowerCase() === String(courseId).toLowerCase();
-      const matchName = courseName && String(c.name).toLowerCase() === String(courseName).toLowerCase();
-      return !matchId && !matchName;
+    // 1. Immediately remove the card element from the DOM with smooth transition
+    if (btnEl) {
+      const card = btnEl.closest('.course-card');
+      if (card) {
+        card.style.transition = 'all 0.25s ease';
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.92)';
+        setTimeout(() => card.remove(), 250);
+      }
+    }
+    document.querySelectorAll('.course-card').forEach(c => {
+      const cId = (c.getAttribute('data-course-id') || '').trim().toLowerCase();
+      const cName = (c.getAttribute('data-course-name') || '').trim().toLowerCase();
+      if ((cleanId && cId === cleanId.toLowerCase()) || (cleanName && cName === cleanName.toLowerCase())) {
+        c.remove();
+      }
     });
 
+    // 2. Immediately register in permanent tombstone so it NEVER returns from Supabase or fallback
+    addDeletedCourseKey(cleanId, cleanName);
+
+    // 3. Remove permanently from local stores
+    deleteCourseLocally(cleanId, cleanName);
+
+    // 4. Immediately filter from active memory array & re-render UI
+    allCourses = allCourses.filter(c => {
+      const matchId = cleanId && String(c.id).trim().toLowerCase() === cleanId.toLowerCase();
+      const matchName = cleanName && String(c.name).trim().toLowerCase() === cleanName.toLowerCase();
+      return !matchId && !matchName;
+    });
+    renderCoursesDashboard();
+
     try {
-      // 4. Delete from Supabase
+      // 5. Delete from Supabase
       if (window.supaDB && typeof window.supaDB.deleteSubject === 'function') {
-        await window.supaDB.deleteSubject(courseId, courseName);
+        await window.supaDB.deleteSubject(cleanId, cleanName);
       }
 
       if (window.showToast) {
-        window.showToast(`Course "${courseName}" permanently deleted.`, 'success');
+        window.showToast(`Course "${cleanName}" permanently deleted.`, 'success');
       }
 
       await loadAllAttendanceData();
     } catch (err) {
-      console.error(err);
-      await loadAllAttendanceData();
+      console.warn('Background deletion error/warning:', err);
+      renderCoursesDashboard();
     }
   }
 
@@ -885,24 +931,34 @@
   }
 
   function deleteCourseLocally(id, name) {
-    const targetId = id ? String(id).toLowerCase() : '';
-    const targetName = name ? String(name).toLowerCase() : '';
+    const targetId = (id || '').toString().trim().toLowerCase();
+    const targetName = (name || '').toString().trim().toLowerCase();
 
-    let localCourses = JSON.parse(localStorage.getItem('preptrack_subjects') || '[]');
-    localCourses = localCourses.filter(c => {
-      const matchId = targetId && String(c.id).toLowerCase() === targetId;
-      const matchName = targetName && String(c.name).toLowerCase() === targetName;
-      return !matchId && !matchName;
-    });
-    localStorage.setItem('preptrack_subjects', JSON.stringify(localCourses));
+    const scrub = (key) => {
+      try {
+        let items = JSON.parse(localStorage.getItem(key) || '[]');
+        if (Array.isArray(items)) {
+          items = items.filter(c => {
+            if (!c) return false;
+            if (typeof c === 'string') {
+              const str = c.trim().toLowerCase();
+              return str !== targetName && str !== targetId;
+            }
+            const cId = (c.id || '').toString().trim().toLowerCase();
+            const cName = (c.name || '').toString().trim().toLowerCase();
+            const matchId = targetId && cId === targetId;
+            const matchName = targetName && cName === targetName;
+            return !matchId && !matchName;
+          });
+          localStorage.setItem(key, JSON.stringify(items));
+        }
+      } catch (e) {}
+    };
 
-    let masterCourses = JSON.parse(localStorage.getItem('preptrack_master_courses') || '[]');
-    masterCourses = masterCourses.filter(c => {
-      const matchId = targetId && String(c.id).toLowerCase() === targetId;
-      const matchName = targetName && String(c.name).toLowerCase() === targetName;
-      return !matchId && !matchName;
-    });
-    localStorage.setItem('preptrack_master_courses', JSON.stringify(masterCourses));
+    scrub('preptrack_subjects');
+    scrub('preptrack_master_courses');
+    scrub('preptrack_subjects_cache');
+    scrub('preptrack_selected_courses');
   }
 
   // --------------------------------------------
@@ -1073,7 +1129,7 @@
     }
     if (session.title) {
       const match = session.title.match(/\[(?:Class|Cohort):\s*([^\]]+)\]/i) ||
-                    session.title.match(/\((?:Class|Cohort):\s*([^\)]+)\)/i);
+        session.title.match(/\((?:Class|Cohort):\s*([^\)]+)\)/i);
       if (match && match[1]) return match[1].trim();
     }
     return 'Class A';
@@ -1183,11 +1239,11 @@
         const wk = weekName.toLowerCase();
         const title = (session.title || '').toLowerCase();
         if (!name.includes(searchVal) &&
-            !indexNum.includes(searchVal) &&
-            !cls.includes(searchVal) &&
-            !course.includes(searchVal) &&
-            !wk.includes(searchVal) &&
-            !title.includes(searchVal)) {
+          !indexNum.includes(searchVal) &&
+          !cls.includes(searchVal) &&
+          !course.includes(searchVal) &&
+          !wk.includes(searchVal) &&
+          !title.includes(searchVal)) {
           return false;
         }
       }
@@ -1572,6 +1628,19 @@
     if (formCard.style.display === 'none' || !formCard.style.display) {
       formCard.style.display = 'block';
       if (btn) btn.textContent = '✕ Close Form';
+
+      // Automatically pre-fill starting and ending date & time to now and now + 60 mins
+      const startInput = document.getElementById('sessionStartTime');
+      const endInput = document.getElementById('sessionEndTime');
+      if (startInput && !startInput.value) {
+        const now = new Date();
+        const localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        startInput.value = localNow;
+        if (endInput && !endInput.value) {
+          const endDate = new Date(now.getTime() + 60 * 60000 - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+          endInput.value = endDate;
+        }
+      }
     } else {
       formCard.style.display = 'none';
       if (btn) btn.textContent = '+ Create New Session';
@@ -1599,7 +1668,7 @@
     const btnEl = document.getElementById('btnAdminGetLocation');
 
     if (adminLocationWatchId !== null) {
-      try { navigator.geolocation.clearWatch(adminLocationWatchId); } catch (e) {}
+      try { navigator.geolocation.clearWatch(adminLocationWatchId); } catch (e) { }
       adminLocationWatchId = null;
     }
 
@@ -1656,7 +1725,7 @@
     function lockTrueVenue(coords) {
       isLocked = true;
       if (adminLocationWatchId !== null) {
-        try { navigator.geolocation.clearWatch(adminLocationWatchId); } catch (e) {}
+        try { navigator.geolocation.clearWatch(adminLocationWatchId); } catch (e) { }
         adminLocationWatchId = null;
       }
       if (statusBox) {
@@ -1738,7 +1807,7 @@
         handleGeoError,
         { enableHighAccuracy: true, maximumAge: 0, timeout: 12000 }
       );
-    } catch (e) {}
+    } catch (e) { }
 
     // Auto-lock best fix after 6 seconds if accuracy hasn't reached <= 15m (e.g. indoor laptop)
     setTimeout(() => {
@@ -1753,9 +1822,6 @@
 
     const title = document.getElementById('sessionTitle').value.trim();
     const subject = document.getElementById('sessionSubject').value;
-    const className = (document.getElementById('sessionClassName')?.value || '').trim() || 'Class A';
-    const week = document.getElementById('sessionWeek')?.value || 'Week 1';
-    const sessionDate = document.getElementById('sessionDate').value;
     const startTimeVal = document.getElementById('sessionStartTime').value;
     const endTimeVal = document.getElementById('sessionEndTime').value;
     const durationMinutes = parseInt(document.getElementById('sessionDuration').value, 10) || 60;
@@ -1773,7 +1839,7 @@
       radius = parseInt(radiusSelect, 10) || 30;
     }
 
-    if (!title || !subject || !sessionDate || !startTimeVal || !endTimeVal) {
+    if (!title || !subject || !startTimeVal || !endTimeVal) {
       alert('Please fill in all required fields.');
       return;
     }
@@ -1783,16 +1849,17 @@
       if (!proceed) return;
     }
 
+    // Automatically derive date from starting datetime
+    const sessionDate = startTimeVal.split('T')[0];
+
     const payload = {
       title,
       subject,
-      class_name: className,
-      week: week,
       session_date: sessionDate,
       start_time: new Date(startTimeVal).toISOString(),
       end_time: new Date(endTimeVal).toISOString(),
       duration_minutes: durationMinutes,
-      instructions: instructions ? `[Class: ${className}] [Week: ${week}] ${instructions}` : `[Class: ${className}] [Week: ${week}]`,
+      instructions: instructions || null,
       status: status || 'scheduled',
       location_name: locationName || null,
       reference_lat: !isNaN(lat) ? lat : null,
@@ -1808,7 +1875,7 @@
       }
 
       if (window.showToast) {
-        window.showToast(`Attendance session created for ${subject} (${week})!`, 'success');
+        window.showToast(`Attendance session created for ${subject}!`, 'success');
       }
 
       toggleCreateForm();
@@ -1824,7 +1891,7 @@
     if (!tbody) return;
 
     if (!sessions || sessions.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-light);padding:30px;">No attendance sessions found. Click "+ Create New Session" to get started.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-light);padding:30px;">No attendance sessions found. Click "+ Create New Session" to get started.</td></tr>';
       return;
     }
 
@@ -1854,15 +1921,11 @@
       }
 
       const radiusDisplay = session.radius_meters ? `${session.radius_meters}m` : '30m';
-      const className = extractSessionClass(session);
-      const weekName = extractSessionWeek(session);
 
       rowsHtml += `
         <tr>
           <td><strong>${escapeHtml(session.title)}</strong></td>
-          <td><span class="register-class-tag">${escapeHtml(className)}</span></td>
           <td>${escapeHtml(session.subject || 'General')}</td>
-          <td><span class="register-week-tag">${escapeHtml(weekName)}</span></td>
           <td>${escapeHtml(session.session_date || '')}</td>
           <td>${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
           <td>${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
@@ -1872,6 +1935,9 @@
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
               <button class="btn btn-sm btn-primary" onclick="window.adminAttendance.viewSessionRecords('${session.id}')">
                 Records
+              </button>
+              <button class="btn btn-sm btn-outline" onclick="window.adminAttendance.openEditSessionModal('${session.id}')">
+                Edit
               </button>
               <button class="btn btn-sm btn-outline" onclick="window.adminAttendance.toggleSessionStatus('${session.id}', '${session.status}')">
                 Toggle Status
@@ -1886,6 +1952,123 @@
     });
 
     tbody.innerHTML = rowsHtml;
+  }
+
+  function openEditSessionModal(sessionId) {
+    const session = allSessions.find(s => String(s.id) === String(sessionId));
+    if (!session) {
+      alert('Session not found.');
+      return;
+    }
+
+    const modal = document.getElementById('editSessionModal');
+    if (!modal) return;
+
+    document.getElementById('editSessionId').value = session.id;
+    document.getElementById('editSessionTitle').value = session.title || '';
+
+    // Populate subjects dropdown
+    const subjSelect = document.getElementById('editSessionSubject');
+    if (subjSelect) {
+      let opts = '';
+      allCourses.forEach(c => {
+        const isSel = (session.subject || '').trim().toLowerCase() === (c.name || '').trim().toLowerCase();
+        opts += `<option value="${escapeHtml(c.name)}" ${isSel ? 'selected' : ''}>${escapeHtml(c.name)}</option>`;
+      });
+      subjSelect.innerHTML = opts;
+    }
+
+    const formatToLocalDatetime = (isoStr) => {
+      if (!isoStr) return '';
+      const d = new Date(isoStr);
+      if (isNaN(d.getTime())) return '';
+      return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    };
+
+    document.getElementById('editSessionStartTime').value = formatToLocalDatetime(session.start_time);
+    document.getElementById('editSessionEndTime').value = formatToLocalDatetime(session.end_time);
+    document.getElementById('editSessionDuration').value = session.duration_minutes || 60;
+    document.getElementById('editSessionStatus').value = session.status || 'scheduled';
+
+    const radiusSelect = document.getElementById('editSessionRadius');
+    if (radiusSelect) {
+      radiusSelect.value = String(session.radius_meters || 30);
+    }
+
+    document.getElementById('editSessionLocationName').value = session.location_name || '';
+    document.getElementById('editSessionLat').value = session.reference_lat != null ? session.reference_lat : '';
+    document.getElementById('editSessionLng').value = session.reference_lng != null ? session.reference_lng : '';
+    document.getElementById('editSessionInstructions').value = session.instructions || '';
+
+    modal.style.display = 'flex';
+  }
+
+  function closeEditSessionModal() {
+    const modal = document.getElementById('editSessionModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  async function handleUpdateSession(e) {
+    e.preventDefault();
+
+    const id = document.getElementById('editSessionId').value;
+    const title = document.getElementById('editSessionTitle').value.trim();
+    const subject = document.getElementById('editSessionSubject').value;
+    const startTimeVal = document.getElementById('editSessionStartTime').value;
+    const endTimeVal = document.getElementById('editSessionEndTime').value;
+    const durationMinutes = parseInt(document.getElementById('editSessionDuration').value, 10) || 60;
+    const status = document.getElementById('editSessionStatus').value;
+    const radius = parseInt(document.getElementById('editSessionRadius').value, 10) || 30;
+    const locationName = document.getElementById('editSessionLocationName').value.trim();
+    const lat = parseFloat(document.getElementById('editSessionLat').value);
+    const lng = parseFloat(document.getElementById('editSessionLng').value);
+    const instructions = document.getElementById('editSessionInstructions').value.trim();
+
+    if (!title || !subject || !startTimeVal || !endTimeVal) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    // Automatically derive date from starting datetime
+    const sessionDate = startTimeVal.split('T')[0];
+
+    const updates = {
+      title,
+      subject,
+      session_date: sessionDate,
+      start_time: new Date(startTimeVal).toISOString(),
+      end_time: new Date(endTimeVal).toISOString(),
+      duration_minutes: durationMinutes,
+      status,
+      radius_meters: radius,
+      location_name: locationName || null,
+      reference_lat: !isNaN(lat) ? lat : null,
+      reference_lng: !isNaN(lng) ? lng : null,
+      instructions: instructions || null
+    };
+
+    try {
+      const { data, error } = await window.supaAttendance.updateAttendanceSession(id, updates);
+      if (error) {
+        alert('Failed to update session: ' + error.message);
+        return;
+      }
+
+      const idx = allSessions.findIndex(s => s.id === id);
+      if (idx !== -1) {
+        allSessions[idx] = { ...allSessions[idx], ...updates };
+      }
+
+      renderSessionsTable(allSessions);
+      closeEditSessionModal();
+
+      if (window.showToast) {
+        window.showToast(`Session "${title}" updated successfully!`, 'success');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error updating session.');
+    }
   }
 
   async function toggleSessionStatus(id, currentStatus) {
@@ -1946,9 +2129,7 @@
       headerInfo.innerHTML = `
         <h3 style="margin:0 0 4px 0; font-size:1.1rem;">${escapeHtml(session.title)}</h3>
         <p style="margin:0; font-size:0.85rem; color:var(--text-light);">
-          <strong>Class:</strong> ${escapeHtml(className)} | 
           <strong>Course:</strong> ${escapeHtml(session.subject || 'N/A')} | 
-          <strong>Week:</strong> ${escapeHtml(weekName)} | 
           <strong>Date:</strong> ${escapeHtml(session.session_date || '')} | 
           <strong>Location:</strong> ${escapeHtml(session.location_name || 'N/A')} (${session.radius_meters || 30}m)
         </p>
@@ -1969,18 +2150,18 @@
     const tbody = document.getElementById('recordsTableBody');
     if (!tbody) return;
 
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Loading submissions...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Loading submissions...</td></tr>';
 
     try {
       const { data, error } = await window.supaAttendance.getAttendanceSubmissions(sessionId);
       if (error) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:red;">Error: ${escapeHtml(error.message)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:red;">Error: ${escapeHtml(error.message)}</td></tr>`;
         return;
       }
       currentSubmissions = data || [];
       renderSingleSubmissionsTable(currentSubmissions);
     } catch (err) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Failed to load records.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">Failed to load records.</td></tr>';
     }
   }
 
@@ -1990,12 +2171,21 @@
     if (!tbody) return;
 
     if (totalPresentBadge) {
-      const presentCount = submissions.filter(s => s.verification_status === 'verified').length;
+      const presentCount = (currentSubmissions || []).filter(s => s.verification_status === 'verified').length;
       totalPresentBadge.textContent = `Total Present: ${presentCount}`;
     }
 
+    // Flagged count & action button
+    const flaggedList = (currentSubmissions || []).filter(s => s.verification_status !== 'verified');
+    const flaggedCountEl = document.getElementById('flaggedCount');
+    const btnConfirmAll = document.getElementById('btnConfirmAllFlagged');
+    if (flaggedCountEl) flaggedCountEl.textContent = flaggedList.length;
+    if (btnConfirmAll) {
+      btnConfirmAll.style.display = flaggedList.length > 0 ? 'inline-block' : 'none';
+    }
+
     if (!submissions || submissions.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-light);">No attendance records submitted yet.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-light);">No attendance records found.</td></tr>';
       return;
     }
 
@@ -2005,19 +2195,209 @@
       const distStr = typeof s.distance_meters === 'number' ? `${s.distance_meters.toFixed(1)}m` : 'N/A';
       const isVerified = s.verification_status === 'verified';
 
+      const statusBadge = isVerified
+        ? `<span class="status-badge verified">✔ Verified</span>`
+        : `<span class="status-badge rejected" style="background:#fef3c7; color:#b45309; border:1px solid #fde68a;">⚠️ Flagged (${distStr})</span>`;
+
+      const actionButtons = isVerified
+        ? `
+          <button type="button" class="btn btn-sm btn-outline" style="color:#b45309; border-color:#f59e0b; padding:4px 8px; font-size:12px;" onclick="window.adminAttendance.flagSubmission('${s.id}')" title="Flag as Out of Range">⚠️ Flag</button>
+          <button type="button" class="btn btn-sm btn-outline" style="color:#ef4444; border-color:#ef4444; padding:4px 8px; font-size:12px;" onclick="window.adminAttendance.deleteSubmissionRecord('${s.id}')" title="Delete record">🗑 Delete</button>
+        `
+        : `
+          <button type="button" class="btn btn-sm btn-primary" style="padding:4px 10px; font-size:12px; font-weight:600;" onclick="window.adminAttendance.confirmSubmission('${s.id}')" title="Tap to confirm this student as Present">✔ Confirm</button>
+          <button type="button" class="btn btn-sm btn-outline" style="color:#ef4444; border-color:#ef4444; padding:4px 8px; font-size:12px;" onclick="window.adminAttendance.deleteSubmissionRecord('${s.id}')" title="Delete record">🗑 Delete</button>
+        `;
+
+      const rowBg = !isVerified ? 'background: #fffbeb;' : '';
+
       rowsHtml += `
-        <tr>
+        <tr style="${rowBg}">
+          <td style="text-align:center;">
+            <input type="checkbox" class="rec-cb" value="${s.id}" onchange="window.adminAttendance.updateSelectedSubmissionsState()">
+          </td>
           <td>${idx + 1}</td>
           <td><strong>${escapeHtml(s.full_name || 'Student')}</strong></td>
           <td><span class="register-index-tag">${escapeHtml(s.index_number || 'N/A')}</span></td>
           <td>${timeStr}</td>
           <td>${distStr}</td>
-          <td><span class="status-badge ${isVerified ? 'verified' : 'rejected'}">${isVerified ? 'Verified' : 'Flagged'}</span></td>
+          <td>${statusBadge}</td>
+          <td style="text-align: right;">
+            <div style="display:inline-flex; gap:6px; justify-content:flex-end;">
+              ${actionButtons}
+            </div>
+          </td>
         </tr>
       `;
     });
 
     tbody.innerHTML = rowsHtml;
+    updateSelectedSubmissionsState();
+  }
+
+  async function confirmSubmission(submissionId) {
+    try {
+      const { error } = await window.supaAttendance.updateAttendanceSubmissionStatus(submissionId, 'verified');
+      if (error) {
+        alert('Failed to confirm submission: ' + error.message);
+        return;
+      }
+
+      const item = currentSubmissions.find(s => s.id === submissionId);
+      if (item) item.verification_status = 'verified';
+
+      const globalItem = allSubmissions.find(s => s.id === submissionId);
+      if (globalItem) globalItem.verification_status = 'verified';
+
+      filterRecords();
+      recalculateDaysPresent(allSubmissions);
+      updateRegisterKpis(allSubmissions);
+
+      if (window.showToast) {
+        window.showToast(`✔ ${item?.index_number || 'Student'} confirmed as Verified Present!`, 'success');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error confirming submission.');
+    }
+  }
+
+  async function flagSubmission(submissionId) {
+    try {
+      const { error } = await window.supaAttendance.updateAttendanceSubmissionStatus(submissionId, 'rejected');
+      if (error) {
+        alert('Failed to flag submission: ' + error.message);
+        return;
+      }
+
+      const item = currentSubmissions.find(s => s.id === submissionId);
+      if (item) item.verification_status = 'rejected';
+
+      const globalItem = allSubmissions.find(s => s.id === submissionId);
+      if (globalItem) globalItem.verification_status = 'rejected';
+
+      filterRecords();
+      recalculateDaysPresent(allSubmissions);
+      updateRegisterKpis(allSubmissions);
+
+      if (window.showToast) {
+        window.showToast(`⚠️ Submission flagged as Out of Range.`, 'warning');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error flagging submission.');
+    }
+  }
+
+  async function deleteSubmissionRecord(submissionId) {
+    const item = currentSubmissions.find(s => s.id === submissionId);
+    const identifier = item ? `${item.full_name || 'Student'} (${item.index_number || 'ID'})` : 'this submission';
+
+    if (!confirm(`Are you sure you want to delete attendance record for ${identifier}?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await window.supaAttendance.deleteAttendanceSubmission(submissionId);
+      if (error) {
+        alert('Failed to delete submission: ' + error.message);
+        return;
+      }
+
+      currentSubmissions = currentSubmissions.filter(s => s.id !== submissionId);
+      allSubmissions = allSubmissions.filter(s => s.id !== submissionId);
+
+      filterRecords();
+      recalculateDaysPresent(allSubmissions);
+      updateRegisterKpis(allSubmissions);
+
+      if (window.showToast) {
+        window.showToast(`Submission removed.`, 'success');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting submission.');
+    }
+  }
+
+  async function confirmAllFlagged() {
+    const flagged = currentSubmissions.filter(s => s.verification_status !== 'verified');
+    if (flagged.length === 0) return;
+
+    if (!confirm(`Confirm all ${flagged.length} flagged out-of-range student(s) as Verified Present?`)) {
+      return;
+    }
+
+    let successCount = 0;
+    for (const s of flagged) {
+      try {
+        await window.supaAttendance.updateAttendanceSubmissionStatus(s.id, 'verified');
+        s.verification_status = 'verified';
+        const g = allSubmissions.find(item => item.id === s.id);
+        if (g) g.verification_status = 'verified';
+        successCount++;
+      } catch (e) {
+        console.warn('Error confirming submission:', s.id, e);
+      }
+    }
+
+    filterRecords();
+    recalculateDaysPresent(allSubmissions);
+    updateRegisterKpis(allSubmissions);
+
+    if (window.showToast) {
+      window.showToast(`✔ Successfully confirmed ${successCount} student(s) as Verified Present!`, 'success');
+    }
+  }
+
+  function toggleSelectAllRecords(masterCb) {
+    const cbs = document.querySelectorAll('.rec-cb');
+    cbs.forEach(cb => cb.checked = masterCb.checked);
+    updateSelectedSubmissionsState();
+  }
+
+  function updateSelectedSubmissionsState() {
+    const checked = document.querySelectorAll('.rec-cb:checked');
+    const deleteBtn = document.getElementById('btnDeleteSelectedSubmissions');
+    if (deleteBtn) {
+      if (checked.length > 0) {
+        deleteBtn.style.display = 'inline-block';
+        deleteBtn.textContent = `🗑 Delete Selected (${checked.length})`;
+      } else {
+        deleteBtn.style.display = 'none';
+      }
+    }
+  }
+
+  async function deleteSelectedSubmissions() {
+    const checked = Array.from(document.querySelectorAll('.rec-cb:checked'));
+    if (checked.length === 0) return;
+
+    if (!confirm(`Are you sure you want to delete ${checked.length} selected attendance record(s)?`)) {
+      return;
+    }
+
+    const ids = checked.map(cb => cb.value);
+    for (const id of ids) {
+      try {
+        await window.supaAttendance.deleteAttendanceSubmission(id);
+        currentSubmissions = currentSubmissions.filter(s => s.id !== id);
+        allSubmissions = allSubmissions.filter(s => s.id !== id);
+      } catch (e) {
+        console.warn('Error deleting submission:', id, e);
+      }
+    }
+
+    const masterCb = document.getElementById('selectAllRecordsCb');
+    if (masterCb) masterCb.checked = false;
+
+    filterRecords();
+    recalculateDaysPresent(allSubmissions);
+    updateRegisterKpis(allSubmissions);
+
+    if (window.showToast) {
+      window.showToast(`Deleted ${ids.length} attendance record(s).`, 'success');
+    }
   }
 
   function filterRecords() {
@@ -2026,7 +2406,7 @@
 
     let filtered = currentSubmissions.filter(s => {
       const matchesSearch = (s.full_name || '').toLowerCase().includes(searchVal) ||
-                            (s.index_number || '').toLowerCase().includes(searchVal);
+        (s.index_number || '').toLowerCase().includes(searchVal);
       const matchesStatus = statusVal === 'all' || s.verification_status === statusVal;
       return matchesSearch && matchesStatus;
     });
@@ -2125,7 +2505,7 @@
     w.document.write(`<h2>Session Attendance Report</h2>`);
     w.document.write(`<table><thead><tr><th>#</th><th>Name</th><th>Index</th><th>Time</th><th>Status</th></tr></thead><tbody>`);
     currentSubmissions.forEach((s, i) => {
-      w.document.write(`<tr><td>${i+1}</td><td>${escapeHtml(s.full_name)}</td><td>${escapeHtml(s.index_number || '')}</td><td>${new Date(s.submitted_at).toLocaleTimeString()}</td><td>${escapeHtml(s.verification_status || 'verified')}</td></tr>`);
+      w.document.write(`<tr><td>${i + 1}</td><td>${escapeHtml(s.full_name)}</td><td>${escapeHtml(s.index_number || '')}</td><td>${new Date(s.submitted_at).toLocaleTimeString()}</td><td>${escapeHtml(s.verification_status || 'verified')}</td></tr>`);
     });
     w.document.write(`</tbody></table></body></html>`);
     w.document.close();
@@ -2205,6 +2585,9 @@
     handleRadiusChange,
     getAdminLocation,
     handleCreateSession,
+    openEditSessionModal,
+    closeEditSessionModal,
+    handleUpdateSession,
     toggleSessionStatus,
     deleteSession,
 
@@ -2212,6 +2595,13 @@
     viewSessionRecords,
     backToSessions,
     filterRecords,
+    confirmSubmission,
+    flagSubmission,
+    deleteSubmissionRecord,
+    confirmAllFlagged,
+    toggleSelectAllRecords,
+    updateSelectedSubmissionsState,
+    deleteSelectedSubmissions,
     doExportCSV,
     doCopyToExcel,
     doPrint,
