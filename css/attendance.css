@@ -82,10 +82,10 @@
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
+  gap: 4px;
+  padding: 2px 8px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: capitalize;
@@ -444,12 +444,12 @@
 
 .register-index-tag {
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--primary, #003bf7);
   background: rgba(0, 59, 247, 0.08);
-  padding: 2px 8px;
-  border-radius: 6px;
+  padding: 2px 6px;
+  border-radius: 5px;
   display: inline-block;
 }
 
@@ -828,9 +828,9 @@
 
 .ranking-table th {
   background: #f8fafc;
-  padding: 14px 24px;
-  font-size: 12px;
-  font-weight: 800;
+  padding: 9px 14px;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: #475569;
@@ -840,13 +840,14 @@
 
 .ranking-table th.th-attendance {
   text-align: right;
-  width: 320px;
+  width: 240px;
 }
 
 .ranking-table td {
-  padding: 18px 24px;
+  padding: 9px 14px;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
+  font-size: 12px;
 }
 
 .ranking-table tbody tr:hover {
@@ -856,52 +857,52 @@
 .ranking-student-cell {
   display: flex;
   align-items: flex-start;
-  gap: 18px;
+  gap: 10px;
 }
 
 .ranking-num-badge {
-  font-size: 20px;
+  font-size: 13px;
   font-weight: 800;
   color: var(--primary, #003bf7);
-  min-width: 36px;
+  min-width: 24px;
   line-height: 1.2;
 }
 
 .ranking-student-details {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .ranking-student-name {
-  font-size: 15px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text, #1e293b);
 }
 
 .ranking-student-index {
   font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   color: #64748b;
 }
 
 .ranking-student-attended {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: #059669;
-  margin-top: 3px;
+  margin-top: 2px;
 }
 
 .ranking-attendance-cell {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 6px;
+  gap: 4px;
 }
 
 .ranking-pct-label {
-  font-size: 18px;
+  font-size: 13px;
   font-weight: 800;
   line-height: 1;
 }
@@ -911,8 +912,8 @@
 .ranking-pct-label.low { color: #dc2626; }
 
 .ranking-bar-track {
-  width: 180px;
-  height: 8px;
+  width: 120px;
+  height: 6px;
   background: #e2e8f0;
   border-radius: 99px;
   overflow: hidden;
