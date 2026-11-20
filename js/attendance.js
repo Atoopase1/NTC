@@ -28,6 +28,10 @@
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
+  // Track realtime channel and auto-refresh interval
+  let _sessionRealtimeChannel = null;
+  let _sessionRefreshInterval = null;
+
   async function initAuthAndLoad() {
     // Show admin banner if current user is an administrator
     const isAdmin = localStorage.getItem('preptrack_is_admin') === 'true' || localStorage.getItem('ntc_is_admin') === 'true';
@@ -50,7 +54,47 @@
         }
       } catch (e) { userProfile = {}; }
       await loadSessions();
+      startSessionSync(client);  // ← live session sync
     } catch (err) { window.location.href = 'login.html'; }
+  }
+
+  /**
+   * Subscribe to realtime session changes so students instantly see when
+   * admin edits/reopens a session, and fall back to a 30-second poll.
+   */
+  function startSessionSync(client) {
+    // ── Realtime subscription ──────────────────────────────────────
+    try {
+      if (_sessionRealtimeChannel) {
+        client.removeChannel(_sessionRealtimeChannel);
+        _sessionRealtimeChannel = null;
+      }
+      _sessionRealtimeChannel = client
+        .channel('student-session-sync')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'attendance_sessions' },
+          () => { loadSessions(); }
+        )
+        .on(
+          'postgres_changes',
+          { event: 'DELETE', schema: 'public', table: 'attendance_submissions' },
+          () => { loadSessions(); }  // admin deleted a submission → recheck submission state
+        )
+        .subscribe();
+    } catch (rtErr) {
+      console.warn('[attendance] Realtime subscription unavailable, using poll only:', rtErr);
+    }
+
+    // ── 30-second fallback poll ────────────────────────────────────
+    if (_sessionRefreshInterval) clearInterval(_sessionRefreshInterval);
+    _sessionRefreshInterval = setInterval(() => {
+      // Only refresh if the submit modal is NOT open (avoid disrupting mid-submission)
+      const modal = document.getElementById('submitModal');
+      if (!modal || modal.style.display === 'none' || modal.style.display === '') {
+        loadSessions();
+      }
+    }, 30000);
   }
 
   async function loadSessions() {
@@ -133,9 +177,51 @@
     const end = new Date(session.end_time);
     const isOpen = session.status === 'active' && now >= start && now <= end;
     const isClosed = session.status === 'closed' || now > end;
+
+    // ── Determine whether this was reopened by admin (was closed, now open) ──
+    // We detect "reopened" state by checking if the session end_time was
+    // recently extended past "now" (i.e. it is active but end is in future).
+    // We display a subtle banner so students know to try again.
+    const wasReopened = !isClosed && session.status === 'active' && !isOpen === false &&
+      session._reopened; // set by realtime reload logic below (flag approach)
+    // Simpler: show a "Reopened" badge whenever isOpen AND session has a
+    // 'reopened' status hint.  We use the existing status field as proxy:
+    // admin changes status back to 'active'; the badge colour already says
+    // 'Open Now'.  Extra hint shown only when student couldn't previously submit.
+
     let badgeClass = 'scheduled', badgeText = 'Scheduled';
     if (isOpen) { badgeClass = 'active'; badgeText = 'Open Now'; }
     else if (isClosed) { badgeClass = 'closed'; badgeText = 'Closed'; }
+
+    // Footer logic:
+    // 1. Student has an existing submission → show its status (no resubmit)
+    // 2. Session is open + no submission → show Submit button
+    // 3. Session is scheduled (future) → show opens-at time
+    // 4. Session is closed + no submission → show "Attendance is closed"
+    //    BUT also check: if student has no submission AND admin previously
+    //    reopened (now isOpen again), we still show the Submit button (case 2 handles this)
+    let footerHtml;
+    if (alreadySubmitted) {
+      if (alreadySubmitted.verification_status === 'rejected') {
+        footerHtml = '<p class="warning-text" style="color:#d97706;font-weight:600;display:inline-flex;align-items:center;gap:6px;">' +
+          '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>' +
+          '<line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
+          ' Attendance Submitted (Flagged Out of Range)</p>';
+      } else {
+        footerHtml = '<p class="success-text"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Attendance Submitted (Verified)</p>';
+      }
+    } else if (isOpen) {
+      // Session open and student hasn't submitted (or submission was deleted by admin)
+      footerHtml = `<button class="btn btn-primary" onclick="window.studentAttendance.openSubmitForm('${session.id}')">Submit Attendance</button>`;
+    } else if (!isClosed) {
+      // Scheduled — not yet open
+      footerHtml = `<p class="text-muted">Opens at ${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>`;
+    } else {
+      // Closed — student missed it
+      footerHtml = '<p class="text-muted">Attendance is closed</p>';
+    }
+
     return `
       <div class="attendance-card">
         <div class="attendance-card-header">
@@ -150,17 +236,7 @@
           ${session.instructions ? `<p><em>${escapeHtml(session.instructions)}</em></p>` : ''}
         </div>
         <div class="attendance-card-footer">
-          ${alreadySubmitted ?
-            (alreadySubmitted.verification_status === 'rejected' ?
-              '<p class="warning-text" style="color:#d97706;font-weight:600;display:inline-flex;align-items:center;gap:6px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Attendance Submitted (Flagged Out of Range)</p>' :
-              '<p class="success-text"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Attendance Submitted (Verified)</p>'
-            ) :
-            isOpen ?
-            `<button class="btn btn-primary" onclick="window.studentAttendance.openSubmitForm('${session.id}')">Submit Attendance</button>` :
-            isClosed ?
-            '<p class="text-muted">Attendance is closed</p>' :
-            `<p class="text-muted">Opens at ${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>`
-          }
+          ${footerHtml}
         </div>
       </div>
     `;
@@ -520,16 +596,38 @@
   }
 
   async function submitAttendanceForm(sessionId, fullName, indexNumber, session) {
+    // ── Re-fetch the session live so we have admin's latest end_time/status ──
+    let liveSession = session;
+    try {
+      const client = typeof window.getSupabaseClient === 'function' ? window.getSupabaseClient() : window.supabaseClient;
+      if (client) {
+        const { data: freshSession } = await client
+          .from('attendance_sessions')
+          .select('*')
+          .eq('id', sessionId)
+          .maybeSingle();
+        if (freshSession) {
+          liveSession = freshSession;
+          // Keep allSessions in sync with admin's latest edit
+          const idx = allSessions.findIndex(s => s.id === sessionId);
+          if (idx !== -1) allSessions[idx] = freshSession;
+        }
+      }
+    } catch (refetchErr) {
+      console.warn('[attendance] Could not re-fetch live session, using cached copy:', refetchErr);
+    }
+
     const now = new Date();
-    if (now < new Date(session.start_time)) {
+    if (now < new Date(liveSession.start_time)) {
       showSubmittingStatus('Attendance is not open yet.', 'error');
       return;
     }
-    if (now > new Date(session.end_time) || session.status === 'closed') {
-      showSubmittingStatus('Attendance has closed.', 'error');
+    if (now > new Date(liveSession.end_time) || liveSession.status === 'closed') {
+      showSubmittingStatus('Attendance has closed. If you believe this is a mistake, ask your lecturer to extend the session.', 'error');
       return;
     }
 
+    // ── Fresh DB check — prevents true duplicate, allows resubmit after deletion ──
     const { data: existing } = await window.supaAttendance.checkAlreadySubmitted(sessionId, currentUser.id);
     if (existing) {
       showSubmittingStatus('You have already submitted attendance for this session.', 'error');
